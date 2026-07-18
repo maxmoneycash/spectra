@@ -4,6 +4,8 @@
 
 ### A software-defined radio lab in your browser — no hardware required.
 
+**Live: [spectra-one.vercel.app](https://spectra-one.vercel.app)** — every push to `main` deploys automatically via Vercel.
+
 A physics-based RF **signal-environment simulator**, a real **DSP receiver** with live demodulated audio, automatic **emission detection & identification**, **SigMF** recording, and mission-based **training** — all running client-side in TypeScript. It's a flight simulator for spectrum operators.
 
 </div>
