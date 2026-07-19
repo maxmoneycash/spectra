@@ -1,64 +1,29 @@
-import { useEffect } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 import { useStore } from '../store/store';
 import { RailTabs, PanelView } from './RailTabs';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 
 /**
- * Bottom sheet hosting the panels on small screens (rail hidden < 1024px).
- * Spring entrance, drag-to-dismiss with velocity handoff, scrim + Esc close.
+ * Panels on small screens (rail hidden < lg) as a shadcn bottom sheet:
+ * Radix focus trap, scrim, animated slide — replacing the hand-rolled one.
  */
 export function PanelSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const panel = useStore((s) => s.panel);
 
-  useEffect(() => {
-    if (!open) return;
-    const esc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', esc);
-    return () => window.removeEventListener('keydown', esc);
-  }, [open, onClose]);
-
   return (
-    <AnimatePresence>
-      {open && (
-        <>
-          <motion.div
-            className="sheet-scrim"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={onClose}
-          />
-          <motion.div
-            className="sheet"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Panels"
-            initial={{ y: '102%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '102%' }}
-            transition={{ type: 'spring', bounce: 0, duration: 0.45 }}
-            drag="y"
-            dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={{ top: 0, bottom: 0.55 }}
-            onDragEnd={(_e, info) => {
-              if (info.offset.y > 110 || info.velocity.y > 550) onClose();
-            }}
-          >
-            <div className="sheet-grab">
-              <div className="sheet-handle" />
-            </div>
-            <div className="sheet-tabs">
-              <RailTabs pillId="sheet-pill" />
-            </div>
-            <div className="sheet-body">
-              <PanelView panel={panel} />
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+    <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
+      <SheetContent
+        side="bottom"
+        className="flex h-[76dvh] flex-col gap-0 rounded-t-2xl border-line p-0"
+        aria-label="Panels"
+      >
+        <SheetTitle className="sr-only">Panels</SheetTitle>
+        <div className="border-b border-line px-3 pt-1">
+          <RailTabs lineId="sheet-line" />
+        </div>
+        <div className="thin-scroll min-h-0 flex-1 overflow-y-auto p-3">
+          <PanelView panel={panel} />
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }

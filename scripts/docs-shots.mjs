@@ -1,5 +1,5 @@
 /**
- * Capture docs/screenshots with the current UI.
+ * Capture docs/screenshots with the current UI (chanhdai idiom, both themes).
  * Usage: node scripts/docs-shots.mjs   (dev server on :5173 required)
  */
 import { chromium } from 'playwright';
@@ -11,67 +11,76 @@ const BASE = 'http://localhost:5173';
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+page.on('pageerror', (e) => console.log('PAGE ERROR:', e.message));
 
 async function shot(name) {
   await page.screenshot({ path: `${OUT}${name}.png` });
   console.log('docs shot:', name);
 }
-
-async function selectMission(name) {
-  await page.click('.rail .seg-item:has-text("Mission")');
+async function theme(name) {
+  await page.click('button[aria-label*="theme"]');
+  await page.waitForTimeout(800);
+}
+async function mission(name) {
+  await page.click('.border-l .flex.gap-4 button:has-text("Mission"), aside button:has-text("Mission")');
   await page.waitForTimeout(400);
-  await page.click(`.scenario-card:has-text("${name}")`);
-  await page.waitForTimeout(300);
+  await page.click(`button:has-text("${name}")`);
+  await page.waitForTimeout(400);
 }
 
 await page.goto(BASE, { waitUntil: 'networkidle' });
 await page.waitForTimeout(800);
 
-// FM band, running, tuned to a station with a card expanded.
-await page.click('.start-play');
+// Light theme, running.
+await page.click('button[aria-label="Start the simulation"]');
 await page.waitForTimeout(5000);
 await shot('analyzer');
 
-await page.click('.det-item >> nth=0');
+// Tuned to the strongest signal with row expanded.
+await page.locator('.divide-y > div[role="button"]').first().click();
 await page.waitForTimeout(1500);
 await shot('fm-broadcast');
 await shot('receiver-scopes');
-
-// Signals + SNR history: same expanded card, scroll rail to show it fully.
-await page.locator('.rail-body').evaluate((el) => el.scrollTo({ top: 0 }));
-await page.waitForTimeout(300);
 await shot('signals-snr');
 
-// ISM band with LoRa chirps.
-await selectMission('ISM Sensor Sweep');
+// Dark theme console.
+await theme('dark');
+await page.waitForTimeout(400);
+await shot('analyzer-dark');
+
+// Academy, both themes.
+await page.click('button[role="tab"]:has-text("Academy")');
+await page.waitForTimeout(800);
+await shot('academy-dark');
+await theme('light');
+await page.waitForTimeout(400);
+await shot('academy');
+
+// Back to console, light, ISM + wideband scenarios.
+await page.click('button[role="tab"]:has-text("Console")');
+await page.waitForTimeout(500);
+await mission('ISM Sensor Sweep');
 await page.waitForTimeout(6000);
 await shot('ism-lora');
-
-// Wideband.
-await selectMission('Wideband Sandbox');
+await mission('Wideband Sandbox');
 await page.waitForTimeout(6000);
 await shot('wideband');
 
 await page.close();
 
 // Mobile.
-const mobile = await browser.newPage({
-  viewport: { width: 390, height: 844 },
-  isMobile: true,
-  hasTouch: true,
-  deviceScaleFactor: 2,
-});
-await mobile.goto(BASE, { waitUntil: 'networkidle' });
-await mobile.waitForTimeout(600);
-await mobile.tap('.tp-play');
-await mobile.waitForTimeout(5000);
-await mobile.screenshot({ path: `${OUT}mobile.png` });
+const m = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+await m.goto(BASE, { waitUntil: 'networkidle' });
+await m.waitForTimeout(700);
+await m.tap('button[aria-label="Start the simulation"]');
+await m.waitForTimeout(5000);
+await m.screenshot({ path: `${OUT}mobile.png` });
 console.log('docs shot: mobile');
-await mobile.tap('.panels-btn');
-await mobile.waitForTimeout(800);
-await mobile.screenshot({ path: `${OUT}mobile-sheet.png` });
+await m.tap('button[aria-label="Open panels"]');
+await m.waitForTimeout(900);
+await m.screenshot({ path: `${OUT}mobile-sheet.png` });
 console.log('docs shot: mobile-sheet');
-await mobile.close();
+await m.close();
 
 await browser.close();
 console.log('done');

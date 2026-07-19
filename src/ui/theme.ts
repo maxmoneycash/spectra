@@ -1,35 +1,36 @@
 /**
  * Single source of truth for canvas-rendered colors.
- * Mirrors the CSS tokens in index.css — keep the two in sync.
+ * The stage is always dark (zinc) in both UI themes; ember is the one
+ * data accent, reserved for the waterfall LUT and the VFO marker.
  */
 export const THEME = {
-  /** Spectrum plot background */
-  plotBg: '#0c0b0d',
+  /** Spectrum plot background (zinc-950) */
+  plotBg: '#09090b',
   /** Waterfall background before data arrives */
-  waterfallBg: '#070708',
+  waterfallBg: '#060607',
   /** Tuner scale band background */
-  rulerBg: '#111013',
+  rulerBg: '#101013',
   /** dB grid lines */
   grid: 'rgba(255,255,255,0.05)',
   /** Scale ticks, minor / major */
   tick: 'rgba(255,255,255,0.13)',
   tickMajor: 'rgba(255,255,255,0.3)',
   /** Axis + scale labels */
-  label: '#8a8680',
-  labelDim: '#5c5955',
+  label: '#8e8e96',
+  labelDim: '#5f5f66',
   /** Spectrum trace */
-  trace: 'rgba(246,245,243,0.94)',
-  traceFill: 'rgba(246,245,243,0.05)',
+  trace: 'rgba(250,250,250,0.94)',
+  traceFill: 'rgba(250,250,250,0.05)',
   /** Decaying peak-hold line */
-  peak: 'rgba(246,245,243,0.28)',
-  /** The one accent (matches --accent oklch(66% 0.19 38)) */
+  peak: 'rgba(250,250,250,0.28)',
+  /** The one data accent — ember (waterfall LUT + VFO) */
   accent: '#f5622f',
   accentHi: '#ff8a5c',
   accentSoft: 'rgba(245,98,47,0.55)',
   /** Scope backgrounds */
-  scopeBg: '#0c0b0d',
+  scopeBg: '#09090b',
   scopeGrid: 'rgba(255,255,255,0.07)',
-  scopeTrace: 'rgba(246,245,243,0.85)',
+  scopeTrace: 'rgba(250,250,250,0.85)',
   /** Canvas font */
-  mono: '"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace',
+  mono: '"Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace',
 } as const;

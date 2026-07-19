@@ -2,10 +2,10 @@ import { useEffect, useRef } from 'react';
 import { getEngine } from '../engine/engine';
 import { THEME } from './theme';
 
-const SIZE = 92;
+const SIZE = 76;
 
 /** IQ constellation / phase scope of the tuned channel (post-filter). */
-function IQScope() {
+export function IQScope() {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const canvas = ref.current!;
@@ -20,7 +20,7 @@ function IQScope() {
     const unsub = getEngine().on('chanIQ', (re, im) => {
       if (frame++ % 2 !== 0) return;
       // Fade the previous frame for a persistence trail.
-      ctx.fillStyle = 'rgba(12,11,13,0.32)';
+      ctx.fillStyle = 'rgba(9,9,11,0.3)';
       ctx.fillRect(0, 0, SIZE, SIZE);
       // Axes.
       ctx.strokeStyle = THEME.scopeGrid;
@@ -47,71 +47,15 @@ function IQScope() {
     return unsub;
   }, []);
   return (
-    <div className="scope-well">
-      <div className="scope-title">IQ</div>
-      <canvas ref={ref} className="scope-canvas" style={{ width: SIZE, height: SIZE }} />
+    <div className="flex flex-col gap-1.5">
+      <span className="mono-feats font-mono text-[8.5px] uppercase tracking-[0.16em] text-muted-foreground">
+        IQ
+      </span>
+      <canvas
+        ref={ref}
+        className="rounded-lg border border-border"
+        style={{ width: SIZE, height: SIZE, background: THEME.scopeBg }}
+      />
     </div>
-  );
-}
-
-/** Time-domain scope of the demodulated audio. */
-function AudioScope() {
-  const ref = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    const canvas = ref.current!;
-    const ctx = canvas.getContext('2d')!;
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    let w = 0;
-    const resize = () => {
-      w = canvas.clientWidth || 180;
-      canvas.width = w * dpr;
-      canvas.height = SIZE * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.fillStyle = THEME.scopeBg;
-      ctx.fillRect(0, 0, w, SIZE);
-    };
-    resize();
-    const ro = new ResizeObserver(resize);
-    ro.observe(canvas);
-    const unsub = getEngine().on('audio', (pcm) => {
-      ctx.fillStyle = THEME.scopeBg;
-      ctx.fillRect(0, 0, w, SIZE);
-      ctx.strokeStyle = THEME.scopeGrid;
-      ctx.beginPath();
-      ctx.moveTo(0, SIZE / 2);
-      ctx.lineTo(w, SIZE / 2);
-      ctx.stroke();
-      ctx.strokeStyle = THEME.scopeTrace;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      const step = pcm.length / w;
-      for (let x = 0; x < w; x++) {
-        const s = pcm[Math.floor(x * step)] || 0;
-        const y = SIZE / 2 - s * (SIZE / 2) * 0.88;
-        if (x === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-    });
-    return () => {
-      unsub();
-      ro.disconnect();
-    };
-  }, []);
-  return (
-    <div className="scope-well" style={{ flex: 1, minWidth: 0 }}>
-      <div className="scope-title">Audio</div>
-      <canvas ref={ref} className="scope-canvas" style={{ width: '100%', height: SIZE }} />
-    </div>
-  );
-}
-
-/** Deck scopes: IQ constellation + audio waveform, side by side. */
-export function DeckScopes() {
-  return (
-    <>
-      <IQScope />
-      <AudioScope />
-    </>
   );
 }

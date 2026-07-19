@@ -1,51 +1,64 @@
-/* SPECTRA design tokens — dark precision instrument · near-black + ember accent.
- * Portable export of the system in src/index.css (see DESIGN.md). Import or copy into any project.
+/* SPECTRA design tokens — chanhdai idiom: zinc monochrome + always-dark stage.
+ * Portable export of the system in src/index.css (see DESIGN.md). Light + dark.
  */
 :root {
-  /* Surfaces — warm-neutral near-black, layered */
-  --bg: oklch(14% 0.005 60);
-  --bg-elev: oklch(16.5% 0.005 60);
-  --stage: oklch(11.5% 0.004 60);
-  --surface-1: oklch(19.5% 0.005 60);
-  --surface-2: oklch(23.5% 0.006 60);
-  --surface-3: oklch(28.5% 0.006 60);
-  --border: oklch(100% 0 0 / 0.07);
-  --border-strong: oklch(100% 0 0 / 0.14);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.141 0.005 285.823);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.141 0.005 285.823);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.141 0.005 285.823);
+  --primary: oklch(0.21 0.006 285.885);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.967 0.001 286.375);
+  --secondary-foreground: oklch(0.21 0.006 285.885);
+  --muted: oklch(0.967 0.001 286.375);
+  --muted-foreground: oklch(0.552 0.016 285.938);
+  --accent: oklch(0.967 0.001 286.375);
+  --accent-foreground: oklch(0.21 0.006 285.885);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.92 0.004 286.32);
+  --input: oklch(0.92 0.004 286.32);
+  --ring: oklch(0.705 0.015 286.067);
+  --link: oklch(0.488 0.243 264.376);
+  --radius: 0.625rem;
 
-  /* Text */
-  --text: oklch(96% 0.003 60);
-  --text-2: oklch(74% 0.005 60);
-  --text-3: oklch(60% 0.006 60);
-  --text-faint: oklch(46% 0.006 60);
+  /* Structural hairline — softer than --border */
+  --line: color-mix(in oklab, var(--border) 64%, var(--background));
 
-  /* Single accent — ember (≈ #f5622f), for active / tuned / record states */
-  --accent: oklch(66% 0.19 38);
-  --accent-hi: oklch(74% 0.17 38);
-  --accent-ink: oklch(24% 0.06 38);
-  --accent-dim: oklch(66% 0.19 38 / 0.13);
-  --accent-line: oklch(66% 0.19 38 / 0.45);
+  /* The stage is always dark, both themes */
+  --stage: oklch(0.141 0.005 285.823);
+  --stage-foreground: oklch(0.985 0 0);
+  --stage-muted: oklch(0.705 0.015 286.067);
+  --stage-border: oklch(1 0 0 / 0.12);
 
-  /* Semantic — grading feedback only */
-  --ok: oklch(74% 0.14 155);
-  --ok-dim: oklch(74% 0.14 155 / 0.12);
-  --ok-line: oklch(74% 0.14 155 / 0.4);
+  /* Data accent — only inside the stage canvas / data viz */
+  --ember: oklch(66% 0.19 38);
 
-  /* Type — IBM Plex Sans (UI) + IBM Plex Mono (data), self-hosted */
-  --sans: 'IBM Plex Sans', -apple-system, system-ui, sans-serif;
-  --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
 
-  /* Space (4pt) */
-  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 20px; --s6: 24px; --s8: 32px;
-
-  /* Radius */
-  --r-1: 6px; --r-2: 10px; --r-3: 14px; --r-pill: 999px;
-
-  /* Elevation — soft shadow + inset top highlight */
-  --elev-1: 0 1px 2px rgb(0 0 0 / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.03);
-  --elev-2: 0 12px 32px rgb(0 0 0 / 0.5), inset 0 1px 0 rgb(255 255 255 / 0.04);
-
-  /* Motion */
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --dur-fast: 120ms;
-  --dur: 200ms;
+.dark {
+  --background: oklch(0.141 0.005 285.823);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.21 0.006 285.885);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.21 0.006 285.885);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.21 0.006 285.885);
+  --secondary: oklch(0.274 0.006 286.033);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.274 0.006 286.033);
+  --muted-foreground: oklch(0.705 0.015 286.067);
+  --accent: oklch(0.274 0.006 286.033);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.274 0.006 286.033);
+  --input: oklch(0.274 0.006 286.033);
+  --ring: oklch(0.552 0.016 285.938);
+  --link: oklch(0.623 0.214 259.815);
 }

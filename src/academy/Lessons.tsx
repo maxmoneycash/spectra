@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { Fader } from '../ui/deck/Fader';
 import { THEME } from '../ui/theme';
 
@@ -58,7 +58,15 @@ function Demo({ draw, ariaLabel }: { draw: DrawFn; ariaLabel: string }) {
     };
   }, []);
 
-  return <canvas ref={ref} className="acad-demo" aria-label={ariaLabel} role="img" />;
+  return (
+    <canvas
+      ref={ref}
+      aria-label={ariaLabel}
+      role="img"
+      className="block h-[84px] w-full rounded-lg border border-border"
+      style={{ background: THEME.scopeBg }}
+    />
+  );
 }
 
 /* ---------------- Individual demo drawings ---------------- */
@@ -247,15 +255,18 @@ interface Lesson {
 function LessonCard({ lesson, index, onTune }: { lesson: Lesson; index: number; onTune: (id: string) => void }) {
   return (
     <motion.div
-      className="acad-lesson"
+      className="flex flex-col gap-2.5 bg-background p-4"
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', bounce: 0, duration: 0.4, delay: 0.08 + index * 0.06 }}
     >
-      <div className="acad-lesson-title">{lesson.title}</div>
-      <p className="acad-lesson-blurb">{lesson.blurb}</p>
+      <div className="text-[13px] font-medium text-foreground">{lesson.title}</div>
+      <p className="text-[11.5px] leading-relaxed text-muted-foreground">{lesson.blurb}</p>
       {lesson.demo()}
-      <button className="acad-chip" onClick={() => onTune(lesson.scenarioId)}>
+      <button
+        onClick={() => onTune(lesson.scenarioId)}
+        className="mono-feats mt-auto self-start rounded-md border border-border px-2.5 py-1 font-mono text-[10px] text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
+      >
         ▶ Hear it in the simulator
       </button>
     </motion.div>
@@ -320,7 +331,7 @@ export function Lessons({ onTune }: { onTune: (scenarioId: string) => void }) {
   ];
 
   return (
-    <div className="acad-lessons">
+    <div className="grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-line bg-line sm:grid-cols-2">
       {lessons.map((l, i) => (
         <LessonCard key={l.id} lesson={l} index={i} onTune={onTune} />
       ))}

@@ -21,9 +21,9 @@ export function SnrHistory({ trackId }: { trackId: string }) {
       axes: [
         { show: false },
         {
-          stroke: '#6a6a70',
-          grid: { stroke: 'rgba(255,255,255,0.05)' },
-          font: '9px "SF Mono", ui-monospace, monospace',
+          stroke: '#8e8e96',
+          grid: { stroke: 'rgba(127,127,133,0.2)' },
+          font: '9px "Geist Mono", ui-monospace, monospace',
           size: 26,
           values: (_u, vals) => vals.map((v) => `${v}`),
         },
@@ -51,8 +51,10 @@ export function SnrHistory({ trackId }: { trackId: string }) {
   }, [trackId]);
 
   return (
-    <div style={{ marginTop: 8 }}>
-      <div className="scope-title">SNR history (dB)</div>
+    <div className="mt-2">
+      <div className="mono-feats mb-1 font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
+        SNR history (dB)
+      </div>
       <div ref={ref} className="uplot-host" />
     </div>
   );

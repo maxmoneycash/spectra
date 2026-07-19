@@ -1,62 +1,57 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getEngine } from '../engine/engine';
+import { Matrix } from '@/components/ui/matrix';
 
-// S-meter scale: label -> dB (dBFS-ish) -> percentage of the -120..-10 span.
-const SCALE: { label: string; db: number }[] = [
-  { label: 'S1', db: -115 },
-  { label: '3', db: -103 },
-  { label: '5', db: -91 },
-  { label: '7', db: -79 },
-  { label: 'S9', db: -67 },
-  { label: '+20', db: -47 },
-  { label: '+40', db: -27 },
-];
-const pct = (db: number) => Math.max(0, Math.min(100, ((db + 120) / 110) * 100));
+const COLS = 18;
+const SCALE = ['S1', '3', '5', '7', 'S9', '+20', '+40'];
+const pct = (db: number) => Math.max(0, Math.min(1, (db + 120) / 110));
 
 /**
- * S-meter with instant attack and a decaying peak-hold marker. Driven by the
- * engine's high-rate meter events, written straight to the DOM (no React state).
+ * S-meter as an elevenlabs Matrix dot-matrix VU meter with decay.
+ * Driven by the engine's meter events at control rate.
  */
 export function Meter() {
-  const fillRef = useRef<HTMLDivElement>(null);
-  const peakRef = useRef<HTMLDivElement>(null);
-  const textRef = useRef<HTMLSpanElement>(null);
+  const [levels, setLevels] = useState<number[]>(() => Array(COLS).fill(0));
+  const [dbText, setDbText] = useState('—');
   const peak = useRef(0);
 
   useEffect(() => {
     const unsub = getEngine().on('meter', (db) => {
-      const p = pct(db);
-      peak.current = Math.max(p, peak.current - 0.6);
-      if (fillRef.current) fillRef.current.style.width = `${p}%`;
-      if (peakRef.current) peakRef.current.style.left = `${peak.current}%`;
-      if (textRef.current) textRef.current.textContent = `${db.toFixed(0)} dB`;
+      const v = pct(db);
+      peak.current = Math.max(v, peak.current - 0.02);
+      setLevels((prev) =>
+        prev.map((p, i) => {
+          const target = Math.min(Math.max(v * COLS - i, 0), 1);
+          return Math.max(target, p - 0.07);
+        }),
+      );
+      setDbText(`${db.toFixed(0)} dB`);
     });
     return unsub;
   }, []);
 
   return (
-    <div className="smeter">
-      <div className="smeter-top">
-        <span className="deck-label">Signal</span>
-        <span ref={textRef} className="smeter-db">
-          —
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-baseline justify-between">
+        <span className="mono-feats font-mono text-[8.5px] uppercase tracking-[0.16em] text-muted-foreground">
+          Signal
         </span>
+        <span className="mono-feats font-mono text-[10.5px] text-foreground">{dbText}</span>
       </div>
-      <div className="smeter-scale">
+      <Matrix
+        rows={7}
+        cols={COLS}
+        mode="vu"
+        levels={levels}
+        size={4}
+        gap={2}
+        ariaLabel="Signal level meter"
+        className="text-foreground"
+      />
+      <div className="flex justify-between font-mono text-[7.5px] text-muted-foreground">
         {SCALE.map((s) => (
-          <span key={s.label} style={{ left: `${pct(s.db)}%` }}>
-            {s.label}
-          </span>
+          <span key={s}>{s}</span>
         ))}
-      </div>
-      <div className="smeter-bar">
-        <div ref={fillRef} className="fill" style={{ width: '0%' }} />
-        <div className="smeter-ticks">
-          {SCALE.map((s) => (
-            <i key={s.label} style={{ left: `${pct(s.db)}%` }} />
-          ))}
-        </div>
-        <div ref={peakRef} className="peak" style={{ left: '0%' }} />
       </div>
     </div>
   );

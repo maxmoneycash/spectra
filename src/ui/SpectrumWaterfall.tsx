@@ -448,7 +448,7 @@ export function SpectrumWaterfall() {
   };
 
   return (
-    <div ref={wrapRef} className="spectrum-wrap">
+    <div ref={wrapRef} className="absolute inset-0 flex cursor-crosshair flex-col touch-none">
       <WaterfallControls onAuto={autoLevel} zoomLabelRef={zoomLabelRef} />
       <div ref={vfoBandRef} className="vfo-band" />
       <div ref={hoverRef} className="hover-line" />

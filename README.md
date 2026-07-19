@@ -28,9 +28,11 @@ Open-source SDR is bimodal: world-class native DSP (GNU Radio, SDR++, URH) on on
 
 ## A real receiver console
 
-A dark precision instrument — near-black with a single ember accent, IBM Plex type, and an always-visible **receiver deck** under the panadapter: rolling-digit **VFO readout** (click to type a frequency), demod mode chips, console **faders** for bandwidth / squelch / volume / noise, an **S-meter** with peak-hold, and live **scopes** (IQ constellation — a ring for FM, points for PSK — plus audio waveform). The spectrum stage integrates the tuner scale with kind-colored detection carets that tie 1:1 to the Stations list, a **peak-hold** envelope, **wheel-zoom** centered on the cursor with a live frequency/dB hover readout, selectable **colormaps**, and an **auto-leveling** dB range. Fully responsive: panels become a spring bottom sheet on small screens.
+An engineering-grid instrument in the [chanhdai.com](https://chanhdai.com) idiom — zinc-monochrome ruled chrome (light default + animated dark toggle, Geist Sans/Mono) around an always-dark spectrum stage. The **receiver deck** sits under the panadapter: rolling-digit **VFO readout** (click to type a frequency), demod mode toggle group, console **faders** for bandwidth / squelch / volume / noise, a dot-matrix **S-meter VU** ([ElevenLabs UI](https://github.com/elevenlabs/ui) Matrix), and live **scopes** — IQ constellation plus an ElevenLabs **BarVisualizer** fed by a `MediaStreamDestination` tap on the engine's Web Audio graph. The stage integrates the tuner scale with kind-colored detection carets that tie 1:1 to the lined Stations list, a **peak-hold** envelope, **wheel-zoom** centered on the cursor with a live frequency/dB hover readout, selectable **colormaps**, and an **auto-leveling** dB range. Fully responsive: panels become a bottom sheet on small screens.
 
 **Keyboard:** `Space` start/stop · `← →` nudge tune (`Shift` coarse) · `↑ ↓` hop detections · `M` cycle mode · `R` record · `?` shortcuts.
+
+![SPECTRA in the dark theme](docs/screenshots/analyzer-dark.png)
 
 ![Receiver with tuning scale, IQ constellation, audio, and audio-spectrum scopes](docs/screenshots/receiver-scopes.png)
 
@@ -91,7 +93,7 @@ src/
 └── ui/         spectrum+waterfall stage, receiver deck (VFO, faders, meter, scopes), stations / library / mission panels
 ```
 
-**Charts:** the per-signal SNR-history strip uses **[uPlot](https://github.com/leeoniya/uPlot)** — a tiny canvas charting library that streams at 60 fps via imperative `setData`. The spectrum/waterfall and IQ/audio scopes are hand-rolled canvas for maximum throughput, and UI motion is **framer-motion** springs (see `DESIGN.md`). (Considered but rejected `bklit` — it's a lovely SVG/Motion component set, but SVG re-render at signal rates janks; see `docs/RESEARCH.md`.)
+**Charts & UI kit:** the per-signal SNR-history strip uses **[uPlot](https://github.com/leeoniya/uPlot)** — a tiny canvas charting library that streams at 60 fps via imperative `setData`. The spectrum/waterfall and IQ scopes are hand-rolled canvas for maximum throughput. Chrome is **Tailwind CSS v4 + shadcn/ui** with components from **[ElevenLabs UI](https://github.com/elevenlabs/ui)** (MIT) and the **[@ncdai registry](https://chanhdai.com/blocks)**; UI motion is **motion** springs (see `DESIGN.md`). (Considered but rejected `bklit` — it's a lovely SVG/Motion component set, but SVG re-render at signal rates janks; see `docs/RESEARCH.md`.)
 
 **Built directly on the research:** the receiver mirrors Signal-Weaver's tested pure-TS demodulators; the worker+AudioWorklet path follows SDRLab; the sample-source seam generalizes web_hackrf's swappable-driver idea; and the whole thing turns hackrf-webui's "simulator mode" (a test convenience) into the product. Unlike several of the seed repos, this is clean-room and permissively licensed.
 

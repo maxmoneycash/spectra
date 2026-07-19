@@ -38,6 +38,7 @@ export class SpectraEngine {
   private audioCtx: AudioContext | null = null;
   private node: AudioWorkletNode | null = null;
   private gain: GainNode | null = null;
+  private streamDest: MediaStreamAudioDestinationNode | null = null;
   private audioReady = false;
 
   centerFreqHz = 100_000_000;
@@ -118,11 +119,20 @@ export class SpectraEngine {
     const gain = ctx.createGain();
     gain.gain.value = 0.7;
     node.connect(gain).connect(ctx.destination);
+    // Tap the output so UI visualizers can consume it as a MediaStream.
+    const streamDest = ctx.createMediaStreamDestination();
+    gain.connect(streamDest);
     await ctx.resume();
     this.audioCtx = ctx;
     this.node = node;
     this.gain = gain;
+    this.streamDest = streamDest;
     this.audioReady = true;
+  }
+
+  /** Live audio of the tuned channel as a MediaStream (post-start only). */
+  getAudioStream(): MediaStream | null {
+    return this.streamDest?.stream ?? null;
   }
 
   setVolume(v: number): void {

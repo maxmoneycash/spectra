@@ -7,3 +7,4 @@ dist-ssr
 coverage
 *.sigmf-data
 *.sigmf-meta
+.vercel

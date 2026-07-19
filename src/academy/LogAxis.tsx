@@ -381,8 +381,8 @@ export function LogAxis({ selectedId, onSelect }: LogAxisProps) {
   }, [selectedId]);
 
   return (
-    <div ref={wrapRef} className="logaxis-wrap">
-      <canvas ref={canvasRef} />
+    <div ref={wrapRef} className="absolute inset-0 cursor-grab touch-none active:cursor-grabbing">
+      <canvas ref={canvasRef} className="block h-full w-full" />
     </div>
   );
 }

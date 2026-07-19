@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { cn } from '@/lib/utils';
 
 interface FaderProps {
   name: string;
@@ -11,7 +12,7 @@ interface FaderProps {
 }
 
 /**
- * Console fader: pointer-capture drag on a hairline track, accent fill,
+ * Console fader: pointer-capture drag on a hairline track, foreground fill,
  * thumb appears on hover/drag. Full keyboard support (arrows, Shift = x10).
  */
 export function Fader({ name, value, min, max, step, fmt, onChange }: FaderProps) {
@@ -36,14 +37,13 @@ export function Fader({ name, value, min, max, step, fmt, onChange }: FaderProps
   };
 
   return (
-    <div className={`fader ${dragging ? 'dragging' : ''}`}>
-      <div className="fader-head">
-        <span className="fader-name">{name}</span>
-        <span className="fader-val">{fmt(clamped)}</span>
+    <div className={cn('group min-w-0', dragging && 'is-dragging')}>
+      <div className="mb-1 flex items-baseline justify-between gap-2">
+        <span className="text-[10.5px] text-muted-foreground">{name}</span>
+        <span className="mono-feats font-mono text-[10.5px] text-foreground">{fmt(clamped)}</span>
       </div>
       <div
         ref={trackRef}
-        className="fader-track"
         role="slider"
         aria-label={name}
         aria-valuemin={min}
@@ -51,6 +51,7 @@ export function Fader({ name, value, min, max, step, fmt, onChange }: FaderProps
         aria-valuenow={clamped}
         aria-valuetext={fmt(clamped)}
         tabIndex={0}
+        className="relative h-5 cursor-ew-resize touch-none rounded-sm focus-visible:outline-2 focus-visible:outline-ring"
         onPointerDown={(e) => {
           e.preventDefault();
           trackRef.current!.setPointerCapture(e.pointerId);
@@ -79,9 +80,21 @@ export function Fader({ name, value, min, max, step, fmt, onChange }: FaderProps
           }
         }}
       >
-        <div className="fader-rail" />
-        <div className="fader-fill" style={{ width: `${pct}%` }} />
-        <div className="fader-thumb" style={{ left: `${pct}%` }} />
+        <div className="absolute inset-x-0 top-1/2 h-[2px] -translate-y-1/2 rounded-full bg-border" />
+        <div
+          className={cn(
+            'absolute left-0 top-1/2 h-[2px] -translate-y-1/2 rounded-full bg-foreground',
+            dragging ? 'opacity-100' : 'opacity-80',
+          )}
+          style={{ width: `${pct}%` }}
+        />
+        <div
+          className={cn(
+            'pointer-events-none absolute top-1/2 size-[11px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground shadow transition-opacity',
+            dragging ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+          )}
+          style={{ left: `${pct}%` }}
+        />
       </div>
     </div>
   );

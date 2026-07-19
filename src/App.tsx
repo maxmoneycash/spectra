@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
+import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { useStore } from './store/store';
 import { Academy } from './academy/Academy';
 import { TopBar } from './ui/TopBar';
@@ -10,6 +10,8 @@ import { RailTabs, PanelView } from './ui/RailTabs';
 import { PanelSheet } from './ui/PanelSheet';
 import { StatusBar } from './ui/StatusBar';
 import { useHotkeys } from './hooks/useHotkeys';
+import { Toaster } from '@/components/ui/sonner';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 const SHORTCUTS: { keys: string[]; what: string }[] = [
   { keys: ['Space'], what: 'Start / stop the simulation' },
@@ -41,25 +43,29 @@ function KeysPop({ onClose }: { onClose: () => void }) {
   return (
     <motion.div
       ref={ref}
-      className="keys-pop"
       initial={{ opacity: 0, y: -6, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -6, scale: 0.98 }}
       transition={{ duration: 0.15, ease: 'easeOut' }}
       style={{ transformOrigin: 'top right' }}
+      className="fixed right-3 top-[3.75rem] z-[60] w-64 rounded-xl border border-border bg-popover p-3.5 text-popover-foreground shadow-xl"
     >
-      <div className="keys-title">Keyboard shortcuts</div>
+      <div className="mb-2 text-[13px] font-medium">Keyboard shortcuts</div>
       {SHORTCUTS.map((s) => (
-        <div className="keys-row" key={s.what}>
+        <div key={s.what} className="flex items-center gap-2 py-1 text-[11.5px] text-muted-foreground">
           <span>{s.what}</span>
+          <span className="flex-1" />
           {s.keys.map((k, i) => (
-            <span className="kbd" key={i}>
+            <kbd
+              key={i}
+              className="mono-feats rounded border border-border bg-secondary px-1.5 py-0.5 font-mono text-[9.5px] text-secondary-foreground shadow-[0_1.5px_0_0_var(--color-border)]"
+            >
               {k}
-            </span>
+            </kbd>
           ))}
         </div>
       ))}
-      <div className="keys-row" style={{ marginTop: 8, color: 'var(--text-faint)' }}>
+      <div className="mt-2 border-t border-border pt-2 text-[10.5px] text-muted-foreground">
         Click the VFO readout to type a frequency.
       </div>
     </motion.div>
@@ -76,33 +82,41 @@ export function App() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="app">
-        <TopBar onOpenPanels={() => setSheetOpen(true)} onToggleKeys={toggleKeys} />
-        {view === 'console' ? (
-          <>
-            <div className="main">
-              <div className="stage">
-                <SpectrumWaterfall />
-                <StartOverlay />
+      <TooltipProvider delayDuration={300}>
+        <div className="grid h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[3.5rem_minmax(0,1fr)_auto_1.625rem] bg-background">
+          <TopBar onOpenPanels={() => setSheetOpen(true)} onToggleKeys={toggleKeys} />
+          {view === 'console' ? (
+            <>
+              <div className="grid min-h-0 min-w-0 grid-cols-[minmax(0,1fr)_360px] max-lg:grid-cols-[minmax(0,1fr)] xl:grid-cols-[minmax(0,1fr)_380px]">
+                <div className="relative min-h-0 min-w-0 overflow-hidden bg-stage">
+                  <SpectrumWaterfall />
+                  <StartOverlay />
+                </div>
+                <aside
+                  aria-label="Inspector"
+                  className="flex min-h-0 flex-col border-l border-line bg-background max-lg:hidden"
+                >
+                  <div className="border-b border-line px-3 pt-3">
+                    <RailTabs />
+                  </div>
+                  <div className="thin-scroll min-h-0 flex-1 overflow-y-auto p-3">
+                    <PanelView panel={panel} />
+                  </div>
+                </aside>
               </div>
-              <aside className="rail" aria-label="Inspector">
-                <div className="rail-tabs">
-                  <RailTabs pillId="rail-pill" />
-                </div>
-                <div className="rail-body">
-                  <PanelView panel={panel} />
-                </div>
-              </aside>
-            </div>
-            <ReceiverDeck />
-          </>
-        ) : (
-          <Academy />
-        )}
-        <StatusBar />
-        <PanelSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
-        <AnimatePresence>{keysOpen && <KeysPop onClose={() => setKeysOpen(false)} />}</AnimatePresence>
-      </div>
+              <ReceiverDeck />
+            </>
+          ) : (
+            <Academy />
+          )}
+          <StatusBar />
+          <PanelSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
+          <AnimatePresence>
+            {keysOpen && <KeysPop onClose={() => setKeysOpen(false)} />}
+          </AnimatePresence>
+        </div>
+        <Toaster position="bottom-right" gap={8} />
+      </TooltipProvider>
     </MotionConfig>
   );
 }
