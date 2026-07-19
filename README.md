@@ -42,7 +42,13 @@ Works on mobile too — the console condenses and the panels slide up as a sheet
 
 ## RF Academy
 
-A second view (top bar → **Academy**): the radio spectrum from 100 kHz to 10 GHz on a zoomable log axis — regions, bands, and services fading in as you descend. Every band has an inspector (who's here, wavelength, propagation), bands that exist in the simulator are marked ▶ and hand you straight into the matching mission, and five concept cards teach wavelength, modulation, bandwidth, noise, and propagation with live canvas demos.
+A second view (top bar → **Academy**) with three tabs:
+
+- **Explorer** — the radio spectrum from 100 kHz to 10 GHz on a zoomable log axis, with an inspector per band and five live concept demos.
+- **Course** — a complete 25-chapter ham-radio curriculum (foundations, electricity, radio theory, station equipment, propagation) with **206 quiz questions** with explanations, per-chapter bench labs, and progress tracking — adapted from [The Radio Bench](https://github.com/jemcik/the-radio-bench) (MIT). Twelve interactive widgets (AM/FM modulation explorers, SWR, resonance, dipole length, dB, Ohm's law…) are embedded in the chapters they teach.
+- **Reference** — a searchable 284-term glossary with see-also links, plus the widget playground.
+
+Everything hands off into the simulator: bands marked ▶ and every chapter's try-it chips load the matching live scenario, so you read about FM and then hear it.
 
 ![RF Academy spectrum explorer](docs/screenshots/academy.png)
 
@@ -99,7 +105,7 @@ src/
 
 ## Roadmap
 
-Next up: a **macOS menu-bar WiFi console** (CoreWLAN channel-occupancy graphs, RSSI history, security audit — see [`docs/ROADMAP.md`](docs/ROADMAP.md) for the phased plan and research notes), then **WebUSB SDR ingest** and a **WiFi sensing lab**.
+Next up: a **macOS menu-bar WiFi console** (CoreWLAN channel-occupancy graphs, RSSI history, security audit — see [`docs/ROADMAP.md`](docs/ROADMAP.md) for the phased plan and research notes), then **WebUSB SDR ingest** and a **WiFi sensing lab**. Near-term Academy additions: a morse/CW audio trainer and more widget ports.
 
 More emitters (ADS-B, POCSAG, APRS, digital voice), fading/multipath channels, a spectrogram chirp detector + learned classifier (trained on the simulator's own labeled output), a scenario editor, and a WebUSB **hardware-ingest** path so a real HackRF/RTL-SDR drops in behind the same receiver.
 
@@ -107,4 +113,4 @@ More emitters (ADS-B, POCSAG, APRS, digital voice), fading/multipath channels, a
 
 MIT — see [`LICENSE`](LICENSE).
 
-*Built as a from-scratch clean-room implementation. All signals are simulated; SPECTRA neither transmits nor requires any radio hardware.*
+*Built as a from-scratch clean-room implementation. All signals are simulated; SPECTRA neither transmits nor requires any radio hardware. Course content adapted from The Radio Bench (MIT) — see [`NOTICE`](NOTICE).*

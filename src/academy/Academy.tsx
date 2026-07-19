@@ -5,29 +5,24 @@ import { BANDS } from './data';
 import { LogAxis } from './LogAxis';
 import { Inspector } from './Inspector';
 import { Lessons } from './Lessons';
+import { CourseView } from './course/CourseView';
+import { ReferenceView } from './course/ReferenceView';
+import { cn } from '@/lib/utils';
 
-/**
- * RF Academy — a zoomable tour of the radio spectrum that hands you off
- * into the live simulator wherever the band exists inside SPECTRA.
- */
-export function Academy() {
+type AcademyTab = 'explorer' | 'course' | 'reference';
+
+const TABS: { id: AcademyTab; label: string }[] = [
+  { id: 'explorer', label: 'Explorer' },
+  { id: 'course', label: 'Course' },
+  { id: 'reference', label: 'Reference' },
+];
+
+function ExplorerView({ onTune }: { onTune: (scenarioId: string) => void }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = BANDS.find((b) => b.id === selectedId) ?? null;
 
-  const openInSimulator = useCallback((scenarioId: string) => {
-    const s = useStore.getState();
-    if (scenarioId !== s.scenarioId) s.loadScenario(scenarioId);
-    s.setView('console');
-    if (!s.running) void s.start();
-  }, []);
-
   return (
-    <motion.div
-      className="thin-scroll min-h-0 overflow-y-auto bg-background"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.2 }}
-    >
+    <div className="thin-scroll h-full overflow-y-auto">
       <div className="mx-auto min-h-full max-w-3xl border-x border-line">
         <section className="screen-line-bottom px-4 py-8 sm:px-6">
           <h1 className="text-2xl font-medium tracking-tight text-foreground">
@@ -56,7 +51,7 @@ export function Academy() {
         <div className="stripe-divider screen-line-bottom" aria-hidden />
 
         <section className="screen-line-bottom px-4 py-6 sm:px-6">
-          <Inspector band={selected} onPick={setSelectedId} onTune={openInSimulator} />
+          <Inspector band={selected} onPick={setSelectedId} onTune={onTune} />
         </section>
 
         <section className="px-4 py-6 sm:px-6">
@@ -66,8 +61,82 @@ export function Academy() {
               5 lessons · live demos
             </span>
           </div>
-          <Lessons onTune={openInSimulator} />
+          <Lessons onTune={onTune} />
         </section>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * RF Academy — explorer, course (The Radio Bench curriculum), reference
+ * (glossary + widget playground). Everything hands off into the simulator.
+ */
+export function Academy() {
+  const [tab, setTab] = useState<AcademyTab>('explorer');
+
+  const openInSimulator = useCallback((scenarioId: string) => {
+    const s = useStore.getState();
+    if (scenarioId !== s.scenarioId) s.loadScenario(scenarioId);
+    s.setView('console');
+    if (!s.running) void s.start();
+  }, []);
+
+  return (
+    <motion.div
+      className="flex min-h-0 flex-col bg-background"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
+    >
+      <div className="flex items-center gap-4 border-b border-line px-4 sm:px-6">
+        {TABS.map((t) => {
+          const active = tab === t.id;
+          return (
+            <button
+              key={t.id}
+              role="tab"
+              aria-selected={active}
+              onClick={() => setTab(t.id)}
+              className={cn(
+                'relative py-2.5 text-[12.5px] transition-colors',
+                active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {t.label}
+              {active && (
+                <motion.span
+                  layoutId="academy-line"
+                  className="absolute inset-x-0 -bottom-[1px] h-px bg-foreground"
+                  transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+                />
+              )}
+            </button>
+          );
+        })}
+        <span className="flex-1" />
+        <a
+          href="https://github.com/jemcik/the-radio-bench"
+          target="_blank"
+          rel="noreferrer"
+          className="mono-feats hidden font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground sm:inline"
+        >
+          Course: The Radio Bench · MIT
+        </a>
+      </div>
+
+      <div className="min-h-0 flex-1">
+        {tab === 'explorer' && <ExplorerView onTune={openInSimulator} />}
+        {tab === 'course' && (
+          <div className="h-full">
+            <CourseView onTune={openInSimulator} />
+          </div>
+        )}
+        {tab === 'reference' && (
+          <div className="thin-scroll h-full overflow-y-auto">
+            <ReferenceView />
+          </div>
+        )}
       </div>
     </motion.div>
   );

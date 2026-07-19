@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "shots": "node scripts/qa-shots.mjs",
+    "course:gen": "node scripts/convert-course.mjs",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
   },

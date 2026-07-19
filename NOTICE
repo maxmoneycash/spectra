@@ -1,0 +1,12 @@
+SPECTRA
+=======
+
+Course content in src/academy/course/*.gen.ts is adapted from
+**The Radio Bench** (https://github.com/jemcik/the-radio-bench)
+© 2026 Yevhen Yemchynskyi — MIT License. Ported with thanks.
+
+UI components in src/components/ui/{matrix,waveform,live-waveform,bar-visualizer}.tsx
+are from **ElevenLabs UI** (https://github.com/elevenlabs/ui)
+© 2025 Eleven Labs Inc. — MIT License.
+
+Design-language inspiration from chanhdai.com (@ncdai registry) — MIT License.

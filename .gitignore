@@ -8,3 +8,4 @@ coverage
 *.sigmf-data
 *.sigmf-meta
 .vercel
+vendor/
