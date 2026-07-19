@@ -22,6 +22,35 @@ export type PanelTab = 'signals' | 'library' | 'scenario';
 
 export type AppView = 'console' | 'academy';
 
+/** Persisted operator record powering the shareable Operator Card. */
+export interface OperatorRecord {
+  since: number;
+  identified: SignalKind[];
+  missions: string[];
+}
+
+const OPERATOR_KEY = 'spectra.operator.v1';
+
+function loadOperator(): OperatorRecord {
+  try {
+    const raw = JSON.parse(localStorage.getItem(OPERATOR_KEY) || 'null');
+    if (raw && Array.isArray(raw.identified) && Array.isArray(raw.missions)) {
+      return { since: raw.since ?? Date.now(), identified: raw.identified, missions: raw.missions };
+    }
+  } catch {
+    /* ignore */
+  }
+  return { since: Date.now(), identified: [], missions: [] };
+}
+
+function saveOperator(rec: OperatorRecord): void {
+  try {
+    localStorage.setItem(OPERATOR_KEY, JSON.stringify(rec));
+  } catch {
+    /* ignore */
+  }
+}
+
 export interface Recording {
   name: string;
   durationSec: number;
@@ -68,6 +97,8 @@ interface AppState {
   recording: boolean;
   panel: PanelTab;
   view: AppView;
+  cardOpen: boolean;
+  operator: OperatorRecord;
   audioStarted: boolean;
   cmapIndex: number;
   floorDb: number;
@@ -95,6 +126,8 @@ interface AppState {
   selectTrack: (id: string | null) => void;
   setPanel: (p: PanelTab) => void;
   setView: (v: AppView) => void;
+  setCardOpen: (open: boolean) => void;
+  recordMission: (id: string) => void;
   setCmap: (i: number) => void;
   setDbRange: (floorDb: number, ceilDb: number) => void;
 }
@@ -128,6 +161,8 @@ export const useStore = create<AppState>((set, get) => {
     recording: false,
     panel: 'signals',
     view: 'console',
+    cardOpen: false,
+    operator: loadOperator(),
     audioStarted: false,
     cmapIndex: 0,
     floorDb: -80,
@@ -254,6 +289,12 @@ export const useStore = create<AppState>((set, get) => {
         message = `Correct — ${KIND_INFO[kind].label} confirmed.`;
         const cur = get().correctlyIdentified;
         if (!cur.includes(kind)) set({ correctlyIdentified: [...cur, kind] });
+        const op = get().operator;
+        if (!op.identified.includes(kind)) {
+          const next = { ...op, identified: [...op.identified, kind] };
+          saveOperator(next);
+          set({ operator: next });
+        }
       } else if (res.actualLabel) {
         message = `Not quite — that emitter is actually ${res.actualLabel}.`;
       } else {
@@ -293,6 +334,14 @@ export const useStore = create<AppState>((set, get) => {
     selectTrack: (id) => set({ selectedId: id }),
     setPanel: (p) => set({ panel: p }),
     setView: (v) => set({ view: v }),
+    setCardOpen: (open) => set({ cardOpen: open }),
+    recordMission: (id) => {
+      const op = get().operator;
+      if (op.missions.includes(id)) return;
+      const next = { ...op, missions: [...op.missions, id] };
+      saveOperator(next);
+      set({ operator: next });
+    },
     setCmap: (i) => set({ cmapIndex: i }),
     setDbRange: (floorDb, ceilDb) => set({ floorDb, ceilDb }),
   };

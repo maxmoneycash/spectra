@@ -35,6 +35,10 @@ Light default + dark, `.dark` class on `<html>`, persisted to `localStorage`, an
 - Console shell: 56px ruled navbar / full-width stage + 360–380px ruled rail / ruled receiver deck / 26px mono status bar. Mobile: rail → shadcn bottom sheet, deck condenses to VFO + modes + scrollable fader strip.
 - Deck groups, rail lists, and grids use divide/border rules instead of cards (chanhdai "lined" idiom); cards appear only as wells around scopes/demos.
 
+## Artifacts
+
+The **Operator Card** (`src/ui/card/renderOperatorCard.ts`) is its own light artifact, independent of the app theme: paper `#fafafa`, ink `#18181b`, hairline rules, Geist Mono everywhere, ember only for the rank pill + QR frame. Square 1080×1080 for feeds, wide 1200×630 for OG (`scripts/make-og.mjs` regenerates `public/og.png` via the `?ogcard=1` capture route). Rank ladder: Listener → Operator (3) → Analyst (6) → Spectrum Specialist (10).
+
 ## Components (owned code — `src/components/ui/`)
 
 - **shadcn**: button, badge, card, separator, slider, sheet, popover, tooltip, toggle-group, tabs, sonner, scroll-area, checkbox.

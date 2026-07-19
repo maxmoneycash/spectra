@@ -10,6 +10,8 @@ import { RailTabs, PanelView } from './ui/RailTabs';
 import { PanelSheet } from './ui/PanelSheet';
 import { StatusBar } from './ui/StatusBar';
 import { useHotkeys } from './hooks/useHotkeys';
+import { OperatorCard } from './ui/OperatorCard';
+import { OgCardCapture } from './ui/card/OgCardCapture';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
@@ -80,6 +82,11 @@ export function App() {
   const toggleKeys = useCallback(() => setKeysOpen((o) => !o), []);
   useHotkeys(toggleKeys);
 
+  // Dev-only capture route for the site OG image (scripts/make-og.mjs).
+  if (new URLSearchParams(window.location.search).get('ogcard') === '1') {
+    return <OgCardCapture />;
+  }
+
   return (
     <MotionConfig reducedMotion="user">
       <TooltipProvider delayDuration={300}>
@@ -110,6 +117,7 @@ export function App() {
             <Academy />
           )}
           <StatusBar />
+          <OperatorCard />
           <PanelSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
           <AnimatePresence>
             {keysOpen && <KeysPop onClose={() => setKeysOpen(false)} />}

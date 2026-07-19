@@ -24,6 +24,14 @@ New `macos/` Swift project in this repo (Swift 6, SwiftUI, macOS 14+, **MenuBarE
 
 Reference repos: `SHIINASAMA/wifi-lens` (cadence engine, bell rendering, IE parser, menu-bar scaffolding), `backrunner/WiFiBuddy` (noiseMeasurement==0 → nil), `takuan-osho/BeaconTrace` (single-flight, fixtures), `zheltukheen/wifa` (OUI DB, menu structure), `suzukaze-skrame/wifi-analyzer` (entitlement proof).
 
+## Operator Card v2 (share loop)
+
+v1 shipped: persisted operator record (`spectra.operator.v1`), canvas-rendered 1080×1080 card with rank + stats + QR (`src/ui/card/`), PNG download / copy-image / copy-link / share text, static `public/og.png` + OG meta. Next:
+
+- `/api/og/[callsign].png` — per-user dynamic OG images on Vercel edge (satori + resvg), so shared links unfurl with the sharer's own card.
+- **FCC ULS validation** — cron-download `data.fcc.gov/download/pub/uls/complete/l_amat.zip`, parse EN/HD/AM.dat into Vercel KV (indexed, not their brute-force scan), ZIP-as-ownership-proof (hamradiowallet pattern), demo callsign stays.
+- Wallet passes via `passkit-generator` (Apple) + RS256 JWT generic class (Google).
+
 ## Phase 3 — Hardware bridges (SDR ingest)
 
 WebUSB RTL-SDR behind the existing sample-source seam (`engine/worker.ts` consumes a wideband I/Q block; today it comes from `sim/Scene` or SigMF playback — a third source drops in). Real ham-band surveillance in the web app. Later: HackRF for true 2.4 GHz spectrum feeding the macOS app.

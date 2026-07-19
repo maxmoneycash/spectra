@@ -1,5 +1,6 @@
+import { useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Check } from 'lucide-react';
+import { Check, IdCard } from 'lucide-react';
 import { useStore } from '../store/store';
 import { SCENARIOS, scenarioById } from '../scenarios/scenarios';
 import { evaluateObjectives } from '../scenarios/scoring';
@@ -25,6 +26,12 @@ export function ScenarioPanel() {
   const total = active.objectives.length;
   const doneCount = done.filter(Boolean).length;
   const complete = total > 0 && done.every(Boolean);
+  const recordMission = useStore((s) => s.recordMission);
+  const setCardOpen = useStore((s) => s.setCardOpen);
+
+  useEffect(() => {
+    if (complete) recordMission(active.id);
+  }, [complete, active.id, recordMission]);
 
   return (
     <div>
@@ -98,6 +105,12 @@ export function ScenarioPanel() {
                 <div className="mt-1 text-[11px] text-muted-foreground">
                   All objectives met. Try a harder scenario.
                 </div>
+                <button
+                  onClick={() => setCardOpen(true)}
+                  className="mono-feats mx-auto mt-2.5 inline-flex items-center gap-1.5 rounded-md border border-foreground bg-foreground px-2.5 py-1 font-mono text-[10px] text-background transition-opacity hover:opacity-85"
+                >
+                  <IdCard className="size-3.5" /> Share your operator card
+                </button>
               </motion.div>
             )}
           </AnimatePresence>

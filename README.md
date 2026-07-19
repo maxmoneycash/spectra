@@ -25,6 +25,7 @@ Open-source SDR is bimodal: world-class native DSP (GNU Radio, SDR++, URH) on on
 - **Finds and identifies signals.** A CFAR-style detector locates and tracks every emission; a classifier guesses each modulation from bandwidth, duty cycle, and carrier shape with a confidence score. A live **Morse decoder** reads CW beacons.
 - **Teaches.** An **interactive signal library** lets you inject any signal into the live band to see and hear it. **Mission scenarios** give you scored objectives and a graded "identify this emitter" quiz. The **RF Academy** maps the whole spectrum from 100 kHz to 10 GHz and drops you into the simulator at any band it covers.
 - **Records to SigMF.** Capture the wideband I/Q and export a standard, annotated `.sigmf-meta` + `.sigmf-data` pair that opens in IQEngine, inspectrum, or GNU Radio.
+- **Mints your Operator Card.** Signals you identify, missions you complete, and course progress are tracked on a persistent operator record — rendered as a shareable 1080×1080 license-style card with a QR back to the app (top bar → card icon). Download the PNG, copy it, or copy the share text and post it.
 
 ## A real receiver console
 
@@ -105,7 +106,7 @@ src/
 
 ## Roadmap
 
-Next up: a **macOS menu-bar WiFi console** (CoreWLAN channel-occupancy graphs, RSSI history, security audit — see [`docs/ROADMAP.md`](docs/ROADMAP.md) for the phased plan and research notes), then **WebUSB SDR ingest** and a **WiFi sensing lab**. Near-term Academy additions: a morse/CW audio trainer and more widget ports.
+Next up: a **macOS menu-bar WiFi console** (CoreWLAN channel-occupancy graphs, RSSI history, security audit — see [`docs/ROADMAP.md`](docs/ROADMAP.md) for the phased plan and research notes), then **WebUSB SDR ingest** and a **WiFi sensing lab**. Near-term additions: a morse/CW audio trainer, per-card dynamic OG images and FCC callsign validation for the Operator Card (v2 notes in `docs/ROADMAP.md`).
 
 More emitters (ADS-B, POCSAG, APRS, digital voice), fading/multipath channels, a spectrogram chirp detector + learned classifier (trained on the simulator's own labeled output), a scenario editor, and a WebUSB **hardware-ingest** path so a real HackRF/RTL-SDR drops in behind the same receiver.
 

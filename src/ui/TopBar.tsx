@@ -11,6 +11,7 @@ import {
   Moon,
   LayoutGrid,
   Radio,
+  IdCard,
 } from 'lucide-react';
 
 function GithubMark({ className }: { className?: string }) {
@@ -204,6 +205,9 @@ export function TopBar({
           <Eye className="size-4" strokeWidth={1.75} />
         </IconBtn>
       )}
+      <IconBtn label="Your operator card" onClick={() => useStore.getState().setCardOpen(true)}>
+        <IdCard className="size-4" strokeWidth={1.75} />
+      </IconBtn>
       <IconBtn label="Keyboard shortcuts" onClick={onToggleKeys} className="max-sm:hidden">
         <Keyboard className="size-4" strokeWidth={1.75} />
       </IconBtn>

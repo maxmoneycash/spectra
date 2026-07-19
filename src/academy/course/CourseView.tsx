@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Check, ChevronLeft, ChevronRight, FlaskConical, Play, RotateCcw } from 'lucide-react';
+import { useStore } from '../../store/store';
 import { useCourseData } from './useCourseData';
 import { RichText } from './RichText';
 import { WIDGETS, CHAPTER_WIDGETS } from '../widgets/registry';
@@ -270,9 +271,13 @@ export function CourseView({ onTune }: { onTune: (scenarioId: string) => void })
       <nav className="border-b border-line md:border-b-0 md:border-r">
         <div className="mono-feats flex items-baseline justify-between px-4 pb-2 pt-4 font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground md:pt-5">
           <span>Course</span>
-          <span>
-            {doneCount}/{data.CHAPTERS.length}
-          </span>
+          <button
+            onClick={() => useStore.getState().setCardOpen(true)}
+            className="rounded border border-border px-1.5 py-0.5 transition-colors hover:border-foreground hover:text-foreground"
+            title="Share your operator card"
+          >
+            {doneCount}/{data.CHAPTERS.length} · share card
+          </button>
         </div>
         {/* Mobile select */}
         <div className="px-4 pb-3 md:hidden">
