@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
 import { useCourseData } from './useCourseData';
 import { WIDGETS, PLAYGROUND } from '../widgets/registry';
+import { BeaconClock } from '../widgets/BeaconClock';
 import { cn } from '@/lib/utils';
 
 export function ReferenceView() {
@@ -103,8 +104,11 @@ export function ReferenceView() {
       <div className="mb-4 mt-10 flex items-center justify-between">
         <h2 className="text-lg font-medium tracking-tight text-foreground">Playground</h2>
         <span className="mono-feats font-mono text-[9px] uppercase tracking-[0.16em] text-muted-foreground">
-          {PLAYGROUND.length} interactives
+          {PLAYGROUND.length + 1} interactives
         </span>
+      </div>
+      <div className="mb-4">
+        <BeaconClock />
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {PLAYGROUND.map((id) => {

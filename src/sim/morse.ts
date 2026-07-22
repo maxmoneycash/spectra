@@ -59,10 +59,16 @@ export class MorseDecoder {
   /** Feed one keyed interval. */
   push(on: boolean, durSec: number): void {
     if (on) {
+      // Drop edge artifacts (ramp truncations, noise blips) that would
+      // otherwise poison the dot-length estimate.
+      if (durSec < this.dotEst * 0.5) return;
       this.marks.push(durSec);
       if (this.marks.length > 12) this.marks.shift();
-      const shortest = Math.min(...this.marks);
-      this.dotEst = 0.7 * this.dotEst + 0.3 * shortest;
+      // 10th percentile of recent marks: hugs the true dot length — dah-heavy
+      // stretches can't drag the estimate long and turn dashes into dots.
+      const sorted = [...this.marks].sort((a, b) => a - b);
+      const q = sorted[Math.max(0, Math.floor(sorted.length * 0.1))];
+      this.dotEst = 0.7 * this.dotEst + 0.3 * q;
       this.symbol += durSec < this.dotEst * 2 ? '.' : '-';
     } else {
       if (durSec > this.dotEst * 5) {

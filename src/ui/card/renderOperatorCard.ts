@@ -3,6 +3,7 @@
 export interface CardData {
   callsign: string;
   name: string;
+  grid?: string;
   signals: number;
   missions: number;
   coursePct: number;
@@ -163,11 +164,17 @@ export function renderOperatorCard(canvas: HTMLCanvasElement, d: CardData): void
   ctx.fillStyle = INK;
   ctx.fillText(cs, X - 8, y);
 
-  // name
+  // name + grid
   y += 56;
   ctx.font = `500 30px ${MONO}`;
   ctx.fillStyle = MUTED;
-  ctx.fillText(d.name || 'Samuel Morse', X, y);
+  const nameText = d.name || 'Samuel Morse';
+  ctx.fillText(nameText, X, y);
+  if (d.grid) {
+    ctx.font = `500 22px ${MONO}`;
+    const gw = ctx.measureText(nameText).width;
+    ctx.fillText(` · ${d.grid.toUpperCase()}`, X + gw, y);
+  }
 
   // rank pill
   y += 84;

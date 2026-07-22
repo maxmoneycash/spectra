@@ -153,6 +153,28 @@ export const SCENARIOS: Scenario[] = [
     ],
   },
   {
+    id: 'ncdxf-beacons',
+    name: 'Beacon Carousel',
+    tagline: 'The real NCDXF network, live on 20 m.',
+    brief:
+      'Right now, on the real 14.100 MHz, one of 18 international beacons is transmitting for exactly 10 seconds before handing off to the next. This scenario replays that same rotation on the same clock. Tune in CW and log the callsigns as they rotate past — the decoder reads them for you.',
+    difficulty: 'medium',
+    band: 'HF beacons (14.1 MHz)',
+    centerFreqHz: 14.1 * MHZ,
+    noiseSigma: 0.028,
+    emitters: [
+      // Self-rotating NCDXF beacon on the real schedule (20 m band index 0).
+      { id: 'ncdxf-live', kind: 'cw', freqHz: 14.1 * MHZ, powerDb: -4, ncdxfBand: 0 },
+      { id: 'ncdxf-n1', kind: 'cw', freqHz: 14.052 * MHZ, powerDb: -14, wpm: 18, text: 'CQ CQ DE HB9 XYZ K', seed: 4 },
+      { id: 'ncdxf-n2', kind: 'lsb', freqHz: 14.19 * MHZ, powerDb: -11, message: 'voice', seed: 9 },
+    ],
+    objectives: [
+      { type: 'tune', offsetHz: 0, mode: 'cw', tolHz: 2_000, label: 'Tune 14.100 MHz in CW' },
+      { type: 'decode', text: '6WX', label: 'Log W6WX (California)' },
+      { type: 'decode', text: 'A2IGY', label: 'Log JA2IGY (Japan)' },
+    ],
+  },
+  {
     id: 'wideband',
     name: 'Wideband Sandbox',
     tagline: 'One of everything. Free play.',

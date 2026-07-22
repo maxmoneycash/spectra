@@ -43,9 +43,11 @@ Each emitter renders a complex baseband and the NCO up-converts it into the shar
 
 - `emitters.ts` — 12 modulations (WFM/NFM/AM/USB/LSB/CW/2-FSK/OOK/LoRa/PSK/FHSS/radar). Continuous-phase FSK, cyclically-shifted LoRa up-chirps, linear-FM radar pulses, pseudo-random frequency hopping, phasing-method SSB.
 - `messages.ts` / `modulation.ts` — procedural message audio (voice-cadence babble, procedural melody, tones) at 24 kHz, linearly interpolated up to the RF rate; a Hilbert transformer for analytic SSB.
-- `morse.ts` — text→keying encoder and an adaptive streaming decoder.
+- `morse.ts` — text→keying encoder and an adaptive streaming decoder (dot-length estimated from the 10th percentile of recent marks with sub-half-dot artifact rejection — robust against edge blips and dah-heavy content; covered by end-to-end decode tests).
 - `prng.ts` — a seeded Mulberry32 + Box–Muller RNG so scenarios are **reproducible** (same seed → same spectrum), which matters for grading and tests.
 - `signal-kinds.ts` — the taxonomy and metadata (nominal bandwidth, category, recommended demod, waterfall/real-world description) powering the classifier ground truth and the interactive library.
+- `ncdxf.ts` — the real NCDXF/IARU beacon network: 18 stations, 5 bands, 10 s slots computed from wall-clock time. A dedicated `NcdxfEmitter` (via `EmitterConfig.ncdxfBand`) self-rotates inside the scene with a clean 0.55 s inter-slot silence — the Beacon Carousel mission and the Academy beacon clock share the same schedule.
+- `geo.ts` — Maidenhead grid ↔ lat/lon and great-circle distance/bearings for the beam-heading widget.
 
 ## Detection & identification
 

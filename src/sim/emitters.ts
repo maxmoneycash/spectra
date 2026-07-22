@@ -1,6 +1,7 @@
 import { ComplexOsc } from '../dsp/oscillator';
 import { KIND_INFO, type SignalKind } from './signal-kinds';
 import { Rng } from './prng';
+import { activeBeacon, beaconText, slotIndex } from './ncdxf';
 import {
   MessagePump,
   AnalyticMessage,
@@ -38,6 +39,8 @@ export interface EmitterConfig {
   text?: string;
   wpm?: number;
   baud?: number;
+  /** When set, this emitter is the live NCDXF rotation on that band index (0-4). */
+  ncdxfBand?: number;
   // Spread / burst options
   hopSpanHz?: number;
   dwellMs?: number;
@@ -189,6 +192,55 @@ class SSBEmitter extends Emitter {
       this.pump.next(this.tmp);
       re[i] = this.tmp[0] * g;
       im[i] = this.sign * this.tmp[1] * g;
+    }
+  }
+}
+
+/** NCDXF beacon — the real 18-beacon rotation with a clean inter-slot silence. */
+class NcdxfEmitter extends Emitter {
+  private band: number;
+  private slot = -1;
+  private durs: number[] = [];
+  private ons: boolean[] = [];
+  private seg = 0;
+  private segLeft = 0;
+  private silenceLeft = 0;
+  private env = 0;
+  private alpha: number;
+
+  constructor(cfg: EmitterConfig, sr: number) {
+    super(cfg, sr);
+    this.band = cfg.ncdxfBand ?? 0;
+    this.alpha = 1 - Math.exp(-1 / (0.004 * sr));
+  }
+
+  protected generateBaseband(re: Float32Array, im: Float32Array, len: number): void {
+    for (let i = 0; i < len; i++) {
+      const slot = slotIndex();
+      if (slot !== this.slot) {
+        this.slot = slot;
+        const b = activeBeacon(this.band);
+        const segs = encodeMorse(beaconText(b), 22);
+        this.durs = segs.map((s) => Math.max(1, Math.round(s.durSec * this.sampleRate)));
+        this.ons = segs.map((s) => s.on);
+        this.seg = 0;
+        this.segLeft = this.durs[0] ?? 1;
+        this.silenceLeft = Math.round(0.55 * this.sampleRate); // clean handoff gap
+      }
+      let target = 0;
+      if (this.silenceLeft > 0) {
+        this.silenceLeft--;
+      } else if (this.durs.length > 0) {
+        if (this.segLeft <= 0) {
+          this.seg = (this.seg + 1) % this.durs.length;
+          this.segLeft = this.durs[this.seg];
+        }
+        this.segLeft--;
+        target = this.ons[this.seg] ? 1 : 0;
+      }
+      this.env += (target - this.env) * this.alpha;
+      re[i] = this.env;
+      im[i] = 0;
     }
   }
 }
@@ -571,6 +623,7 @@ const REGISTRY: Record<SignalKind, new (cfg: EmitterConfig, sr: number) => Emitt
 };
 
 export function createEmitter(cfg: EmitterConfig, sampleRate: number): Emitter {
+  if (cfg.ncdxfBand !== undefined) return new NcdxfEmitter(cfg, sampleRate);
   const Cls = REGISTRY[cfg.kind];
   return new Cls(cfg, sampleRate);
 }

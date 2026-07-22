@@ -47,7 +47,7 @@ A second view (top bar → **Academy**) with three tabs:
 
 - **Explorer** — the radio spectrum from 100 kHz to 10 GHz on a zoomable log axis, with an inspector per band and five live concept demos.
 - **Course** — a complete 25-chapter ham-radio curriculum (foundations, electricity, radio theory, station equipment, propagation) with **206 quiz questions** with explanations, per-chapter bench labs, and progress tracking — adapted from [The Radio Bench](https://github.com/jemcik/the-radio-bench) (MIT). Twelve interactive widgets (AM/FM modulation explorers, SWR, resonance, dipole length, dB, Ohm's law…) are embedded in the chapters they teach.
-- **Reference** — a searchable 284-term glossary with see-also links, plus the widget playground.
+- **Reference** — a searchable 284-term glossary with see-also links, plus the widget playground: 14 interactives including a UTC-synced **NCDXF beacon clock**, a **beam-heading** calculator (Maidenhead grid ↔ great-circle), and an **antenna-length** calculator (dipole/vertical/loop with end-effect K).
 
 Everything hands off into the simulator: bands marked ▶ and every chapter's try-it chips load the matching live scenario, so you read about FM and then hear it.
 
@@ -81,6 +81,7 @@ npm run build        # type-check + production build
 | **ISM Sensor Sweep** | 915 MHz ISM | Catalog LoRa / OOK / FSK sensors |
 | **Drone Hunt** | 2.4 GHz-style | Identify a PSK downlink and a hopping control link |
 | **Fox Hunt** | 2 m | Dig a weak beacon out of the noise |
+| **Beacon Carousel** | 14.1 MHz | Copy the real NCDXF beacon network, UTC-synced |
 | **Wideband Sandbox** | — | One of everything; free play |
 
 ## How it works

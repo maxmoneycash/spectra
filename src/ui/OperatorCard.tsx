@@ -48,6 +48,7 @@ export function OperatorCard() {
 
   const [callsign, setCallsign] = useState('M0RSE');
   const [name, setName] = useState('');
+  const [grid, setGrid] = useState('');
   const [copied, setCopied] = useState<'img' | 'link' | 'text' | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const qr = useQrImage(SITE_URL);
@@ -56,13 +57,14 @@ export function OperatorCard() {
     () => ({
       callsign,
       name: name.trim(),
+      grid: grid.trim(),
       signals: operator.identified.length,
       missions: operator.missions.length,
       coursePct: coursePct(),
       since: new Date(operator.since),
       qr,
     }),
-    [callsign, name, operator, qr],
+    [callsign, name, grid, operator, qr],
   );
 
   const dataRef = useRef(data);
@@ -157,6 +159,17 @@ export function OperatorCard() {
               onChange={(e) => setName(e.target.value.slice(0, 26))}
               placeholder="Samuel Morse"
               className="rounded-lg border border-border bg-background px-2.5 py-1.5 text-[13px] text-foreground focus:outline-2 focus:outline-ring"
+            />
+          </label>
+          <label className="col-span-2 flex flex-col gap-1">
+            <span className="mono-feats font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">
+              Grid square (optional)
+            </span>
+            <input
+              value={grid}
+              onChange={(e) => setGrid(e.target.value.toUpperCase().slice(0, 6))}
+              placeholder="FN20"
+              className="mono-feats rounded-lg border border-border bg-background px-2.5 py-1.5 font-mono text-[13px] uppercase text-foreground focus:outline-2 focus:outline-ring"
             />
           </label>
         </div>

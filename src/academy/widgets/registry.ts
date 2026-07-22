@@ -3,6 +3,7 @@ import { AmModulationExplorer, FmModulationExplorer } from './Modulation';
 import { SineExplorer, WavelengthConverter, PrefixConverter, DbCalculator } from './Basics';
 import { OhmsLawPlot, VoltageDivider, ColourCodeDecoder, ResonanceCalc } from './Circuits';
 import { SwrExplorer, DipoleLength } from './Antenna';
+import { GridBeam, AntennaCalc } from './RadioTools';
 
 /** All ported Radio Bench-style interactives. */
 export const WIDGETS: Record<string, ComponentType> = {
@@ -18,6 +19,8 @@ export const WIDGETS: Record<string, ComponentType> = {
   resonance: ResonanceCalc,
   'swr-explorer': SwrExplorer,
   'dipole-length': DipoleLength,
+  'grid-beam': GridBeam,
+  'antenna-calc': AntennaCalc,
 };
 
 /** Widgets embedded at the end of specific chapters. */
@@ -47,4 +50,6 @@ export const PLAYGROUND: string[] = [
   'prefix-converter',
   'swr-explorer',
   'dipole-length',
+  'antenna-calc',
+  'grid-beam',
 ];
