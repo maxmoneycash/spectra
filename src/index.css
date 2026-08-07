@@ -36,11 +36,11 @@
   /* Structural hairline — softer than --border */
   --line: color-mix(in oklab, var(--border) 64%, var(--background));
 
-  /* The stage is always dark, both themes (zinc-950) */
-  --stage: oklch(0.141 0.005 285.823);
-  --stage-foreground: oklch(0.985 0 0);
-  --stage-muted: oklch(0.705 0.015 286.067);
-  --stage-border: oklch(1 0 0 / 0.12);
+  /* The stage follows the theme: paper in light, zinc-950 in dark. */
+  --stage: oklch(0.988 0.001 286);
+  --stage-foreground: oklch(0.21 0.006 285.885);
+  --stage-muted: oklch(0.552 0.016 285.938);
+  --stage-border: oklch(0.141 0.005 285.823 / 0.12);
 
   /* Data accent — only ever inside the stage canvas / data viz */
   --ember: oklch(66% 0.19 38);
@@ -70,6 +70,12 @@
   --input: oklch(0.274 0.006 286.033);
   --ring: oklch(0.552 0.016 285.938);
   --link: oklch(0.623 0.214 259.815);
+
+  /* Dark stage (zinc-950) */
+  --stage: oklch(0.141 0.005 285.823);
+  --stage-foreground: oklch(0.985 0 0);
+  --stage-muted: oklch(0.705 0.015 286.067);
+  --stage-border: oklch(1 0 0 / 0.12);
 }
 
 @theme inline {

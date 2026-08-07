@@ -15,6 +15,7 @@ import {
   MoreHorizontal,
 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { IconButton } from './controls';
 
 function GithubMark({ className }: { className?: string }) {
   return (
@@ -59,43 +60,6 @@ function NavTab({
         />
       )}
     </button>
-  );
-}
-
-function IconBtn({
-  label,
-  onClick,
-  active,
-  disabled,
-  children,
-  className,
-}: {
-  label: string;
-  onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  active?: boolean;
-  disabled?: boolean;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <motion.button
-      aria-label={label}
-      title={label}
-      onClick={onClick}
-      disabled={disabled}
-      whileTap={{ scale: 0.94 }}
-      className={cn(
-        // 44px touch target on phones, compact on pointer devices.
-        'relative grid size-11 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors sm:size-8',
-        'hover:bg-accent hover:text-foreground',
-        'focus-visible:outline-2 focus-visible:outline-ring',
-        'disabled:opacity-40',
-        active && 'bg-accent text-foreground',
-        className,
-      )}
-    >
-      {children}
-    </motion.button>
   );
 }
 
@@ -168,14 +132,14 @@ export function TopBar({
       {isConsole && (
         <>
           <div className="flex items-center gap-0.5">
-            <IconBtn
+            <IconButton
               label="Previous signal"
               onClick={() => tuneStep(-1)}
               disabled={!running || detections.length === 0}
               className="max-sm:hidden"
             >
               <SkipBack className="size-4" strokeWidth={1.75} />
-            </IconBtn>
+            </IconButton>
             <motion.button
               aria-label={running ? 'Stop the simulation' : 'Start the simulation'}
               title={running ? 'Stop' : 'Start'}
@@ -189,19 +153,19 @@ export function TopBar({
                 <Play className="size-4 translate-x-px" strokeWidth={1.75} />
               )}
             </motion.button>
-            <IconBtn
+            <IconButton
               label="Next signal"
               onClick={() => tuneStep(1)}
               disabled={!running || detections.length === 0}
               className="max-sm:hidden"
             >
               <SkipForward className="size-4" strokeWidth={1.75} />
-            </IconBtn>
+            </IconButton>
           </div>
 
           <Sep />
 
-          <IconBtn
+          <IconButton
             label={recording ? 'Stop recording (exports SigMF)' : 'Record I/Q to SigMF'}
             onClick={toggleRecording}
             disabled={!running}
@@ -209,37 +173,37 @@ export function TopBar({
             className={recording ? 'animate-pulse' : ''}
           >
             <Circle className={cn('size-4', recording && 'fill-current')} strokeWidth={1.75} />
-          </IconBtn>
-          <IconBtn
+          </IconButton>
+          <IconButton
             label="Reveal ground truth"
             onClick={toggleReveal}
             active={revealTruth}
             className="max-sm:hidden"
           >
             <Eye className="size-4" strokeWidth={1.75} />
-          </IconBtn>
+          </IconButton>
         </>
       )}
 
       {/* Secondary actions: inline on desktop, folded into a menu on phones. */}
-      <IconBtn
+      <IconButton
         label="Your operator card"
         onClick={() => useStore.getState().setCardOpen(true)}
         className="max-sm:hidden"
       >
         <IdCard className="size-4" strokeWidth={1.75} />
-      </IconBtn>
-      <IconBtn label="Keyboard shortcuts" onClick={onToggleKeys} className="max-sm:hidden">
+      </IconButton>
+      <IconButton label="Keyboard shortcuts" onClick={onToggleKeys} className="max-sm:hidden">
         <Keyboard className="size-4" strokeWidth={1.75} />
-      </IconBtn>
-      <IconBtn
+      </IconButton>
+      <IconButton
         label="GitHub repository"
         onClick={() => window.open('https://github.com/maxmoneycash/spectra', '_blank')}
         className="max-sm:hidden"
       >
         <GithubMark className="size-4" />
-      </IconBtn>
-      <IconBtn
+      </IconButton>
+      <IconButton
         label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
         onClick={(e) => toggle(e.clientX, e.clientY)}
         className="max-sm:hidden"
@@ -249,7 +213,7 @@ export function TopBar({
         ) : (
           <Moon className="size-4" strokeWidth={1.75} />
         )}
-      </IconBtn>
+      </IconButton>
 
       <Popover>
         <PopoverTrigger asChild>
@@ -287,14 +251,14 @@ export function TopBar({
       </Popover>
 
       {isConsole && (
-        <IconBtn label="Open panels" onClick={onOpenPanels} className="lg:hidden">
+        <IconButton label="Open panels" onClick={onOpenPanels} className="lg:hidden">
           <LayoutGrid className="size-4" strokeWidth={1.75} />
           {detections.length > 0 && (
             <span className="mono-feats absolute -right-1 -top-1 grid min-h-3.5 min-w-3.5 place-items-center rounded-full bg-primary px-0.5 font-mono text-[9px] font-medium text-primary-foreground">
               {detections.length}
             </span>
           )}
-        </IconBtn>
+        </IconButton>
       )}
     </header>
   );

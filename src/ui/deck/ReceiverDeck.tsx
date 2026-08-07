@@ -41,7 +41,7 @@ function AudioBars() {
   }, [running]);
 
   return (
-    <div className="dark flex min-w-0 flex-1 flex-col gap-1.5">
+    <div className="flex min-w-0 flex-1 flex-col gap-1.5">
       <GroupLabel>Audio</GroupLabel>
       <div className="overflow-hidden rounded-lg border border-stage-border bg-stage p-2">
         <BarVisualizer

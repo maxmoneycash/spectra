@@ -15,6 +15,8 @@ import { POOLS, subelementOf, type ElementId, type PoolQuestion } from './types'
 import { subelementTitle } from './syllabus';
 import { warmVoices, speechSupported, speakQuestion, cancelSpeech } from './speech';
 import { clipUrl, useRenderedSet } from './narration';
+import { BottomSheet } from '@/ui/BottomSheet';
+import { IconButton } from '@/ui/controls';
 import { cn } from '@/lib/utils';
 
 const LETTERS = ['A', 'B', 'C', 'D'] as const;
@@ -190,93 +192,64 @@ function FilterSheet({ open, onClose }: { open: boolean; onClose: () => void }) 
   );
 
   return (
-    <AnimatePresence>
-      {open && (
-        <>
-          <motion.button
-            aria-label="Close filters"
-            className="absolute inset-0 z-40 bg-background/70 backdrop-blur-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-          />
-          <motion.div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Browse questions"
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', stiffness: 360, damping: 38 }}
-            className="absolute inset-x-0 bottom-0 z-50 flex max-h-[82%] flex-col rounded-t-xl border-t border-line bg-card"
+    <BottomSheet
+      open={open}
+      onClose={onClose}
+      title="Browse questions"
+      position="absolute"
+      footer={
+        <button
+          onClick={onClose}
+          className="mono-feats flex min-h-11 w-full items-center justify-center rounded-lg bg-foreground font-mono text-[11px] font-semibold uppercase tracking-wider text-background"
+        >
+          Show {queue.length} questions
+        </button>
+      }
+    >
+      <div className="px-4 pb-1">
+        <p className="mono-feats pb-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+          Licence class
+        </p>
+        <div className="grid grid-cols-3 gap-1 rounded-lg border border-line p-1">
+          {POOLS.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => void loadPool(p.id)}
+              className={cn(
+                'min-h-10 rounded-md text-[12px] font-medium transition-colors',
+                pool === p.id ? 'bg-foreground text-background' : 'text-muted-foreground',
+              )}
+            >
+              {p.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <p className="mono-feats px-4 pb-1 pt-4 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+        Topic
+      </p>
+      <div className="border-t border-line">
+        {[null, ...subs].map((s, i) => (
+          <button
+            key={s ?? 'all'}
+            onClick={() => {
+              setSubFilter(s);
+              onClose();
+            }}
+            className={cn(
+              'flex min-h-12 w-full items-center gap-2.5 px-4 text-left text-[12.5px]',
+              i ? 'border-t border-line' : '',
+              subFilter === s ? 'bg-accent text-foreground' : 'text-muted-foreground',
+            )}
           >
-            <div className="flex items-center justify-between px-4 pb-2 pt-3">
-              <p className="mono-feats font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
-                Licence class
-              </p>
-              <button
-                onClick={onClose}
-                aria-label="Close"
-                className="grid size-9 place-items-center rounded-full border border-line text-muted-foreground"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            <div className="mx-4 grid grid-cols-3 gap-1 rounded-lg border border-line p-1">
-              {POOLS.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => void loadPool(p.id)}
-                  className={cn(
-                    'min-h-10 rounded-md text-[12px] font-medium transition-colors',
-                    pool === p.id ? 'bg-foreground text-background' : 'text-muted-foreground',
-                  )}
-                >
-                  {p.name}
-                </button>
-              ))}
-            </div>
-
-            <p className="mono-feats px-4 pb-1 pt-4 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
-              Topic
-            </p>
-            <div className="thin-scroll min-h-0 flex-1 overflow-y-auto border-y border-line">
-              {[null, ...subs].map((s, i) => (
-                <button
-                  key={s ?? 'all'}
-                  onClick={() => {
-                    setSubFilter(s);
-                    onClose();
-                  }}
-                  className={cn(
-                    'flex min-h-12 w-full items-center gap-2.5 px-4 text-left text-[12.5px]',
-                    i ? 'border-t border-line' : '',
-                    subFilter === s ? 'bg-accent text-foreground' : 'text-muted-foreground',
-                  )}
-                >
-                  {s && (
-                    <span className="mono-feats font-mono text-[10px] opacity-70">{s}</span>
-                  )}
-                  <span>{s ? subelementTitle(s) : 'All topics'}</span>
-                  {subFilter === s && <span className="ml-auto">•</span>}
-                </button>
-              ))}
-            </div>
-
-            <div className="px-3 pt-3" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 14px)' }}>
-              <button
-                onClick={onClose}
-                className="mono-feats flex min-h-11 w-full items-center justify-center rounded-lg bg-foreground font-mono text-[11px] font-semibold uppercase tracking-wider text-background"
-              >
-                Show {queue.length} questions
-              </button>
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+            {s && <span className="mono-feats font-mono text-[10px] opacity-70">{s}</span>}
+            <span>{s ? subelementTitle(s) : 'All topics'}</span>
+            {subFilter === s && <span className="ml-auto">•</span>}
+          </button>
+        ))}
+      </div>
+    </BottomSheet>
   );
 }
 
@@ -366,31 +339,22 @@ export function ExamView() {
         </div>
         <div className="pointer-events-auto flex shrink-0 items-center gap-1.5">
           {speechSupported() && (
-            <button
+            <IconButton
+              variant="outline"
+              active={audio}
               onClick={toggleAudio}
-              aria-label={audio ? 'Turn narration off' : 'Turn narration on'}
-              aria-pressed={audio}
-              className={cn(
-                'grid size-10 place-items-center rounded-full border transition-colors',
-                audio
-                  ? 'border-foreground bg-foreground text-background'
-                  : 'border-line bg-background/65 text-foreground/85 backdrop-blur',
-              )}
+              label={audio ? 'Turn narration off' : 'Turn narration on'}
             >
-              {audio ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
-            </button>
+              {audio ? <Volume2 /> : <VolumeX />}
+            </IconButton>
           )}
-          <button
-            onClick={resetProgress}
-            aria-label="Reset progress"
-            className="grid size-10 place-items-center rounded-full border border-line bg-background/65 text-foreground/85 backdrop-blur"
-          >
-            <RotateCcw className="size-4" />
-          </button>
+          <IconButton variant="outline" onClick={resetProgress} label="Reset progress">
+            <RotateCcw />
+          </IconButton>
           <button
             onClick={() => setFilterOpen(true)}
             aria-label="Browse questions"
-            className="flex h-10 items-center gap-1.5 rounded-full border border-line bg-background/65 px-3 text-foreground/85 backdrop-blur active:scale-95"
+            className="flex h-10 shrink-0 items-center gap-1.5 rounded-full border border-line bg-background/65 px-3 text-foreground/85 backdrop-blur transition-transform active:scale-95"
           >
             <ListFilter className="size-4" />
             <span className="mono-feats max-w-[92px] truncate font-mono text-[10px] uppercase tracking-wider">

@@ -20,7 +20,7 @@ export function IQScope() {
     const unsub = getEngine().on('chanIQ', (re, im) => {
       if (frame++ % 2 !== 0) return;
       // Fade the previous frame for a persistence trail.
-      ctx.fillStyle = 'rgba(9,9,11,0.3)';
+      ctx.fillStyle = THEME.scopeFade;
       ctx.fillRect(0, 0, SIZE, SIZE);
       // Axes.
       ctx.strokeStyle = THEME.scopeGrid;
@@ -53,8 +53,10 @@ export function IQScope() {
       </span>
       <canvas
         ref={ref}
-        className="rounded-lg border border-border"
-        style={{ width: SIZE, height: SIZE, background: THEME.scopeBg }}
+        // Background comes from the token so it follows the theme; the draw
+        // loop repaints over it once samples arrive.
+        className="rounded-lg border border-border bg-stage"
+        style={{ width: SIZE, height: SIZE }}
       />
     </div>
   );

@@ -1,4 +1,5 @@
 import { useCallback, useSyncExternalStore } from 'react';
+import { setCanvasTheme } from '../ui/theme';
 
 export type Theme = 'light' | 'dark';
 const KEY = 'spectra-theme';
@@ -18,6 +19,8 @@ function apply(t: Theme) {
   theme = t;
   document.documentElement.classList.toggle('dark', t === 'dark');
   document.documentElement.style.colorScheme = t;
+  // Canvases read a plain object, not CSS variables — keep it in step.
+  setCanvasTheme(t === 'dark');
   try {
     localStorage.setItem(KEY, t);
   } catch {
@@ -29,6 +32,7 @@ function apply(t: Theme) {
 // Apply on module load (before first paint of components).
 document.documentElement.classList.toggle('dark', theme === 'dark');
 document.documentElement.style.colorScheme = theme;
+setCanvasTheme(theme === 'dark');
 
 function subscribe(l: () => void) {
   listeners.add(l);

@@ -4,9 +4,10 @@ import { SAMPLE_RATE } from '../engine/protocol';
 import { useStore } from '../store/store';
 import type { TrackMsg } from '../engine/protocol';
 import { KIND_INFO } from '../sim/signal-kinds';
-import { COLORMAPS } from './colormaps';
+import { lutFor } from './colormaps';
 import { WaterfallControls } from './WaterfallControls';
-import { THEME } from './theme';
+import { THEME, isCanvasDark } from './theme';
+import { useTheme } from '../hooks/useTheme';
 
 const SPEC_H = 172;
 const RULER_H = 26;
@@ -88,6 +89,14 @@ export function SpectrumWaterfall() {
     view.current = { centerHz: 0, spanHz: SAMPLE_RATE };
   }, [centerFreqHz]);
 
+  // Wipe the painted history on a theme flip so light and dark ramps
+  // don't end up stacked in the same waterfall.
+  const { theme } = useTheme();
+  const clearWaterfallRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    clearWaterfallRef.current();
+  }, [theme]);
+
   useEffect(() => {
     const specCanvas = specRef.current!;
     const wfCanvas = wfRef.current!;
@@ -128,6 +137,7 @@ export function SpectrumWaterfall() {
       c.fillStyle = THEME.waterfallBg;
       c.fillRect(0, 0, width, wfHeight);
     };
+    clearWaterfallRef.current = clearWaterfall;
 
     const onSpectrum = (db: Float32Array) => {
       if (!rowImg) return;
@@ -149,7 +159,7 @@ export function SpectrumWaterfall() {
         peak[x] = Math.max(col[x], peak[x] - 0.28);
       }
 
-      const lut = COLORMAPS[disp.current.cmap].lut;
+      const lut = lutFor(disp.current.cmap, isCanvasDark());
       const floor = disp.current.floorDb;
       const range = disp.current.ceilDb - floor;
       const wfCtx = wfCanvas.getContext('2d')!;
