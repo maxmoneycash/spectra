@@ -24,16 +24,16 @@ lesson). Reuse the Operator Card renderer.
 - [x] No flag text in the image
 - [x] Native share on mobile, clipboard elsewhere
 
-## 3. Static routes for the signal library (SEO) — **next**
+## 3. Static routes for the signal library (SEO) — **done**
 
 "What does LoRa look like on a waterfall" is a real query with weak answers.
 Today none of this is indexable.
 
-- [ ] A route per signal type with its description, waterfall signature, real-world uses
-- [ ] Pre-rendered HTML with per-page title/meta/OG
-- [ ] Cross-links into the live library
+- [x] A route per signal type with its description, waterfall signature, real-world uses
+- [x] Pre-rendered HTML with per-page title/meta/OG, plus sitemap.xml + robots.txt
+- [x] Cross-links between signals and into the live receiver
 
-## 4. Academy UI consistency
+## 4. Academy UI consistency — **next**
 
 The last view still on its own dialect — its own tab treatment and card
 patterns. Bring onto `BottomSheet` / `IconButton` / the reels rhythm.

@@ -6,7 +6,7 @@
   "description": "A browser-based software-defined radio lab: live RF signal-environment simulation, a real DSP receiver, emission detection, signal identification, and training scenarios — with zero hardware.",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && vite-node scripts/prerender-signals.mts",
     "preview": "vite preview",
     "test": "vitest run",
     "shots": "node scripts/qa-shots.mjs",
@@ -14,7 +14,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "narrate": "node scripts/render-narration.mjs",
-    "pools:gen": "node scripts/convert-pools.mjs"
+    "pools:gen": "node scripts/convert-pools.mjs",
+    "prerender": "vite-node scripts/prerender-signals.mts"
   },
   "dependencies": {
     "@fontsource/geist": "^5.2.9",
