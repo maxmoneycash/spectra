@@ -7,7 +7,7 @@ import { Inspector } from './Inspector';
 import { Lessons } from './Lessons';
 import { CourseView } from './course/CourseView';
 import { ReferenceView } from './course/ReferenceView';
-import { cn } from '@/lib/utils';
+import { UnderlineTabs } from '@/ui/controls';
 
 type AcademyTab = 'explorer' | 'course' | 'reference';
 
@@ -89,41 +89,15 @@ export function Academy() {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2 }}
     >
-      <div className="flex items-center gap-4 border-b border-line px-4 sm:px-6">
-        {TABS.map((t) => {
-          const active = tab === t.id;
-          return (
-            <button
-              key={t.id}
-              role="tab"
-              aria-selected={active}
-              onClick={() => setTab(t.id)}
-              className={cn(
-                'relative py-2.5 text-[12.5px] transition-colors',
-                active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {t.label}
-              {active && (
-                <motion.span
-                  layoutId="academy-line"
-                  className="absolute inset-x-0 -bottom-[1px] h-px bg-foreground"
-                  transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
-                />
-              )}
-            </button>
-          );
-        })}
-        <span className="flex-1" />
-        <a
-          href="https://github.com/jemcik/the-radio-bench"
-          target="_blank"
-          rel="noreferrer"
-          className="mono-feats hidden font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground sm:inline"
-        >
-          Course: The Radio Bench · MIT
-        </a>
-      </div>
+      <UnderlineTabs
+        items={TABS}
+        value={tab}
+        onChange={setTab}
+        layoutId="academy-line"
+        ariaLabel="Academy sections"
+        className="border-b border-line px-4 sm:px-6"
+        touch
+      />
 
       <div className="min-h-0 flex-1">
         {tab === 'explorer' && <ExplorerView onTune={openInSimulator} />}

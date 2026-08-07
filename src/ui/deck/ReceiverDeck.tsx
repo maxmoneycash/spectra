@@ -10,6 +10,7 @@ import { IQScope } from '../Scopes';
 import { fmtMHz, fmtElapsed, fmtBw, parseFreqInput } from '../format';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { BarVisualizer } from '@/components/ui/bar-visualizer';
+import { GroupLabel } from '../controls';
 import { cn } from '@/lib/utils';
 
 const BW_RANGE: Record<DemodMode, [number, number, number]> = {
@@ -22,11 +23,6 @@ const BW_RANGE: Record<DemodMode, [number, number, number]> = {
   raw: [5_000, 300_000, 5_000],
 };
 
-const GroupLabel = ({ children }: { children: string }) => (
-  <span className="mono-feats font-mono text-[8.5px] uppercase tracking-[0.16em] text-muted-foreground">
-    {children}
-  </span>
-);
 
 function AudioBars() {
   const running = useStore((s) => s.running);

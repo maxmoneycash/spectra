@@ -33,14 +33,16 @@ Today none of this is indexable.
 - [x] Pre-rendered HTML with per-page title/meta/OG, plus sitemap.xml + robots.txt
 - [x] Cross-links between signals and into the live receiver
 
-## 4. Academy UI consistency — **next**
+## 4. Academy UI consistency — **partly done**
 
 The last view still on its own dialect — its own tab treatment and card
 patterns. Bring onto `BottomSheet` / `IconButton` / the reels rhythm.
 
-- [ ] Unify the three tab treatments (RailTabs, NavTab, exam pool picker)
-- [ ] Deduplicate `GroupLabel`
-- [ ] One spacing scale across views
+- [x] Unify the tab treatments behind `UnderlineTabs` (top bar, console rail, Academy)
+- [x] Deduplicate `GroupLabel` (deck now imports the shared one)
+- [ ] One spacing scale across views — still outstanding
+- [ ] Exam pool picker is a segmented control, not an underline strip; decide if that should converge
+- [ ] Academy card/section patterns still differ from the reels
 
 ## 5. Second CTF challenge set
 

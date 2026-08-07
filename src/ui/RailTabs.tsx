@@ -3,7 +3,7 @@ import { useStore, type PanelTab } from '../store/store';
 import { DetectionsPanel } from './DetectionsPanel';
 import { SignalLibrary } from './SignalLibrary';
 import { ScenarioPanel } from './ScenarioPanel';
-import { cn } from '@/lib/utils';
+import { UnderlineTabs } from './controls';
 
 const TABS: { id: PanelTab; label: string }[] = [
   { id: 'signals', label: 'Stations' },
@@ -18,37 +18,14 @@ export function RailTabs({ lineId = 'rail-line' }: { lineId?: string }) {
   const detections = useStore((s) => s.detections);
 
   return (
-    <div className="flex items-center gap-4" role="tablist" aria-label="Panels">
-      {TABS.map((t) => {
-        const active = panel === t.id;
-        return (
-          <button
-            key={t.id}
-            role="tab"
-            aria-selected={active}
-            onClick={() => setPanel(t.id)}
-            className={cn(
-              'relative py-2 text-[12.5px] transition-colors',
-              active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
-            )}
-          >
-            {t.label}
-            {t.id === 'signals' && detections.length > 0 && (
-              <sup className="mono-feats ml-1 font-mono text-[9px] text-muted-foreground">
-                {detections.length}
-              </sup>
-            )}
-            {active && (
-              <motion.span
-                layoutId={lineId}
-                className="absolute inset-x-0 -bottom-[1px] h-px bg-foreground"
-                transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
-              />
-            )}
-          </button>
-        );
-      })}
-    </div>
+    <UnderlineTabs
+      items={TABS.map((t) => (t.id === 'signals' ? { ...t, badge: detections.length } : t))}
+      value={panel}
+      onChange={setPanel}
+      layoutId={lineId}
+      ariaLabel="Panels"
+      touch
+    />
   );
 }
 

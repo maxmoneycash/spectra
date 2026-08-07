@@ -60,6 +60,72 @@ export function IconButton({
   );
 }
 
+export interface TabItem<T extends string> {
+  id: T;
+  label: string;
+  /** Small count rendered as a superscript, e.g. detected stations. */
+  badge?: number;
+}
+
+/**
+ * The app's tab strip: a sliding underline shared by the top bar, the console
+ * rail and the Academy. `layoutId` must be unique per mounted strip, otherwise
+ * two strips animate into each other.
+ */
+export function UnderlineTabs<T extends string>({
+  items,
+  value,
+  onChange,
+  layoutId,
+  ariaLabel,
+  className,
+  /** Phones need a 44px row; dense desktop chrome doesn't. */
+  touch = false,
+}: {
+  items: readonly TabItem<T>[];
+  value: T;
+  onChange: (id: T) => void;
+  layoutId: string;
+  ariaLabel: string;
+  className?: string;
+  touch?: boolean;
+}) {
+  return (
+    <div className={cn('flex items-center gap-4', className)} role="tablist" aria-label={ariaLabel}>
+      {items.map((t) => {
+        const active = t.id === value;
+        return (
+          <button
+            key={t.id}
+            role="tab"
+            aria-selected={active}
+            onClick={() => onChange(t.id)}
+            className={cn(
+              'relative flex shrink-0 items-center text-[12.5px] transition-colors',
+              touch ? 'min-h-11 sm:min-h-0 sm:py-2' : 'py-2',
+              active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            {t.label}
+            {t.badge !== undefined && t.badge > 0 && (
+              <sup className="mono-feats ml-1 font-mono text-[9px] text-muted-foreground">
+                {t.badge}
+              </sup>
+            )}
+            {active && (
+              <motion.span
+                layoutId={layoutId}
+                className="absolute inset-x-0 -bottom-[1px] h-px bg-foreground"
+                transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+              />
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 /** Micro caption used above control groups and inside sheets. */
 export function GroupLabel({ children, className }: { children: ReactNode; className?: string }) {
   return (
