@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { useStore } from './store/store';
 import { Academy } from './academy/Academy';
+import { ExamView } from './exam/ExamView';
 import { TopBar } from './ui/TopBar';
 import { SpectrumWaterfall } from './ui/SpectrumWaterfall';
 import { StartOverlay } from './ui/StartOverlay';
@@ -90,7 +91,7 @@ export function App() {
   return (
     <MotionConfig reducedMotion="user">
       <TooltipProvider delayDuration={300}>
-        <div className="grid h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[3.5rem_minmax(0,1fr)_auto_1.625rem] bg-background">
+        <div className="grid h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[3.5rem_minmax(0,1fr)_auto_auto] bg-background">
           <TopBar onOpenPanels={() => setSheetOpen(true)} onToggleKeys={toggleKeys} />
           {view === 'console' ? (
             <>
@@ -113,10 +114,12 @@ export function App() {
               </div>
               <ReceiverDeck />
             </>
+          ) : view === 'exam' ? (
+            <ExamView />
           ) : (
             <Academy />
           )}
-          <StatusBar />
+          {view === 'console' && <StatusBar />}
           <OperatorCard />
           <PanelSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
           <AnimatePresence>

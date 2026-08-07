@@ -21,7 +21,9 @@ function CtlBtn({
       title={title}
       onClick={onClick}
       className={cn(
-        'mono-feats rounded-md px-2 py-1 font-mono text-[10px] text-stage-muted transition-colors hover:bg-white/10 hover:text-stage-foreground',
+        'mono-feats rounded-md px-2.5 font-mono text-[10px] text-stage-muted transition-colors hover:bg-white/10 hover:text-stage-foreground',
+        // Comfortable to hit with a thumb; compact under a cursor.
+        'min-h-11 sm:min-h-0 sm:py-1',
         active && 'bg-white/10 text-stage-foreground',
       )}
     >
@@ -63,7 +65,7 @@ export function WaterfallControls({
         <PopoverTrigger asChild>
           <button
             title="Waterfall dB floor / ceiling"
-            className="mono-feats rounded-md px-2 py-1 font-mono text-[10px] text-stage-muted transition-colors hover:bg-white/10 hover:text-stage-foreground"
+            className="mono-feats min-h-11 rounded-md px-2.5 font-mono text-[10px] text-stage-muted transition-colors hover:bg-white/10 hover:text-stage-foreground sm:min-h-0 sm:py-1"
           >
             Levels
           </button>

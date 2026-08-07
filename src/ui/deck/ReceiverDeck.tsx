@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useStore, nearestLabel, DEMOD_MODES } from '../../store/store';
 import { getEngine } from '../../engine/engine';
 import type { DemodMode } from '../../sim/signal-kinds';
@@ -99,14 +100,29 @@ export function ReceiverDeck() {
     setEditing(false);
   };
 
+  // Phones: fold the controls away so the waterfall gets the screen.
+  const [collapsed, setCollapsed] = useState(true);
+  const foldable = collapsed ? 'max-sm:hidden' : '';
+
   return (
     <footer
       aria-label="Receiver"
       className="flex flex-wrap items-stretch border-t border-border bg-background"
     >
       {/* VFO */}
-      <div className="flex min-w-[216px] flex-col justify-center gap-1.5 px-4 py-3">
-        <GroupLabel>VFO</GroupLabel>
+      <div className="flex min-w-[216px] flex-col justify-center gap-1.5 px-4 py-3 max-sm:w-full">
+        <div className="flex items-center gap-2">
+          <GroupLabel>VFO</GroupLabel>
+          <span className="flex-1" />
+          <button
+            onClick={() => setCollapsed((c) => !c)}
+            aria-label={collapsed ? 'Show receiver controls' : 'Hide receiver controls'}
+            aria-expanded={!collapsed}
+            className="-mr-1 grid size-9 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:hidden"
+          >
+            {collapsed ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+          </button>
+        </div>
         {editing ? (
           <input
             autoFocus
@@ -148,7 +164,12 @@ export function ReceiverDeck() {
       </div>
 
       {/* Demod */}
-      <div className="flex flex-col justify-center gap-1.5 border-l border-border px-4 py-3 max-sm:basis-full max-sm:border-l-0 max-sm:border-t">
+      <div
+        className={cn(
+          'flex flex-col justify-center gap-1.5 border-l border-border px-4 py-3 max-sm:basis-full max-sm:border-l-0 max-sm:border-t',
+          foldable,
+        )}
+      >
         <GroupLabel>Demod</GroupLabel>
         <ToggleGroup
           type="single"
@@ -162,7 +183,7 @@ export function ReceiverDeck() {
               key={m}
               value={m}
               aria-label={m.toUpperCase()}
-              className="mono-feats h-7 px-2.5 font-mono text-[10px]"
+              className="mono-feats h-11 px-3 font-mono text-[10px] sm:h-7 sm:px-2.5"
             >
               {m.toUpperCase()}
             </ToggleGroupItem>
@@ -174,10 +195,12 @@ export function ReceiverDeck() {
       <div
         className={cn(
           'grid flex-1 grid-cols-[repeat(auto-fit,minmax(118px,1fr))] content-center gap-x-5 gap-y-1.5 border-l border-border px-4 py-3',
-          'max-sm:flex max-sm:basis-full max-sm:flex-row max-sm:gap-5 max-sm:overflow-x-auto max-sm:border-l-0 max-sm:border-t',
+          // Phones: a 2x2 grid reads whole, where a horizontal scroller looked clipped.
+          'max-sm:grid max-sm:basis-full max-sm:grid-cols-2 max-sm:gap-x-5 max-sm:gap-y-2.5 max-sm:border-l-0 max-sm:border-t',
+          foldable,
         )}
       >
-        <div className="max-sm:w-32 max-sm:flex-none">
+        <div className="min-w-0">
           <Fader
             name="Bandwidth"
             value={bandwidthHz}
@@ -188,7 +211,7 @@ export function ReceiverDeck() {
             onChange={setBandwidth}
           />
         </div>
-        <div className="max-sm:w-32 max-sm:flex-none">
+        <div className="min-w-0">
           <Fader
             name="Squelch"
             value={squelchDb}
@@ -199,7 +222,7 @@ export function ReceiverDeck() {
             onChange={setSquelch}
           />
         </div>
-        <div className="max-sm:w-32 max-sm:flex-none">
+        <div className="min-w-0">
           <Fader
             name="Volume"
             value={volume}
@@ -210,7 +233,7 @@ export function ReceiverDeck() {
             onChange={setVolume}
           />
         </div>
-        <div className="max-sm:w-32 max-sm:flex-none">
+        <div className="min-w-0">
           <Fader
             name="Noise"
             value={noiseSigma}
@@ -224,7 +247,12 @@ export function ReceiverDeck() {
       </div>
 
       {/* S-meter */}
-      <div className="flex w-[172px] flex-col justify-center border-l border-border px-4 py-3 max-sm:w-auto max-sm:min-w-[150px] max-sm:flex-1">
+      <div
+        className={cn(
+          'flex w-[172px] flex-col justify-center border-l border-border px-4 py-3 max-sm:w-auto max-sm:min-w-[150px] max-sm:flex-1',
+          foldable,
+        )}
+      >
         <Meter />
       </div>
 

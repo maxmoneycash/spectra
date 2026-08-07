@@ -12,7 +12,9 @@
     "shots": "node scripts/qa-shots.mjs",
     "course:gen": "node scripts/convert-course.mjs",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "narrate": "node scripts/render-narration.mjs",
+    "pools:gen": "node scripts/convert-pools.mjs"
   },
   "dependencies": {
     "@fontsource/geist": "^5.2.9",

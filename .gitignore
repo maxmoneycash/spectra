@@ -9,3 +9,10 @@ coverage
 *.sigmf-meta
 .vercel
 vendor/
+
+# Generated narration audio (npm run narrate). Rendered pools are committed so
+# they deploy with the app; unrendered pools stay out of the repo.
+public/exam/audio/*
+!public/exam/audio/technician/
+!public/exam/audio/general/
+!public/exam/audio/extra/

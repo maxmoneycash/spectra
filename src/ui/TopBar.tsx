@@ -12,7 +12,9 @@ import {
   LayoutGrid,
   Radio,
   IdCard,
+  MoreHorizontal,
 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 function GithubMark({ className }: { className?: string }) {
   return (
@@ -43,7 +45,8 @@ function NavTab({
       aria-selected={active}
       onClick={() => onClick(id)}
       className={cn(
-        'relative px-1 py-1.5 text-[13px] transition-colors',
+        'relative flex shrink-0 items-center px-1 text-[13px] transition-colors',
+        'min-h-11 sm:min-h-0 sm:py-1.5',
         active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
       )}
     >
@@ -82,7 +85,8 @@ function IconBtn({
       disabled={disabled}
       whileTap={{ scale: 0.94 }}
       className={cn(
-        'grid size-8 place-items-center rounded-lg text-muted-foreground transition-colors',
+        // 44px touch target on phones, compact on pointer devices.
+        'relative grid size-11 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors sm:size-8',
         'hover:bg-accent hover:text-foreground',
         'focus-visible:outline-2 focus-visible:outline-ring',
         'disabled:opacity-40',
@@ -127,9 +131,11 @@ export function TopBar({
 
   return (
     <header className="flex h-14 items-center gap-2 overflow-hidden border-b border-line bg-background px-3 sm:px-4">
-      <div className="flex select-none items-center gap-2">
-        <Radio className="size-4 text-foreground" strokeWidth={1.75} />
-        <span className="text-[13px] font-semibold tracking-[0.2em]">SPECTRA</span>
+      <div className="flex shrink-0 select-none items-center gap-2">
+        <Radio className="size-4 shrink-0 text-foreground" strokeWidth={1.75} />
+        <span className="hidden text-[13px] font-semibold tracking-[0.2em] min-[420px]:inline">
+          SPECTRA
+        </span>
         <span className="mono-feats hidden font-mono text-[9px] uppercase tracking-[0.16em] text-muted-foreground sm:inline">
           SDR Lab
         </span>
@@ -137,7 +143,8 @@ export function TopBar({
 
       <div className="ml-2 flex items-center gap-3" role="tablist" aria-label="View">
         <NavTab id="console" label="Console" active={isConsole} onClick={setView} />
-        <NavTab id="academy" label="Academy" active={!isConsole} onClick={setView} />
+        <NavTab id="academy" label="Academy" active={view === 'academy'} onClick={setView} />
+        <NavTab id="exam" label="Exam" active={view === 'exam'} onClick={setView} />
       </div>
 
       {isConsole && sc && (
@@ -157,63 +164,74 @@ export function TopBar({
 
       <div className="flex-1" />
 
-      <div className="flex items-center gap-0.5">
-        <IconBtn
-          label="Previous signal"
-          onClick={() => tuneStep(-1)}
-          disabled={!running || detections.length === 0}
-          className="max-sm:hidden"
-        >
-          <SkipBack className="size-4" strokeWidth={1.75} />
-        </IconBtn>
-        <motion.button
-          aria-label={running ? 'Stop the simulation' : 'Start the simulation'}
-          title={running ? 'Stop' : 'Start'}
-          onClick={() => (running ? stop() : start())}
-          whileTap={{ scale: 0.94 }}
-          className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground transition-colors hover:opacity-90"
-        >
-          {running ? (
-            <Pause className="size-4" strokeWidth={1.75} />
-          ) : (
-            <Play className="size-4 translate-x-px" strokeWidth={1.75} />
-          )}
-        </motion.button>
-        <IconBtn
-          label="Next signal"
-          onClick={() => tuneStep(1)}
-          disabled={!running || detections.length === 0}
-          className="max-sm:hidden"
-        >
-          <SkipForward className="size-4" strokeWidth={1.75} />
-        </IconBtn>
-      </div>
-
-      <Sep />
-
-      <IconBtn
-        label={recording ? 'Stop recording (exports SigMF)' : 'Record I/Q to SigMF'}
-        onClick={toggleRecording}
-        disabled={!running}
-        active={recording}
-        className={recording ? 'animate-pulse' : ''}
-      >
-        <Circle className={cn('size-4', recording && 'fill-current')} strokeWidth={1.75} />
-      </IconBtn>
+      {/* Transport belongs to the console; other views don't need it. */}
       {isConsole && (
-        <IconBtn label="Reveal ground truth" onClick={toggleReveal} active={revealTruth} className="max-sm:hidden">
-          <Eye className="size-4" strokeWidth={1.75} />
-        </IconBtn>
+        <>
+          <div className="flex items-center gap-0.5">
+            <IconBtn
+              label="Previous signal"
+              onClick={() => tuneStep(-1)}
+              disabled={!running || detections.length === 0}
+              className="max-sm:hidden"
+            >
+              <SkipBack className="size-4" strokeWidth={1.75} />
+            </IconBtn>
+            <motion.button
+              aria-label={running ? 'Stop the simulation' : 'Start the simulation'}
+              title={running ? 'Stop' : 'Start'}
+              onClick={() => (running ? stop() : start())}
+              whileTap={{ scale: 0.94 }}
+              className="grid size-10 place-items-center rounded-lg bg-primary text-primary-foreground transition-colors hover:opacity-90 sm:size-8"
+            >
+              {running ? (
+                <Pause className="size-4" strokeWidth={1.75} />
+              ) : (
+                <Play className="size-4 translate-x-px" strokeWidth={1.75} />
+              )}
+            </motion.button>
+            <IconBtn
+              label="Next signal"
+              onClick={() => tuneStep(1)}
+              disabled={!running || detections.length === 0}
+              className="max-sm:hidden"
+            >
+              <SkipForward className="size-4" strokeWidth={1.75} />
+            </IconBtn>
+          </div>
+
+          <Sep />
+
+          <IconBtn
+            label={recording ? 'Stop recording (exports SigMF)' : 'Record I/Q to SigMF'}
+            onClick={toggleRecording}
+            disabled={!running}
+            active={recording}
+            className={recording ? 'animate-pulse' : ''}
+          >
+            <Circle className={cn('size-4', recording && 'fill-current')} strokeWidth={1.75} />
+          </IconBtn>
+          <IconBtn
+            label="Reveal ground truth"
+            onClick={toggleReveal}
+            active={revealTruth}
+            className="max-sm:hidden"
+          >
+            <Eye className="size-4" strokeWidth={1.75} />
+          </IconBtn>
+        </>
       )}
-      <IconBtn label="Your operator card" onClick={() => useStore.getState().setCardOpen(true)}>
+
+      {/* Secondary actions: inline on desktop, folded into a menu on phones. */}
+      <IconBtn
+        label="Your operator card"
+        onClick={() => useStore.getState().setCardOpen(true)}
+        className="max-sm:hidden"
+      >
         <IdCard className="size-4" strokeWidth={1.75} />
       </IconBtn>
       <IconBtn label="Keyboard shortcuts" onClick={onToggleKeys} className="max-sm:hidden">
         <Keyboard className="size-4" strokeWidth={1.75} />
       </IconBtn>
-
-      <Sep />
-
       <IconBtn
         label="GitHub repository"
         onClick={() => window.open('https://github.com/maxmoneycash/spectra', '_blank')}
@@ -224,6 +242,7 @@ export function TopBar({
       <IconBtn
         label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
         onClick={(e) => toggle(e.clientX, e.clientY)}
+        className="max-sm:hidden"
       >
         {theme === 'dark' ? (
           <Sun className="size-4" strokeWidth={1.75} />
@@ -231,6 +250,41 @@ export function TopBar({
           <Moon className="size-4" strokeWidth={1.75} />
         )}
       </IconBtn>
+
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            aria-label="More actions"
+            className="grid size-11 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:hidden"
+          >
+            <MoreHorizontal className="size-5" strokeWidth={1.75} />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-52 p-1.5">
+          <MenuItem
+            icon={<IdCard className="size-4" />}
+            label="Operator card"
+            onClick={() => useStore.getState().setCardOpen(true)}
+          />
+          <MenuItem
+            icon={theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
+            label={theme === 'dark' ? 'Light theme' : 'Dark theme'}
+            onClick={(e) => toggle(e.clientX, e.clientY)}
+          />
+          {isConsole && (
+            <MenuItem
+              icon={<Eye className="size-4" />}
+              label={revealTruth ? 'Hide ground truth' : 'Reveal ground truth'}
+              onClick={toggleReveal}
+            />
+          )}
+          <MenuItem
+            icon={<GithubMark className="size-4" />}
+            label="Source on GitHub"
+            onClick={() => window.open('https://github.com/maxmoneycash/spectra', '_blank')}
+          />
+        </PopoverContent>
+      </Popover>
 
       {isConsole && (
         <IconBtn label="Open panels" onClick={onOpenPanels} className="lg:hidden">
@@ -243,5 +297,25 @@ export function TopBar({
         </IconBtn>
       )}
     </header>
+  );
+}
+
+function MenuItem({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex min-h-11 w-full items-center gap-2.5 rounded-md px-2.5 text-left text-[13px] text-foreground transition-colors hover:bg-accent"
+    >
+      <span className="text-muted-foreground">{icon}</span>
+      {label}
+    </button>
   );
 }

@@ -20,7 +20,7 @@ export const DEMOD_MODES: DemodMode[] = ['wfm', 'nfm', 'am', 'usb', 'lsb', 'cw',
 
 export type PanelTab = 'signals' | 'library' | 'scenario';
 
-export type AppView = 'console' | 'academy';
+export type AppView = 'console' | 'academy' | 'exam';
 
 /** Persisted operator record powering the shareable Operator Card. */
 export interface OperatorRecord {

@@ -105,6 +105,32 @@ src/
 
 **Built directly on the research:** the receiver mirrors Signal-Weaver's tested pure-TS demodulators; the worker+AudioWorklet path follows SDRLab; the sample-source seam generalizes web_hackrf's swappable-driver idea; and the whole thing turns hackrf-webui's "simulator mode" (a test convenience) into the product. Unlike several of the seed repos, this is clean-room and permissively licensed.
 
+## Exam reels
+
+A swipeable, one-question-at-a-time trainer for the FCC amateur radio licence exams — **1,431 questions** across all three current pools:
+
+| Pool | Element | Valid | Questions |
+|---|---|---|---|
+| Technician | 2 | Jul 2026 – Jun 2030 | 409 |
+| General | 3 | Jul 2023 – Jun 2027 | 423 |
+| Extra | 4 | Jul 2024 – Jun 2028 | 599 |
+
+Swipe (or ↑/↓) to move, tap an answer or press **A–D** to commit. Wrong answers reveal the right one with its FCC Part 97 reference. Progress uses **Leitner spaced repetition** — unseen and repeatedly-missed questions surface first, mastered ones fade back — persisted locally. Filter by syllabus topic. Each pool is a lazily-loaded chunk, so it costs the main bundle nothing.
+
+### Narration
+
+Every Technician question ships with pre-rendered audio — question and all four choices, one clip each. Toggle the speaker in the reel header. Questions without a rendered clip fall back to the browser's live speech synthesis, so narration works everywhere.
+
+Audio is generated from the public-domain pool text; nothing is sampled from third-party recordings.
+
+```bash
+npm run narrate -- --sample                 # audition every local voice on one line
+npm run narrate -- --pool technician        # render a pool (~4 min, ~16 MB)
+npm run narrate -- --engine azure --voice en-US-GuyNeural
+```
+
+Rendering is incremental (a clip is redone only when its text changes) and the engine is pluggable: `say` (macOS, default, no key), `openai`, `elevenlabs`, `google`, `azure`. All engines normalize to mono AAC so the app doesn't care which produced a clip.
+
 ## Roadmap
 
 Next up: a **macOS menu-bar WiFi console** (CoreWLAN channel-occupancy graphs, RSSI history, security audit — see [`docs/ROADMAP.md`](docs/ROADMAP.md) for the phased plan and research notes), then **WebUSB SDR ingest** and a **WiFi sensing lab**. Near-term additions: a morse/CW audio trainer, per-card dynamic OG images and FCC callsign validation for the Operator Card (v2 notes in `docs/ROADMAP.md`).
@@ -116,3 +142,5 @@ More emitters (ADS-B, POCSAG, APRS, digital voice), fading/multipath channels, a
 MIT — see [`LICENSE`](LICENSE).
 
 *Built as a from-scratch clean-room implementation. All signals are simulated; SPECTRA neither transmits nor requires any radio hardware. Course content adapted from The Radio Bench (MIT) — see [`NOTICE`](NOTICE).*
+
+*Exam question pools are the official NCVEC pools, released into the public domain by the NCVEC Question Pool Committee. Machine-readable transcription via [russolsen/ham_radio_question_pool](https://github.com/russolsen/ham_radio_question_pool) (Apache-2.0). Regenerate with `node scripts/convert-pools.mjs`.*

@@ -384,9 +384,16 @@ export function SpectrumWaterfall() {
         setTuning(Math.round(xToOff(e.clientX - rectLeft())));
       }
     };
+    // Touch devices have no hover, so a readout there would strand on screen.
+    const canHover =
+      typeof window.matchMedia === 'function'
+        ? window.matchMedia('(hover: hover)').matches
+        : true;
+
     const move = (e: PointerEvent) => {
       const x = e.clientX - rectLeft();
-      hoverX.current = x >= 0 && x <= width ? x : null;
+      hoverX.current =
+        canHover && e.pointerType === 'mouse' && x >= 0 && x <= width ? x : null;
       if (mode === 'tune') setTuning(Math.round(xToOff(x)));
       else if (mode === 'pan') {
         const dHz = ((e.clientX - panStartX) / width) * view.current.spanHz;
