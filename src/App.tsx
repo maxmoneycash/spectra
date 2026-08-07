@@ -12,6 +12,7 @@ import { RailTabs, PanelView } from './ui/RailTabs';
 import { PanelSheet } from './ui/PanelSheet';
 import { StatusBar } from './ui/StatusBar';
 import { useHotkeys } from './hooks/useHotkeys';
+import { useUrlSync } from './hooks/useUrlSync';
 import { OperatorCard } from './ui/OperatorCard';
 import { OgCardCapture } from './ui/card/OgCardCapture';
 import { Toaster } from '@/components/ui/sonner';
@@ -83,6 +84,7 @@ export function App() {
   const [keysOpen, setKeysOpen] = useState(false);
   const toggleKeys = useCallback(() => setKeysOpen((o) => !o), []);
   useHotkeys(toggleKeys);
+  useUrlSync();
 
   // Dev-only capture route for the site OG image (scripts/make-og.mjs).
   if (new URLSearchParams(window.location.search).get('ogcard') === '1') {
