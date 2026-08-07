@@ -15,16 +15,16 @@ say "go to the site and click around." Cheapest growth feature available.
 - [x] URL updates on navigation via `replaceState` (no history spam)
 - [x] Unknown/malformed params fall back cleanly rather than white-screening
 
-## 2. CTF result card — **next**
+## 2. CTF result card — **done**
 
 A compact, spoiler-free result image travels further than a link (the Wordle
 lesson). Reuse the Operator Card renderer.
 
-- [ ] 10-cell grid of solved/unsolved, score, rank
-- [ ] No flag text in the image
-- [ ] Download + copy-to-clipboard
+- [x] 10-cell grid of solved/unsolved, score, rank
+- [x] No flag text in the image
+- [x] Native share on mobile, clipboard elsewhere
 
-## 3. Static routes for the signal library (SEO)
+## 3. Static routes for the signal library (SEO) — **next**
 
 "What does LoRa look like on a waterfall" is a real query with weak answers.
 Today none of this is indexable.

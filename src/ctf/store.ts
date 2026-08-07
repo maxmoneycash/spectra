@@ -39,9 +39,13 @@ function persist(p: Persisted): void {
   }
 }
 
-/** Answers are compared loosely so nobody loses a flag to spacing or case. */
+/**
+ * Answers are compared loosely so nobody loses a flag to formatting. Spaces and
+ * underscores both collapse, because a flag keyed in Morse reads as
+ * `LISTEN UP` but people habitually type `listen_up`.
+ */
 export function normalise(answer: string): string {
-  return answer.trim().toLowerCase().replace(/\s+/g, '');
+  return answer.trim().toLowerCase().replace(/[\s_]+/g, '');
 }
 
 async function sha256Hex(text: string): Promise<string> {
@@ -139,6 +143,31 @@ export function score(solved: Record<string, Solve>) {
     totalPoints: TOTAL_POINTS,
     pct: TOTAL_POINTS ? Math.round((points / TOTAL_POINTS) * 100) : 0,
   };
+}
+
+/**
+ * A spoiler-free result you can paste anywhere — the Wordle shape. It shows
+ * which challenges fell and how hard they were, and never the answers.
+ * Category order is stable so two people's grids are comparable.
+ */
+export function shareText(solved: Record<string, Solve>, origin?: string): string {
+  const s = score(solved);
+  const grid = CHALLENGES.map((c) => {
+    const hit = solved[c.id];
+    if (!hit) return '⬜';
+    // Clean solves read differently from hinted ones.
+    return hit.hintsUsed === 0 ? '🟩' : '🟨';
+  });
+  const rows: string[] = [];
+  for (let i = 0; i < grid.length; i += 5) rows.push(grid.slice(i, i + 5).join(''));
+
+  const base = origin ?? (typeof window !== 'undefined' ? window.location.origin : '');
+  return [
+    `SPECTRA RF CTF — ${s.points}/${s.totalPoints}`,
+    ...rows,
+    `${rankFor(s.points)} · ${s.solvedCount}/${s.total} flags`,
+    `${base}/?view=ctf`,
+  ].join('\n');
 }
 
 /** Operator rank, for the share card and a bit of pull up the ladder. */

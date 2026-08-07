@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Check, Lightbulb, Flag, RotateCcw, Radio, Trophy } from 'lucide-react';
-import { useCtf, score, rankFor } from './store';
+import { Check, Lightbulb, Flag, RotateCcw, Radio, Trophy, Share2 } from 'lucide-react';
+import { useCtf, score, rankFor, shareText } from './store';
 import { CHALLENGES, CATEGORY_LABEL, challengeById, toSceneSpec, type Challenge } from './challenges';
 import { useStore } from '../store/store';
 import { getEngine } from '../engine/engine';
@@ -162,6 +162,20 @@ export function CtfView() {
 
   const s = useMemo(() => score(solved), [solved]);
   const rank = rankFor(s.points);
+  const [copied, setCopied] = useState(false);
+
+  const onShare = async () => {
+    const text = shareText(solved);
+    try {
+      // Native share on phones; clipboard everywhere else.
+      if (navigator.share) await navigator.share({ text });
+      else await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2200);
+    } catch {
+      // User dismissed the share sheet, or the clipboard was refused.
+    }
+  };
 
   /** Open a challenge: load its RF scene into the live engine, then the sheet. */
   const open = (id: string) => {
@@ -228,13 +242,24 @@ export function CtfView() {
             />
           </div>
 
-          <button
-            onClick={() => setView('console')}
-            className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-lg border border-border px-3 text-[12px] text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <Radio className="size-4" />
-            Open the console to work a signal
-          </button>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              onClick={() => setView('console')}
+              className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-border px-3 text-[12px] text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <Radio className="size-4" />
+              Open the console to work a signal
+            </button>
+            {s.solvedCount > 0 && (
+              <button
+                onClick={onShare}
+                className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-border px-3 text-[12px] text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {copied ? <Check className="size-4 text-emerald-500" /> : <Share2 className="size-4" />}
+                {copied ? 'Copied' : 'Share result'}
+              </button>
+            )}
+          </div>
         </header>
 
         {byCategory.map(([cat, list]) => (

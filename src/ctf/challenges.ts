@@ -64,7 +64,7 @@ export const CHALLENGES: Challenge[] = [
       'Switch to CW mode — the decoder only runs there.',
       'Park the VFO right on the carrier; the tone should sit near 650 Hz.',
     ],
-    flagHash: '87d3fa9191018db0400a28f40effe815',
+    flagHash: '1c8e1aafa5c7a87d90abd9d1cfadd5ab',
     centerFreqHz: 7.05 * MHZ,
     noiseSigma: 0.03,
     emitters: [
@@ -250,7 +250,7 @@ export const CHALLENGES: Challenge[] = [
       'Narrow the bandwidth — CW needs only a few hundred Hz.',
       'The loud one is a decoy. The beacon sits below it in level, not in frequency.',
     ],
-    flagHash: '604ba5d8cfd11d36af721595da64eb35',
+    flagHash: 'ea82c422da73aacc4b529e481517b0a3',
     centerFreqHz: 14.1 * MHZ,
     noiseSigma: 0.055,
     emitters: [
