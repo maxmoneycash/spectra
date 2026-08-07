@@ -33,7 +33,7 @@ export function ReferenceView() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-2xl px-4 py-5 sm:px-6">
       {/* Glossary */}
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="text-lg font-medium tracking-tight text-foreground">Glossary</h2>

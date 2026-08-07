@@ -15,7 +15,7 @@ function Row({ c, onOpen }: { c: Challenge; onOpen: (id: string) => void }) {
     <button
       onClick={() => onOpen(c.id)}
       className={cn(
-        'flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-accent/60',
+        'flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-accent/60 sm:px-6',
         solve && 'bg-accent/30',
       )}
     >
@@ -276,7 +276,7 @@ export function CtfView() {
         ))}
 
         {s.solvedCount === s.total && (
-          <div className="m-4 rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-5 text-center">
+          <div className="m-4 rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-4 text-center">
             <Trophy className="mx-auto size-6 text-emerald-500" />
             <p className="mt-2 text-[15px] font-semibold text-foreground">All flags captured</p>
             <p className="mt-1 text-[12.5px] text-muted-foreground">

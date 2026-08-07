@@ -131,7 +131,7 @@ export function GroupLabel({ children, className }: { children: ReactNode; class
   return (
     <span
       className={cn(
-        'mono-feats font-mono text-[10px] uppercase tracking-wider text-muted-foreground',
+        'mono-feats font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground',
         className,
       )}
     >

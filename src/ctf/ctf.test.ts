@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { CHALLENGES, TOTAL_POINTS } from './challenges';
 import { checkFlag, normalise, score, rankFor, shareText, type Solve } from './store';
+import { encodeMorse, MorseDecoder, MORSE } from '../sim/morse';
 
 const solve = (points: number, hintsUsed = 0): Solve => ({ at: 0, points, hintsUsed });
 
@@ -31,9 +32,10 @@ describe('flag checking', () => {
     for (const answer of ['4', ' 4 ', '4']) {
       expect(await checkFlag('first-light', answer)).toBe(true);
     }
-    expect(await checkFlag('morse-beacon', 'SPECTRA{LISTEN UP}')).toBe(true);
-    expect(await checkFlag('morse-beacon', 'spectra{listen up}')).toBe(true);
-    expect(await checkFlag('morse-beacon', ' Spectra{Listen  Up} ')).toBe(true);
+    expect(await checkFlag('morse-beacon', 'LISTEN UP')).toBe(true);
+    expect(await checkFlag('morse-beacon', 'listen up')).toBe(true);
+    expect(await checkFlag('morse-beacon', ' Listen  Up ')).toBe(true);
+    expect(await checkFlag('morse-beacon', 'listen_up')).toBe(true);
   });
 
   it('rejects wrong answers and unknown challenges', async () => {
@@ -86,4 +88,48 @@ describe('share text', () => {
     expect(t).toContain('https://x.test/?view=ctf');
     expect(t.split('\n').length).toBeGreaterThanOrEqual(4);
   });
+});
+
+describe('CW challenges are actually solvable', () => {
+  // The bug this guards: braces are not in the Morse table, so `encodeMorse`
+  // dropped them silently (and ate the word gap with them). The answer key was
+  // right and the transmitter simply could not produce it — a player read
+  // "SPECTRALISTEN UP" off the decoder and was rejected. Assert the full
+  // encode -> decode -> checkFlag chain, not just the hash.
+  const cwChallenges = CHALLENGES.filter((c) => c.emitters.some((e) => e.kind === 'cw' && e.text));
+
+  it('covers every CW challenge', () => {
+    expect(cwChallenges.length).toBeGreaterThan(0);
+  });
+
+  for (const c of cwChallenges) {
+    it(`${c.id}: what the decoder emits contains the flag`, async () => {
+      const emitter = c.emitters.find((e) => e.kind === 'cw' && e.text)!;
+      const decoder = new MorseDecoder();
+      for (const seg of encodeMorse(emitter.text!, emitter.wpm ?? 18)) {
+        decoder.push(seg.on, seg.durSec);
+      }
+      const heard = decoder.output;
+
+      // Every character the challenge transmits must survive the Morse table.
+      const sendable = emitter
+        .text!.toUpperCase()
+        .split('')
+        .filter((ch) => ch !== ' ')
+        .every((ch) => ch in MORSE);
+      expect(sendable, `${c.id} transmits a character Morse cannot send`).toBe(true);
+
+      // And some run of what was heard must be the accepted answer.
+      const words = heard.split(/\s+/).filter(Boolean);
+      let solvable = false;
+      for (let i = 0; i < words.length && !solvable; i++) {
+        for (let j = i + 1; j <= words.length && !solvable; j++) {
+          if (await checkFlag(c.id, words.slice(i, j).join(' '))) solvable = true;
+        }
+      }
+      expect(solvable, `${c.id}: decoder emitted "${heard}", which never matches the flag`).toBe(
+        true,
+      );
+    });
+  }
 });

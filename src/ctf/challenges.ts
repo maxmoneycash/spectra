@@ -58,13 +58,13 @@ export const CHALLENGES: Challenge[] = [
     category: 'decode',
     points: 200,
     brief:
-      'Something is keying a repeating message on 40 m. Tune it in CW, centre the tone, and read what it is sending. The flag is the whole braced string.',
-    answerHint: 'SPECTRA{...}',
+      'Something is keying a repeating message on 40 m. Tune it in CW, centre the tone, and read what it is sending. The flag is the two-word message after the callsign.',
+    answerHint: 'Two words, e.g. GOOD MORNING',
     hints: [
       'Switch to CW mode — the decoder only runs there.',
       'Park the VFO right on the carrier; the tone should sit near 650 Hz.',
     ],
-    flagHash: '1c8e1aafa5c7a87d90abd9d1cfadd5ab',
+    flagHash: '8c0dc4931e053d877886ab7f09898f5f',
     centerFreqHz: 7.05 * MHZ,
     noiseSigma: 0.03,
     emitters: [
@@ -74,7 +74,7 @@ export const CHALLENGES: Challenge[] = [
         freqHz: 7.061 * MHZ,
         powerDb: -4,
         wpm: 16,
-        text: 'SPECTRA{LISTEN UP}  ',
+        text: 'CQ DE SPECTRA LISTEN UP  ',
         seed: 405,
       },
       { id: 'v1', kind: 'lsb', freqHz: 7.022 * MHZ, powerDb: -9, message: 'voice', seed: 406 },
@@ -131,7 +131,7 @@ export const CHALLENGES: Challenge[] = [
     points: 150,
     brief:
       'One emitter in this ISM band paints unmistakable diagonal ramps across its channel. Name the modulation.',
-    answerHint: 'One word, e.g. nfm',
+    answerHint: 'The protocol name, one word',
     hints: [
       'The signature is a frequency sweep repeated per symbol.',
       'Check the Library tab if the waterfall shape looks familiar.',
@@ -196,7 +196,7 @@ export const CHALLENGES: Challenge[] = [
     points: 250,
     brief:
       'One emitter here refuses to sit still — it scatters short bursts across the whole span instead of holding a channel. Name that technique.',
-    answerHint: 'One word, e.g. psk',
+    answerHint: 'The four-letter abbreviation, e.g. OFDM',
     hints: [
       'It is deliberate, not drift: the transmitter changes channel on a schedule.',
       'Bluetooth and tactical radios use it to resist jamming.',
@@ -244,13 +244,13 @@ export const CHALLENGES: Challenge[] = [
     category: 'decode',
     points: 350,
     brief:
-      'A weak beacon is buried under a loud neighbour and the noise floor is up. Dig it out and read its message. The flag is the whole braced string.',
-    answerHint: 'SPECTRA{...}',
+      'A weak beacon is buried under a loud neighbour and the noise floor is up. Dig it out and read its message. The flag is the two-word message after the callsign.',
+    answerHint: 'Two words, e.g. GOOD MORNING',
     hints: [
       'Narrow the bandwidth — CW needs only a few hundred Hz.',
       'The loud one is a decoy. The beacon sits below it in level, not in frequency.',
     ],
-    flagHash: 'ea82c422da73aacc4b529e481517b0a3',
+    flagHash: '8aa3ecfcd0e0396a22c682132d47155e',
     centerFreqHz: 14.1 * MHZ,
     noiseSigma: 0.055,
     emitters: [
@@ -260,7 +260,7 @@ export const CHALLENGES: Challenge[] = [
         freqHz: 14.118 * MHZ,
         powerDb: -13,
         wpm: 14,
-        text: 'SPECTRA{QUIET CARRIER}  ',
+        text: 'DE SPECTRA QUIET CARRIER  ',
         seed: 423,
       },
       { id: 'loud', kind: 'wfm', freqHz: 14.04 * MHZ, powerDb: -2, message: 'tone', seed: 424 },

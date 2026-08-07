@@ -335,7 +335,7 @@ export function CourseView({ onTune }: { onTune: (scenarioId: string) => void })
       {/* Chapter article */}
       <div id="course-article" className="thin-scroll min-h-0 overflow-y-auto">
         {chapter && (
-          <article className="mx-auto max-w-2xl px-4 py-6 sm:px-6">
+          <article className="mx-auto max-w-2xl px-4 py-5 sm:px-6">
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={chapter.id}

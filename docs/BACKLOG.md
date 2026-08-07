@@ -56,3 +56,46 @@ competitor. Only worth building once set one has an audience.
 Every increment: `npx tsc --noEmit`, `npx vitest run`, `npm run build`, plus a
 real browser check (`scripts/qa-*.mjs`) before commit. Ship to production and
 verify against the live URL, not just localhost.
+
+---
+
+## Review findings — open
+
+From a code-review pass over the recent surface. Fixed already: CW beacons
+transmitted braces the Morse table cannot send (challenges were unsolvable),
+and answer keys that accepted a spelling the UI never shows.
+
+**Correctness, ranked**
+
+- [ ] **CTF scene discarded on first play.** `start()` reloads `scenarioId`
+      when `audioStarted` is false, so opening a challenge (or a `?c=` link)
+      then pressing play swaps in the default scenario while the store still
+      reports the challenge's frequencies. `store.ts:174-186` vs
+      `CtfView.tsx:181-188`.
+- [ ] **Reels blank + mis-grade after a queue rebuild.** `resetProgress()`,
+      re-tapping the current topic, or re-tapping the current pool reset
+      `index` to 0 without resetting `scrollTop`; cards outside the ±3 window
+      render `aria-hidden`, and A–D grades the off-screen `queue[0]`.
+      `ExamView.tsx:286-288,392-394`.
+- [ ] **Submit wedges on a `checkFlag` throw.** No try/catch around
+      `crypto.subtle.digest`, which is undefined outside a secure context —
+      `checking` never clears, Submit stays disabled. `ctf/store.ts:90-98`.
+- [ ] **Sibling cards cancel live narration.** The inactive branch calls the
+      global `cancelSpeech()`; on any index change a later sibling flushes the
+      utterance queue. Masked today because all pools ship rendered clips.
+      `ExamView.tsx:50-69`.
+- [ ] **Canvas panels keep the old palette after a theme flip while stopped.**
+      Draws are driven by engine events; only the waterfall is cleared. The
+      spectrum plot, ruler, scopes and Academy `LogAxis` stay stale.
+- [ ] **`loadPool` drops a rapid second click** — bails on `loading` after
+      already committing `pool`. Needs latest-wins.
+- [ ] **Deep-link `?topic=` is case-sensitive**, and a `?c=` link with no
+      `view` param loses `c` on the first outbound write.
+- [ ] `index.html` hardcodes `color-scheme: dark` while the theme defaults to
+      light and ignores `prefers-color-scheme`.
+- [ ] `render-narration.mjs` uses `new URL(...).pathname` for ROOT — breaks on
+      repo paths containing spaces. Use `fileURLToPath`.
+
+**Clean on review:** `urlState.ts`, `colormaps.ts`, CTF scoring/hints/
+persistence, the exam spaced-repetition weighting, the narration manifest
+logic, `controls.tsx`.

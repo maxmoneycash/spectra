@@ -23,12 +23,12 @@ function ExplorerView({ onTune }: { onTune: (scenarioId: string) => void }) {
 
   return (
     <div className="thin-scroll h-full overflow-y-auto">
-      <div className="mx-auto min-h-full max-w-3xl border-x border-line">
-        <section className="screen-line-bottom px-4 py-8 sm:px-6">
+      <div className="mx-auto min-h-full max-w-2xl border-x border-line">
+        <section className="screen-line-bottom px-4 py-5 sm:px-6">
           <h1 className="text-2xl font-medium tracking-tight text-foreground">
             The radio spectrum
           </h1>
-          <p className="mt-1.5 max-w-prose text-[13px] leading-relaxed text-muted-foreground">
+          <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
             100 kHz to 10 GHz. Scroll to zoom, drag to pan, click a band to inspect it. Bands
             marked ▶ exist live in the simulator.
           </p>
@@ -50,11 +50,11 @@ function ExplorerView({ onTune }: { onTune: (scenarioId: string) => void }) {
 
         <div className="stripe-divider screen-line-bottom" aria-hidden />
 
-        <section className="screen-line-bottom px-4 py-6 sm:px-6">
+        <section className="screen-line-bottom px-4 py-5 sm:px-6">
           <Inspector band={selected} onPick={setSelectedId} onTune={onTune} />
         </section>
 
-        <section className="px-4 py-6 sm:px-6">
+        <section className="px-4 py-5 sm:px-6">
           <div className="mb-4 flex items-baseline justify-between">
             <h2 className="text-lg font-medium tracking-tight text-foreground">Concepts</h2>
             <span className="mono-feats font-mono text-[9px] uppercase tracking-[0.16em] text-muted-foreground">

@@ -33,7 +33,7 @@ export function Inspector({
               λ {fmtWavelength((band.fStartHz + band.fEndHz) / 2)}
             </span>
           </div>
-          <p className="mt-2.5 max-w-prose text-[12.5px] leading-relaxed text-muted-foreground">
+          <p className="mt-2.5 text-[12.5px] leading-relaxed text-muted-foreground">
             {band.summary}
           </p>
           <dl className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -68,7 +68,7 @@ export function Inspector({
           transition={{ duration: 0.16 }}
         >
           <span className="text-[15px] font-medium text-foreground">Pick a band</span>
-          <p className="mt-2 max-w-prose text-[12.5px] leading-relaxed text-muted-foreground">
+          <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">
             Every frequency has an owner and a job. Click any block above to see who lives there
             and how the waves behave. These bands exist inside SPECTRA's simulator:
           </p>

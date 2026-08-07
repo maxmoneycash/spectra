@@ -75,7 +75,7 @@ export function ScenarioPanel() {
                         animate={{ scale: 1 }}
                         transition={{ type: 'spring', bounce: 0.45, duration: 0.4 }}
                       >
-                        <Check className="size-3" strokeWidth={2.5} />
+                        <Check className="size-3" strokeWidth={3} />
                       </motion.span>
                     )}
                   </AnimatePresence>
@@ -97,7 +97,7 @@ export function ScenarioPanel() {
                 initial={{ opacity: 0, scale: 0.97 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ type: 'spring', bounce: 0.25, duration: 0.5 }}
-                className="mt-3 rounded-lg border border-foreground bg-secondary p-3.5 text-center"
+                className="mt-3 rounded-lg border border-foreground bg-secondary p-4 text-center"
               >
                 <div className="text-[12px] font-semibold tracking-[0.08em] text-foreground">
                   MISSION COMPLETE
