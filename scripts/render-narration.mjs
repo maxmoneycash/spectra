@@ -20,7 +20,7 @@ import { promisify } from 'node:util';
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync, mkdirSync, existsSync, rmSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { tmpdir } from 'node:os';
+import { tmpdir, homedir } from 'node:os';
 
 const run = promisify(execFile);
 const ROOT = new URL('..', import.meta.url).pathname;
@@ -153,8 +153,34 @@ async function renderWithAzure(text, outPath) {
   await writeAsM4a(Buffer.from(await res.arrayBuffer()), outPath, 'mp3');
 }
 
+/**
+ * Piper — local neural TTS. Free, offline, and far more natural than `say`.
+ * Point PIPER_BIN / PIPER_MODEL at your install; `--voice` is ignored here
+ * because the model file *is* the voice.
+ */
+async function renderWithPiper(text, outPath) {
+  const bin = process.env.PIPER_BIN ?? join(homedir(), '.local/share/piper-venv/bin/piper');
+  const model =
+    process.env.PIPER_MODEL ??
+    join(homedir(), '.local/share/piper-voices', `${opts.voice}.onnx`);
+  if (!existsSync(model)) {
+    throw new Error(`Piper model not found: ${model} (set PIPER_MODEL or --voice <model-name>)`);
+  }
+  const stem = join(tmpdir(), `spectra-piper-${process.pid}-${Math.random().toString(36).slice(2)}`);
+  const txt = `${stem}.txt`;
+  const wav = `${stem}.wav`;
+  try {
+    writeFileSync(txt, text);
+    await run(bin, ['-m', model, '-i', txt, '-f', wav]);
+    await run('afconvert', ['-f', 'm4af', '-d', 'aac', '-b', String(opts.bitrate), '-c', '1', wav, outPath]);
+  } finally {
+    for (const f of [txt, wav]) if (existsSync(f)) rmSync(f, { force: true });
+  }
+}
+
 const RENDERERS = {
   say: renderWithSay,
+  piper: renderWithPiper,
   openai: renderWithOpenAI,
   elevenlabs: renderWithElevenLabs,
   google: renderWithGoogle,
@@ -179,7 +205,13 @@ async function renderPool(poolId, file) {
 
   const manifestPath = join(dir, 'manifest.json');
   const prev = existsSync(manifestPath) ? JSON.parse(readFileSync(manifestPath, 'utf8')) : { items: {} };
-  const manifest = { engine: opts.engine, voice: opts.voice, bitrate: opts.bitrate, items: {} };
+  const manifest = {
+    engine: opts.engine,
+    voice: opts.voice,
+    bitrate: opts.bitrate,
+    // A partial run (--limit) must not drop clips it didn't look at.
+    items: opts.limit ? { ...(prev.items ?? {}) } : {},
+  };
 
   const work = (opts.limit ? questions.slice(0, opts.limit) : questions).map((q) => {
     const text = narrationText(q);

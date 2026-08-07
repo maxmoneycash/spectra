@@ -68,8 +68,8 @@ export interface ExamState {
   loading: boolean;
   queue: string[];
   index: number;
-  /** Chosen answer index for the current card, or null before answering. */
-  chosen: number | null;
+  /** Chosen answer index per question id — the feed grades each card independently. */
+  chosenById: Record<string, number>;
   subFilter: string | null;
   audio: boolean;
   progress: ProgressMap;
@@ -81,13 +81,10 @@ export interface ExamState {
 
   loadPool: (id: ElementId) => Promise<void>;
   setSubFilter: (sub: string | null) => void;
-  answer: (choice: number) => void;
-  next: () => void;
-  prev: () => void;
-  skip: () => void;
+  setIndex: (i: number) => void;
+  answer: (id: string, choice: number) => void;
   toggleAudio: () => void;
   resetProgress: () => void;
-  current: () => PoolQuestion | null;
 }
 
 const LOADERS: Record<ElementId, () => Promise<{ default: PoolQuestion[] }>> = {
@@ -111,7 +108,7 @@ export const useExam = create<ExamState>((set, get) => {
     loading: false,
     queue: [],
     index: 0,
-    chosen: null,
+    chosenById: {},
     subFilter: null,
     audio: false,
     progress: saved.progress,
@@ -122,7 +119,7 @@ export const useExam = create<ExamState>((set, get) => {
 
     async loadPool(id) {
       if (get().loading) return;
-      set({ loading: true, pool: id, chosen: null, index: 0, subFilter: null });
+      set({ loading: true, pool: id, chosenById: {}, index: 0, subFilter: null });
       const mod = await LOADERS[id]();
       const questions = mod.default;
       const byId: Record<string, PoolQuestion> = {};
@@ -139,13 +136,17 @@ export const useExam = create<ExamState>((set, get) => {
 
     setSubFilter(sub) {
       const { questions, progress } = get();
-      set({ subFilter: sub, queue: rebuild(questions, sub, progress), index: 0, chosen: null });
+      set({ subFilter: sub, queue: rebuild(questions, sub, progress), index: 0, chosenById: {} });
     },
 
-    answer(choice) {
+    setIndex(i) {
+      if (get().index !== i) set({ index: i });
+    },
+
+    answer(id, choice) {
       const st = get();
-      if (st.chosen !== null) return; // already graded this card
-      const q = st.current();
+      if (st.chosenById[id] !== undefined) return; // already graded this card
+      const q = st.byId[id];
       if (!q) return;
       const right = choice === q.c;
       const prev = st.progress[q.id];
@@ -161,7 +162,7 @@ export const useExam = create<ExamState>((set, get) => {
       };
       const streak = right ? st.streak + 1 : 0;
       set({
-        chosen: choice,
+        chosenById: { ...st.chosenById, [id]: choice },
         progress,
         streak,
         bestStreak: Math.max(st.bestStreak, streak),
@@ -169,30 +170,6 @@ export const useExam = create<ExamState>((set, get) => {
         correct: st.correct + (right ? 1 : 0),
       });
       persist({ progress, pool: st.pool });
-    },
-
-    next() {
-      const st = get();
-      if (!st.queue.length) return;
-      // Wrap around, reshuffling so a second pass isn't the same order.
-      if (st.index + 1 >= st.queue.length) {
-        set({
-          queue: rebuild(st.questions, st.subFilter, st.progress),
-          index: 0,
-          chosen: null,
-        });
-        return;
-      }
-      set({ index: st.index + 1, chosen: null });
-    },
-
-    prev() {
-      const st = get();
-      set({ index: Math.max(0, st.index - 1), chosen: null });
-    },
-
-    skip() {
-      get().next();
     },
 
     toggleAudio() {
@@ -206,19 +183,13 @@ export const useExam = create<ExamState>((set, get) => {
         progress,
         queue: rebuild(st.questions, st.subFilter, progress),
         index: 0,
-        chosen: null,
+        chosenById: {},
         streak: 0,
         bestStreak: 0,
         answered: 0,
         correct: 0,
       });
       persist({ progress, pool: st.pool });
-    },
-
-    current() {
-      const st = get();
-      const id = st.queue[st.index];
-      return id ? (st.byId[id] ?? null) : null;
     },
   };
 });

@@ -1,5 +1,5 @@
 /**
- * Exam reels QA driver (mobile viewport).
+ * Exam reels QA (mobile viewport) — snap-scroll feed.
  * Usage: node scripts/qa-exam.mjs [outdir] [baseUrl]
  */
 import { chromium } from 'playwright';
@@ -7,7 +7,7 @@ import { chromium } from 'playwright';
 const OUT = process.argv[2] ?? '/tmp/spectra-exam';
 const BASE = process.argv[3] ?? 'http://localhost:5173';
 
-const browser = await chromium.launch();
+const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] });
 const page = await browser.newPage({
   viewport: { width: 390, height: 844 },
   isMobile: true,
@@ -25,71 +25,74 @@ const shot = async (n) => {
   await page.screenshot({ path: `${OUT}/${n}.png` });
   console.log('shot:', n);
 };
+const cardId = () =>
+  page.evaluate(() => {
+    const cards = [...document.querySelectorAll('article[aria-label^="Question"]')];
+    const mid = window.innerHeight / 2;
+    const hit = cards.find((c) => {
+      const r = c.getBoundingClientRect();
+      return r.top <= mid && r.bottom >= mid;
+    });
+    return hit?.getAttribute('aria-label') ?? null;
+  });
 
 await page.goto(BASE, { waitUntil: 'networkidle' });
 await page.getByRole('tab', { name: 'Exam' }).click();
-await page.waitForTimeout(1800);
+await page.waitForTimeout(2000);
 await shot('e1-reel');
 
-const first = await page.evaluate(() => {
-  const id = document.querySelector('.font-mono')?.textContent?.trim();
-  const q = document.querySelector('p')?.textContent?.trim().slice(0, 70);
-  const answers = [...document.querySelectorAll('button')]
-    .map((b) => b.textContent.trim())
-    .filter((t) => t.length > 20).length;
-  return { id, q, answers };
-});
-console.log('first card:', JSON.stringify(first));
+const first = await cardId();
+console.log('first card :', first);
 
-// Answer the first card by pressing "A", then check feedback appeared.
+// Answer the visible card with "A".
 await page.keyboard.press('a');
-await page.waitForTimeout(600);
+await page.waitForTimeout(500);
+const graded = await page.evaluate(() => /correct|answer [abcd]/i.test(document.body.innerText));
+console.log('graded     :', graded);
 await shot('e2-answered');
 
-const feedback = await page.evaluate(() => {
-  const t = document.body.innerText;
+// Scroll the feed (this is the core "is it scrollable" check).
+await page.keyboard.press('ArrowDown');
+await page.waitForTimeout(900);
+const second = await cardId();
+console.log('after scroll:', second, '| changed:', second !== first);
+await shot('e3-scrolled');
+
+// The feed must be a real scroller with height beyond one screen.
+const metrics = await page.evaluate(() => {
+  const sc = document.querySelector('[aria-label="Exam question reels"]');
+  if (!sc) return null;
   return {
-    hasVerdict: /Correct\.|Answer: [ABCD]\./.test(t),
-    hasNext: /\bNext\b/.test(t),
+    scrollHeight: sc.scrollHeight,
+    clientHeight: sc.clientHeight,
+    scrollTop: Math.round(sc.scrollTop),
+    snap: getComputedStyle(sc).scrollSnapType,
   };
 });
-console.log('feedback:', JSON.stringify(feedback));
+console.log('scroller   :', JSON.stringify(metrics));
 
-// Advance and confirm the card changed.
-await page.keyboard.press('ArrowDown');
+// Filter sheet (pool + topic).
+await page.getByRole('button', { name: /browse questions/i }).click();
 await page.waitForTimeout(700);
-const second = await page.evaluate(() => document.querySelector('.font-mono')?.textContent?.trim());
-console.log('advanced to:', second, '(changed:', second !== first.id, ')');
-await shot('e3-next');
+await shot('e4-sheet');
+const sheetHasPools = await page.evaluate(() =>
+  ['Technician', 'General', 'Extra'].every((n) => document.body.innerText.includes(n)),
+);
+console.log('sheet pools:', sheetHasPools);
 
-// Switch pool to General (lazy chunk load).
-await page.getByRole('tab', { name: 'General' }).click();
-await page.waitForTimeout(1800);
-const gen = await page.evaluate(() => document.querySelector('.font-mono')?.textContent?.trim());
-console.log('general card id:', gen);
-await shot('e4-general');
-
-// Touch-target audit for this view.
+// Touch-target audit.
 const audit = await page.evaluate(() => {
-  const vis = (el) => {
-    const r = el.getBoundingClientRect();
-    return r.width > 0 && r.height > 0;
-  };
-  const btns = [...document.querySelectorAll('button')].filter(vis);
-  const small = btns.filter((b) => {
+  const btns = [...document.querySelectorAll('button')].filter((b) => {
     const r = b.getBoundingClientRect();
-    return r.height < 44;
+    return r.width > 0 && r.height > 0;
   });
+  const small = btns.filter((b) => b.getBoundingClientRect().height < 44);
   return {
     buttons: btns.length,
     under44: small.length,
-    samples: small.slice(0, 6).map((b) => {
-      const r = b.getBoundingClientRect();
-      return `${(b.getAttribute('aria-label') || b.textContent || '').trim().slice(0, 20)} ${Math.round(r.width)}x${Math.round(r.height)}`;
-    }),
-    overflow: document.body.scrollWidth > window.innerWidth,
+    overflowX: document.body.scrollWidth > window.innerWidth,
   };
 });
-console.log('AUDIT:', JSON.stringify(audit));
-console.log('errors:', JSON.stringify(errors));
+console.log('audit      :', JSON.stringify(audit));
+console.log('errors     :', JSON.stringify(errors));
 await browser.close();

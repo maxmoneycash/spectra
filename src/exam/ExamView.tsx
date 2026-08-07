@@ -1,403 +1,448 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import {
   Check,
   X,
-  ChevronUp,
-  ChevronDown,
+  ListFilter,
+  Loader2,
   Volume2,
   VolumeX,
   RotateCcw,
   Sparkles,
 } from 'lucide-react';
 import { useExam, masteryStats } from './store';
-import { POOLS, subelementOf } from './types';
+import { POOLS, subelementOf, type ElementId, type PoolQuestion } from './types';
 import { subelementTitle } from './syllabus';
-import { warmVoices, speechSupported } from './speech';
-import { narrate, stopNarration } from './narration';
+import { warmVoices, speechSupported, speakQuestion, cancelSpeech } from './speech';
+import { clipUrl, useRenderedSet } from './narration';
 import { cn } from '@/lib/utils';
 
 const LETTERS = ['A', 'B', 'C', 'D'] as const;
+/** Room left at the bottom of each card so content clears the app chrome. */
+const BOTTOM_CLEARANCE = 24;
 
-/** Vertical swipe detection for the reel feed. */
-function useSwipe(onUp: () => void, onDown: () => void) {
-  const start = useRef<{ x: number; y: number } | null>(null);
-  return {
-    onPointerDown: (e: React.PointerEvent) => {
-      if (e.pointerType === 'mouse') return;
-      start.current = { x: e.clientX, y: e.clientY };
-    },
-    onPointerUp: (e: React.PointerEvent) => {
-      const s = start.current;
-      start.current = null;
-      if (!s) return;
-      const dy = e.clientY - s.y;
-      const dx = e.clientX - s.x;
-      if (Math.abs(dy) < 60 || Math.abs(dx) > Math.abs(dy)) return;
-      if (dy < 0) onUp();
-      else onDown();
-    },
-  };
-}
+/* ------------------------------------------------------------------ card */
 
-function PoolPicker() {
-  const pool = useExam((s) => s.pool);
-  const loadPool = useExam((s) => s.loadPool);
+function ReelCard({
+  q,
+  pool,
+  active,
+  audioOn,
+  hasClip,
+}: {
+  q: PoolQuestion;
+  pool: ElementId;
+  active: boolean;
+  audioOn: boolean;
+  hasClip: boolean;
+}) {
+  const chosen = useExam((s) => s.chosenById[q.id]);
+  const answer = useExam((s) => s.answer);
+  const streak = useExam((s) => s.streak);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [blocked, setBlocked] = useState(false);
+
+  const graded = chosen !== undefined;
+
+  // Audio follows the active card: play on arrival, stop on leave.
+  useEffect(() => {
+    if (!active || !audioOn) {
+      audioRef.current?.pause();
+      cancelSpeech();
+      setBlocked(false);
+      return;
+    }
+    if (hasClip) {
+      const el = audioRef.current;
+      if (!el) return;
+      el.currentTime = 0;
+      void el.play().catch((err: unknown) => {
+        // Autoplay refused until the user interacts — offer a tap target.
+        if (err instanceof DOMException && err.name === 'NotAllowedError') setBlocked(true);
+      });
+      return () => el.pause();
+    }
+    speakQuestion(q.q, q.a, { withAnswers: true });
+    return cancelSpeech;
+  }, [active, audioOn, hasClip, q]);
+
   return (
-    <div
-      role="tablist"
-      aria-label="Licence class"
-      className="flex gap-1 rounded-xl border border-line bg-card p-1"
+    <article
+      className="relative h-full snap-start snap-always overflow-hidden"
+      aria-label={`Question ${q.id}`}
     >
-      {POOLS.map((p) => (
-        <button
-          key={p.id}
-          role="tab"
-          aria-selected={pool === p.id}
-          onClick={() => loadPool(p.id)}
-          className={cn(
-            'min-h-11 flex-1 rounded-lg px-3 text-[13px] font-medium transition-colors',
-            pool === p.id
-              ? 'bg-secondary text-foreground'
-              : 'text-muted-foreground hover:text-foreground',
+      {hasClip && active && (
+        <audio ref={audioRef} src={clipUrl(pool, q.id)} preload="auto" playsInline />
+      )}
+
+      <div
+        className="absolute inset-x-0 top-0 flex flex-col px-5 pt-16 sm:px-8"
+        style={{ bottom: `calc(${BOTTOM_CLEARANCE}px + env(safe-area-inset-bottom))` }}
+      >
+        {/* meta */}
+        <div className="mono-feats flex shrink-0 items-center gap-2 font-mono text-[10px] uppercase tracking-wider">
+          <span className="rounded border border-border px-1.5 py-0.5 text-foreground/75">{q.id}</span>
+          <span className="truncate text-muted-foreground">{subelementTitle(subelementOf(q.id))}</span>
+          {active && streak >= 3 && (
+            <span className="ml-auto inline-flex shrink-0 items-center gap-1 text-foreground">
+              <Sparkles className="size-3" /> {streak}
+            </span>
           )}
-        >
-          {p.name}
-        </button>
-      ))}
-    </div>
+        </div>
+
+        {/* question */}
+        <div className="flex min-h-0 flex-1 flex-col justify-center py-4">
+          <p className="text-balance text-center text-[1.5rem] font-[540] leading-[1.18] tracking-tight text-foreground sm:text-[2rem]">
+            {q.q}
+          </p>
+          {q.fig && (
+            <img
+              src={`/exam/figures/${q.fig}`}
+              alt={`Figure for question ${q.id}`}
+              className="mx-auto mt-4 max-h-40 w-auto rounded-lg border border-line bg-white p-2"
+            />
+          )}
+          {blocked && active && (
+            <button
+              onClick={() => void audioRef.current?.play().then(() => setBlocked(false))}
+              className="mx-auto mt-4 inline-flex min-h-11 items-center gap-2 rounded-full border border-border px-4 text-[12px] text-foreground"
+            >
+              <Volume2 className="size-4" /> Tap to hear it
+            </button>
+          )}
+        </div>
+
+        {/* answers */}
+        <div className="shrink-0 space-y-2">
+          {q.a.map((text, i) => {
+            const state = !graded
+              ? 'idle'
+              : i === q.c
+                ? 'correct'
+                : i === chosen
+                  ? 'wrong'
+                  : 'dimmed';
+            return (
+              <button
+                key={i}
+                onClick={() => answer(q.id, i)}
+                disabled={graded}
+                className={cn(
+                  'flex min-h-[3rem] w-full items-start gap-3 rounded-xl border p-3 text-left transition-colors',
+                  state === 'idle' && 'border-line bg-card active:bg-accent sm:hover:bg-accent',
+                  state === 'correct' && 'border-emerald-500/50 bg-emerald-500/10',
+                  state === 'wrong' && 'border-rose-500/50 bg-rose-500/10',
+                  state === 'dimmed' && 'border-line bg-card opacity-40',
+                )}
+              >
+                <span
+                  className={cn(
+                    'mono-feats grid size-5 shrink-0 place-items-center rounded border font-mono text-[10px]',
+                    state === 'correct' && 'border-emerald-500/60 text-emerald-500',
+                    state === 'wrong' && 'border-rose-500/60 text-rose-500',
+                    (state === 'idle' || state === 'dimmed') && 'border-border text-muted-foreground',
+                  )}
+                >
+                  {state === 'correct' ? (
+                    <Check className="size-3" strokeWidth={3} />
+                  ) : state === 'wrong' ? (
+                    <X className="size-3" strokeWidth={3} />
+                  ) : (
+                    LETTERS[i]
+                  )}
+                </span>
+                <span className="text-[13px] leading-snug text-foreground">{text}</span>
+              </button>
+            );
+          })}
+
+          <AnimatePresence>
+            {graded && (
+              <motion.p
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mono-feats pt-0.5 text-center font-mono text-[10.5px] uppercase tracking-wider text-muted-foreground"
+              >
+                {chosen === q.c ? 'Correct' : `Answer ${LETTERS[q.c]}`}
+                {q.refs ? ` · FCC ${q.refs}` : ''} · swipe up for next
+              </motion.p>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </article>
   );
 }
 
-function TopicFilter() {
+/* ----------------------------------------------------------------- sheet */
+
+function FilterSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const pool = useExam((s) => s.pool);
+  const loadPool = useExam((s) => s.loadPool);
   const questions = useExam((s) => s.questions);
   const subFilter = useExam((s) => s.subFilter);
   const setSubFilter = useExam((s) => s.setSubFilter);
+  const queue = useExam((s) => s.queue);
 
-  const subs = useMemo(() => {
-    const set = new Set(questions.map((q) => subelementOf(q.id)));
-    return [...set].sort();
-  }, [questions]);
-
-  if (!subs.length) return null;
-
-  return (
-    <div className="thin-scroll -mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1">
-      <button
-        onClick={() => setSubFilter(null)}
-        className={cn(
-          'min-h-11 shrink-0 rounded-full border px-3.5 text-[11.5px] transition-colors',
-          subFilter === null
-            ? 'border-foreground bg-foreground text-background'
-            : 'border-border text-muted-foreground hover:text-foreground',
-        )}
-      >
-        All topics
-      </button>
-      {subs.map((s) => (
-        <button
-          key={s}
-          onClick={() => setSubFilter(s === subFilter ? null : s)}
-          className={cn(
-            'min-h-11 shrink-0 rounded-full border px-3.5 text-[11.5px] transition-colors',
-            s === subFilter
-              ? 'border-foreground bg-foreground text-background'
-              : 'border-border text-muted-foreground hover:text-foreground',
-          )}
-        >
-          <span className="mono-feats font-mono text-[10px] opacity-70">{s}</span>{' '}
-          {subelementTitle(s)}
-        </button>
-      ))}
-    </div>
+  const subs = useMemo(
+    () => [...new Set(questions.map((q) => subelementOf(q.id)))].sort(),
+    [questions],
   );
-}
 
-function AnswerRow({
-  text,
-  letter,
-  state,
-  onPick,
-}: {
-  text: string;
-  letter: string;
-  state: 'idle' | 'correct' | 'wrong' | 'dimmed';
-  onPick: () => void;
-}) {
   return (
-    <button
-      onClick={onPick}
-      disabled={state !== 'idle'}
-      className={cn(
-        'flex w-full items-start gap-3 rounded-xl border p-3.5 text-left transition-colors',
-        'min-h-[3.25rem]',
-        state === 'idle' && 'border-line bg-card hover:border-border hover:bg-accent',
-        state === 'correct' && 'border-emerald-500/50 bg-emerald-500/10',
-        state === 'wrong' && 'border-rose-500/50 bg-rose-500/10',
-        state === 'dimmed' && 'border-line bg-card opacity-45',
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.button
+            aria-label="Close filters"
+            className="absolute inset-0 z-40 bg-background/70 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+          />
+          <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Browse questions"
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', stiffness: 360, damping: 38 }}
+            className="absolute inset-x-0 bottom-0 z-50 flex max-h-[82%] flex-col rounded-t-xl border-t border-line bg-card"
+          >
+            <div className="flex items-center justify-between px-4 pb-2 pt-3">
+              <p className="mono-feats font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                Licence class
+              </p>
+              <button
+                onClick={onClose}
+                aria-label="Close"
+                className="grid size-9 place-items-center rounded-full border border-line text-muted-foreground"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <div className="mx-4 grid grid-cols-3 gap-1 rounded-lg border border-line p-1">
+              {POOLS.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => void loadPool(p.id)}
+                  className={cn(
+                    'min-h-10 rounded-md text-[12px] font-medium transition-colors',
+                    pool === p.id ? 'bg-foreground text-background' : 'text-muted-foreground',
+                  )}
+                >
+                  {p.name}
+                </button>
+              ))}
+            </div>
+
+            <p className="mono-feats px-4 pb-1 pt-4 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+              Topic
+            </p>
+            <div className="thin-scroll min-h-0 flex-1 overflow-y-auto border-y border-line">
+              {[null, ...subs].map((s, i) => (
+                <button
+                  key={s ?? 'all'}
+                  onClick={() => {
+                    setSubFilter(s);
+                    onClose();
+                  }}
+                  className={cn(
+                    'flex min-h-12 w-full items-center gap-2.5 px-4 text-left text-[12.5px]',
+                    i ? 'border-t border-line' : '',
+                    subFilter === s ? 'bg-accent text-foreground' : 'text-muted-foreground',
+                  )}
+                >
+                  {s && (
+                    <span className="mono-feats font-mono text-[10px] opacity-70">{s}</span>
+                  )}
+                  <span>{s ? subelementTitle(s) : 'All topics'}</span>
+                  {subFilter === s && <span className="ml-auto">•</span>}
+                </button>
+              ))}
+            </div>
+
+            <div className="px-3 pt-3" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 14px)' }}>
+              <button
+                onClick={onClose}
+                className="mono-feats flex min-h-11 w-full items-center justify-center rounded-lg bg-foreground font-mono text-[11px] font-semibold uppercase tracking-wider text-background"
+              >
+                Show {queue.length} questions
+              </button>
+            </div>
+          </motion.div>
+        </>
       )}
-    >
-      <span
-        className={cn(
-          'mono-feats grid size-6 shrink-0 place-items-center rounded-md border font-mono text-[11px]',
-          state === 'correct' && 'border-emerald-500/60 text-emerald-500',
-          state === 'wrong' && 'border-rose-500/60 text-rose-500',
-          (state === 'idle' || state === 'dimmed') && 'border-border text-muted-foreground',
-        )}
-      >
-        {state === 'correct' ? (
-          <Check className="size-3.5" strokeWidth={2.5} />
-        ) : state === 'wrong' ? (
-          <X className="size-3.5" strokeWidth={2.5} />
-        ) : (
-          letter
-        )}
-      </span>
-      <span className="text-[13.5px] leading-snug text-foreground">{text}</span>
-    </button>
+    </AnimatePresence>
   );
 }
+
+/* ------------------------------------------------------------------ feed */
 
 export function ExamView() {
   const pool = useExam((s) => s.pool);
   const loading = useExam((s) => s.loading);
   const questions = useExam((s) => s.questions);
+  const byId = useExam((s) => s.byId);
   const queue = useExam((s) => s.queue);
   const index = useExam((s) => s.index);
-  const chosen = useExam((s) => s.chosen);
+  const setIndex = useExam((s) => s.setIndex);
   const audio = useExam((s) => s.audio);
-  const progress = useExam((s) => s.progress);
-  const streak = useExam((s) => s.streak);
-  const answered = useExam((s) => s.answered);
-  const correct = useExam((s) => s.correct);
-  const loadPool = useExam((s) => s.loadPool);
-  const answer = useExam((s) => s.answer);
-  const next = useExam((s) => s.next);
-  const prev = useExam((s) => s.prev);
   const toggleAudio = useExam((s) => s.toggleAudio);
+  const progress = useExam((s) => s.progress);
+  const loadPool = useExam((s) => s.loadPool);
   const resetProgress = useExam((s) => s.resetProgress);
+  const subFilter = useExam((s) => s.subFilter);
 
-  const q = useExam((s) => (s.queue[s.index] ? (s.byId[s.queue[s.index]] ?? null) : null));
+  const [filterOpen, setFilterOpen] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const reduce = useReducedMotion();
+  const rendered = useRenderedSet(pool);
 
-  // Load the saved pool on first mount.
   useEffect(() => {
     if (!questions.length && !loading) void loadPool(pool);
     warmVoices();
   }, [questions.length, loading, pool, loadPool]);
 
-  // Narrate the card when audio is on: rendered file if one exists, else live.
+  useEffect(() => cancelSpeech, []);
+
+  // A new pool or topic resets the feed to the top.
   useEffect(() => {
-    if (!audio || !q) return;
-    void narrate(pool, q);
-    return stopNarration;
-  }, [audio, q, pool]);
+    scrollRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+  }, [pool, subFilter]);
 
-  useEffect(() => stopNarration, []);
-
-  const pick = useCallback(
-    (i: number) => {
-      if (chosen === null) answer(i);
-      else next();
+  const snapTo = useCallback(
+    (next: number) => {
+      const el = scrollRef.current;
+      if (!el || !queue.length) return;
+      const target = Math.max(0, Math.min(queue.length - 1, next));
+      el.scrollTo({ top: target * el.clientHeight, behavior: reduce ? 'auto' : 'smooth' });
     },
-    [chosen, answer, next],
+    [queue.length, reduce],
   );
 
-  // Keyboard: A–D / 1–4 to answer, ↑↓ or Space to move.
+  // Keyboard: j/k or arrows move the feed, A-D answer the visible card.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (filterOpen || e.metaKey || e.ctrlKey || e.altKey) return;
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
       const k = e.key.toLowerCase();
-      const letter = LETTERS.findIndex((l) => l.toLowerCase() === k);
-      const num = Number(k) - 1;
-      if (letter >= 0) {
+      if (k === 'arrowdown' || k === 'pagedown' || k === 'j') {
         e.preventDefault();
-        pick(letter);
-      } else if (num >= 0 && num <= 3) {
+        snapTo(index + 1);
+      } else if (k === 'arrowup' || k === 'pageup' || k === 'k') {
         e.preventDefault();
-        pick(num);
-      } else if (k === 'arrowdown' || k === ' ' || k === 'enter') {
-        e.preventDefault();
-        next();
-      } else if (k === 'arrowup') {
-        e.preventDefault();
-        prev();
+        snapTo(index - 1);
+      } else {
+        const pick = LETTERS.findIndex((l) => l.toLowerCase() === k);
+        const id = queue[index];
+        if (pick >= 0 && id) {
+          e.preventDefault();
+          useExam.getState().answer(id, pick);
+        }
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [pick, next, prev]);
+  }, [filterOpen, index, queue, snapTo]);
 
-  const swipe = useSwipe(next, prev);
   const stats = useMemo(() => masteryStats(questions, progress), [questions, progress]);
-  const accuracy = answered ? Math.round((correct / answered) * 100) : null;
 
   return (
-    <div className="thin-scroll h-full overflow-y-auto">
-      <div className="mx-auto flex min-h-full max-w-2xl flex-col border-x border-line">
-        {/* Header */}
-        <div className="space-y-3 border-b border-line px-4 py-4 sm:px-6">
-          <div className="flex items-center gap-2">
-            <h1 className="text-[15px] font-medium tracking-tight text-foreground">Exam reels</h1>
-            <span className="mono-feats font-mono text-[10px] text-muted-foreground">
-              {stats.mastered}/{stats.total} mastered
-            </span>
-            <span className="flex-1" />
-            {speechSupported() && (
-              <button
-                onClick={toggleAudio}
-                aria-label={audio ? 'Turn narration off' : 'Turn narration on'}
-                aria-pressed={audio}
-                className={cn(
-                  'grid size-11 place-items-center rounded-lg border transition-colors',
-                  audio
-                    ? 'border-foreground bg-foreground text-background'
-                    : 'border-border text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {audio ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
-              </button>
-            )}
+    <div className="relative h-full w-full overflow-hidden bg-background">
+      {/* header overlay */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-2 px-4 pt-3">
+        <div className="min-w-0">
+          <p className="mono-feats font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+            {stats.mastered}/{stats.total} mastered
+          </p>
+          <h1 className="mt-0.5 truncate text-[16px] font-semibold leading-none text-foreground">
+            {POOLS.find((p) => p.id === pool)?.name} reels
+          </h1>
+        </div>
+        <div className="pointer-events-auto flex shrink-0 items-center gap-1.5">
+          {speechSupported() && (
             <button
-              onClick={resetProgress}
-              aria-label="Reset progress"
-              className="grid size-11 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:text-foreground"
+              onClick={toggleAudio}
+              aria-label={audio ? 'Turn narration off' : 'Turn narration on'}
+              aria-pressed={audio}
+              className={cn(
+                'grid size-10 place-items-center rounded-full border transition-colors',
+                audio
+                  ? 'border-foreground bg-foreground text-background'
+                  : 'border-line bg-background/65 text-foreground/85 backdrop-blur',
+              )}
             >
-              <RotateCcw className="size-4" />
+              {audio ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
             </button>
-          </div>
-
-          <PoolPicker />
-
-          <div className="h-[3px] overflow-hidden rounded-full bg-border">
-            <motion.div
-              className="h-full rounded-full bg-foreground"
-              animate={{ width: `${stats.pct}%` }}
-              transition={{ duration: 0.4, ease: 'easeOut' }}
-            />
-          </div>
-
-          <TopicFilter />
-        </div>
-
-        {/* Reel */}
-        <div className="flex-1 px-4 py-5 sm:px-6" {...swipe}>
-          {loading || !q ? (
-            <div className="grid h-64 place-items-center text-[13px] text-muted-foreground">
-              {loading ? 'Loading question pool…' : 'No questions in this topic.'}
-            </div>
-          ) : (
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={q.id}
-                initial={{ opacity: 0, y: 18 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -18 }}
-                transition={{ duration: 0.22, ease: 'easeOut' }}
-              >
-                <div className="mb-3 flex items-center gap-2">
-                  <span className="mono-feats rounded-md border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-                    {q.id}
-                  </span>
-                  <span className="text-[11px] text-muted-foreground">
-                    {subelementTitle(subelementOf(q.id))}
-                  </span>
-                  {streak >= 3 && (
-                    <span className="mono-feats ml-auto inline-flex items-center gap-1 font-mono text-[10px] text-foreground">
-                      <Sparkles className="size-3" /> {streak}
-                    </span>
-                  )}
-                </div>
-
-                <p className="text-[17px] font-medium leading-snug tracking-tight text-foreground">
-                  {q.q}
-                </p>
-
-                {q.fig && (
-                  <img
-                    src={`/exam/figures/${q.fig}`}
-                    alt={`Figure ${q.fig.replace(/\.png$/, '')} for question ${q.id}`}
-                    className="mt-3 max-h-56 w-auto rounded-lg border border-line bg-white p-2"
-                  />
-                )}
-
-                <div className="mt-4 space-y-2">
-                  {q.a.map((text, i) => {
-                    const state =
-                      chosen === null
-                        ? 'idle'
-                        : i === q.c
-                          ? 'correct'
-                          : i === chosen
-                            ? 'wrong'
-                            : 'dimmed';
-                    return (
-                      <AnswerRow
-                        key={i}
-                        text={text}
-                        letter={LETTERS[i]}
-                        state={state}
-                        onPick={() => pick(i)}
-                      />
-                    );
-                  })}
-                </div>
-
-                <AnimatePresence>
-                  {chosen !== null && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      className="overflow-hidden"
-                    >
-                      <div className="mt-3 flex items-center gap-2 rounded-xl border border-line bg-card p-3">
-                        <span className="text-[12px] text-muted-foreground">
-                          {chosen === q.c ? 'Correct.' : `Answer: ${LETTERS[q.c]}.`}
-                          {q.refs ? ` FCC ${q.refs}` : ''}
-                        </span>
-                        <span className="flex-1" />
-                        <button
-                          onClick={next}
-                          className="min-h-11 rounded-lg bg-foreground px-4 text-[13px] font-medium text-background transition-opacity hover:opacity-85"
-                        >
-                          Next
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            </AnimatePresence>
           )}
-        </div>
-
-        {/* Footer */}
-        <div className="flex items-center gap-2 border-t border-line px-4 py-3 sm:px-6">
           <button
-            onClick={prev}
-            aria-label="Previous question"
-            className="grid size-11 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:text-foreground"
+            onClick={resetProgress}
+            aria-label="Reset progress"
+            className="grid size-10 place-items-center rounded-full border border-line bg-background/65 text-foreground/85 backdrop-blur"
           >
-            <ChevronUp className="size-4" />
+            <RotateCcw className="size-4" />
           </button>
           <button
-            onClick={next}
-            aria-label="Next question"
-            className="grid size-11 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:text-foreground"
+            onClick={() => setFilterOpen(true)}
+            aria-label="Browse questions"
+            className="flex h-10 items-center gap-1.5 rounded-full border border-line bg-background/65 px-3 text-foreground/85 backdrop-blur active:scale-95"
           >
-            <ChevronDown className="size-4" />
-          </button>
-          <span className="mono-feats font-mono text-[10.5px] text-muted-foreground">
-            {queue.length ? index + 1 : 0}/{queue.length}
-          </span>
-          <span className="flex-1" />
-          {accuracy !== null && (
-            <span className="mono-feats font-mono text-[10.5px] text-muted-foreground">
-              {accuracy}% · {answered} answered
+            <ListFilter className="size-4" />
+            <span className="mono-feats max-w-[92px] truncate font-mono text-[10px] uppercase tracking-wider">
+              {subFilter ?? `${queue.length}`}
             </span>
-          )}
+          </button>
         </div>
       </div>
+
+      {/* feed */}
+      {loading || !queue.length ? (
+        <div className="grid h-full place-items-center">
+          {loading ? (
+            <Loader2 className="size-5 animate-spin text-muted-foreground" aria-label="Loading" />
+          ) : (
+            <p className="text-[13px] text-muted-foreground">No questions in this topic.</p>
+          )}
+        </div>
+      ) : (
+        <div
+          ref={scrollRef}
+          aria-label="Exam question reels"
+          onScroll={(e) => {
+            const t = e.currentTarget;
+            setIndex(
+              Math.max(0, Math.min(queue.length - 1, Math.round(t.scrollTop / Math.max(1, t.clientHeight)))),
+            );
+          }}
+          className="no-scrollbar absolute inset-0 snap-y snap-mandatory overflow-y-auto overscroll-y-contain"
+        >
+          {queue.map((id, i) => {
+            const q = byId[id];
+            if (!q) return null;
+            // Only mount cards near the viewport; the rest hold their height.
+            if (Math.abs(i - index) > 3) {
+              return <div key={id} className="h-full snap-start snap-always" aria-hidden />;
+            }
+            return (
+              <ReelCard
+                key={id}
+                q={q}
+                pool={pool}
+                active={i === index && !filterOpen}
+                audioOn={audio}
+                hasClip={rendered.has(id)}
+              />
+            );
+          })}
+        </div>
+      )}
+
+      <FilterSheet open={filterOpen} onClose={() => setFilterOpen(false)} />
     </div>
   );
 }

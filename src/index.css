@@ -313,3 +313,12 @@
     animation-duration: 0.01ms;
   }
 }
+
+/* Reels feed: hide the scrollbar without disabling scrolling. */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

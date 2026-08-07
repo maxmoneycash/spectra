@@ -6,6 +6,7 @@
  * cached). Otherwise we fall back to the browser's live speech synthesis, so
  * narration works with no build step at all.
  */
+import { useEffect, useState } from 'react';
 import type { ElementId, PoolQuestion } from './types';
 import { speakQuestion, cancelSpeech } from './speech';
 
@@ -67,4 +68,25 @@ export async function narrate(pool: ElementId, q: PoolQuestion): Promise<void> {
 /** True when a pool has pre-rendered audio available. */
 export async function hasRenderedAudio(pool: ElementId): Promise<boolean> {
   return (await loadManifest(pool)).size > 0;
+}
+
+export const clipUrl = (pool: ElementId, id: string) => `/exam/audio/${pool}/${id}.m4a`;
+
+/**
+ * The set of question ids with rendered audio for a pool. Empty until the
+ * manifest resolves (and stays empty when a pool has none rendered).
+ */
+export function useRenderedSet(pool: ElementId): Set<string> {
+  const [ids, setIds] = useState<Set<string>>(() => new Set());
+  useEffect(() => {
+    let alive = true;
+    setIds(new Set());
+    void loadManifest(pool).then((s) => {
+      if (alive) setIds(s);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [pool]);
+  return ids;
 }

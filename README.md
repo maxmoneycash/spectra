@@ -119,17 +119,28 @@ Swipe (or ↑/↓) to move, tap an answer or press **A–D** to commit. Wrong an
 
 ### Narration
 
-Every Technician question ships with pre-rendered audio — question and all four choices, one clip each. Toggle the speaker in the reel header. Questions without a rendered clip fall back to the browser's live speech synthesis, so narration works everywhere.
+Every question ships with pre-rendered audio — the question and all four choices, one clip each — voiced by **[Piper](https://github.com/rhasspy/piper)**, a local neural TTS (`en_US-ryan-high`). Toggle the speaker in the reel header; audio follows whichever card is on screen. Anything unrendered falls back to the browser's live speech synthesis, so narration works even with no clips built.
 
-Audio is generated from the public-domain pool text; nothing is sampled from third-party recordings.
+Audio is generated from the public-domain pool text — nothing is sampled from third-party recordings.
 
 ```bash
-npm run narrate -- --sample                 # audition every local voice on one line
-npm run narrate -- --pool technician        # render a pool (~4 min, ~16 MB)
-npm run narrate -- --engine azure --voice en-US-GuyNeural
+npm run narrate                             # all pools with the default engine
+npm run narrate -- --pool technician --engine piper --voice en_US-ryan-high
+npm run narrate -- --sample                 # audition local voices on one line
 ```
 
-Rendering is incremental (a clip is redone only when its text changes) and the engine is pluggable: `say` (macOS, default, no key), `openai`, `elevenlabs`, `google`, `azure`. All engines normalize to mono AAC so the app doesn't care which produced a clip.
+Rendering is incremental (a clip is redone only when its narration text changes) and the engine is pluggable: `piper` (local neural, free), `say` (macOS built-in), `openai`, `elevenlabs`, `google`, `azure`. Every engine normalizes to mono AAC, so the app never cares which produced a clip.
+
+Piper setup — one time, free, offline:
+
+```bash
+python3 -m venv ~/.local/share/piper-venv && ~/.local/share/piper-venv/bin/pip install piper-tts
+mkdir -p ~/.local/share/piper-voices && cd ~/.local/share/piper-voices
+curl -LO https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ryan/high/en_US-ryan-high.onnx
+curl -LO https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ryan/high/en_US-ryan-high.onnx.json
+```
+
+Override locations with `PIPER_BIN` / `PIPER_MODEL`.
 
 ## Roadmap
 
