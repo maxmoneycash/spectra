@@ -3,6 +3,7 @@ import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { useStore } from './store/store';
 import { Academy } from './academy/Academy';
 import { ExamView } from './exam/ExamView';
+import { CtfView } from './ctf/CtfView';
 import { TopBar } from './ui/TopBar';
 import { SpectrumWaterfall } from './ui/SpectrumWaterfall';
 import { StartOverlay } from './ui/StartOverlay';
@@ -116,6 +117,8 @@ export function App() {
             </>
           ) : view === 'exam' ? (
             <ExamView />
+          ) : view === 'ctf' ? (
+            <CtfView />
           ) : (
             <Academy />
           )}

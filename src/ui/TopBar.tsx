@@ -109,6 +109,7 @@ export function TopBar({
         <NavTab id="console" label="Console" active={isConsole} onClick={setView} />
         <NavTab id="academy" label="Academy" active={view === 'academy'} onClick={setView} />
         <NavTab id="exam" label="Exam" active={view === 'exam'} onClick={setView} />
+        <NavTab id="ctf" label="CTF" active={view === 'ctf'} onClick={setView} />
       </div>
 
       {isConsole && sc && (

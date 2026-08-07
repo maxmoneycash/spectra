@@ -142,6 +142,14 @@ curl -LO https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ryan/
 
 Override locations with `PIPER_BIN` / `PIPER_MODEL`.
 
+## RF CTF
+
+Ten capture-the-flag challenges worked on the live receiver, graded against the simulator's ground truth — no hardware, no server, nothing to install. Categories mirror real operator skills: **recon** (count what's on the band), **decode** (read a CW beacon buried under a louder neighbour), **identify** (name a modulation from its waterfall signature), and **analysis** (measure a frequency or an occupied bandwidth).
+
+Answers are checked against a salted hash, so flags aren't sitting in plain sight in the bundle. Hints are available and cost 15% each. Score and rank — Listener through Signals Officer — persist locally.
+
+Distribution thinking lives in [`docs/GROWTH.md`](docs/GROWTH.md).
+
 ## Roadmap
 
 Next up: a **macOS menu-bar WiFi console** (CoreWLAN channel-occupancy graphs, RSSI history, security audit — see [`docs/ROADMAP.md`](docs/ROADMAP.md) for the phased plan and research notes), then **WebUSB SDR ingest** and a **WiFi sensing lab**. Near-term additions: a morse/CW audio trainer, per-card dynamic OG images and FCC callsign validation for the Operator Card (v2 notes in `docs/ROADMAP.md`).
