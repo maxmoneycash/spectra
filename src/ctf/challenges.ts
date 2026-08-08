@@ -1,7 +1,7 @@
 import type { EmitterConfig } from '../sim/emitters';
 import type { SceneSpec } from '../engine/protocol';
 
-export type CtfCategory = 'recon' | 'decode' | 'identify' | 'analysis';
+export type CtfCategory = 'recon' | 'decode' | 'identify' | 'analysis' | 'intercept';
 
 export interface Challenge {
   id: string;
@@ -267,6 +267,68 @@ export const CHALLENGES: Challenge[] = [
     ],
     suggest: 'cw',
   },
+  {
+    id: 'split-the-pair',
+    name: 'Split the Pair',
+    category: 'intercept',
+    points: 300,
+    brief:
+      'Two stations are keying 350 Hz apart on 20 m — close enough that a stock CW filter hears both at once and the copy comes out as interleaved nonsense. Separate them and copy the one sending a two-word message. The other is only sending test.',
+    answerHint: 'Two words',
+    hints: [
+      'Your CW filter defaults to 500 Hz. The pair is inside that.',
+      'Narrow the bandwidth until only one carrier is left in the passband, then tune onto it.',
+    ],
+    flagHash: '3f419efae0d2b9ef6ab05b2996534134',
+    centerFreqHz: 14.02 * MHZ,
+    noiseSigma: 0.028,
+    emitters: [
+      { id: 'flag', kind: 'cw', freqHz: 14.02 * MHZ, powerDb: -5, wpm: 15, text: 'DE SPECTRA NARROW FILTER  ', seed: 501 },
+      { id: 'decoy', kind: 'cw', freqHz: 14.02035 * MHZ, powerDb: -5, wpm: 15, text: 'VVV VVV TEST DE TEST  ', seed: 502 },
+    ],
+    suggest: 'cw',
+  },
+  {
+    id: 'repeater-input',
+    name: 'Working the Input',
+    category: 'intercept',
+    points: 300,
+    brief:
+      "You've found a 2 m repeater's output — narrowband voice, easy copy. But the interesting traffic is what stations send *to* it. Find the repeater's input and copy the two-word message being keyed there.",
+    answerHint: 'Two words',
+    hints: [
+      'A repeater receives on one frequency and retransmits on another.',
+      'The standard 2 m offset is 600 kHz, and below 147 MHz it is conventionally negative.',
+    ],
+    flagHash: 'c944711df5f1ab93b747bb463a7fa833',
+    centerFreqHz: 146.64 * MHZ,
+    noiseSigma: 0.03,
+    emitters: [
+      { id: 'output', kind: 'nfm', freqHz: 146.94 * MHZ, powerDb: -4, message: 'voice', seed: 503 },
+      { id: 'input', kind: 'cw', freqHz: 146.34 * MHZ, powerDb: -7, wpm: 16, text: 'DE SPECTRA SPLIT SHIFT  ', seed: 504 },
+    ],
+    suggest: 'nfm',
+  },
+  {
+    id: 'squelch-down',
+    name: 'Below the Gate',
+    category: 'intercept',
+    points: 250,
+    brief:
+      'There is a beacon here, but your receiver is not passing it — the squelch is set above the signal, so the audio stays muted and the decoder never sees a thing. Open the receiver up and copy the two-word message.',
+    answerHint: 'Two words',
+    hints: [
+      'The waterfall shows the carrier even when you cannot hear it — the gate is downstream of the display.',
+      'Squelch mutes the audio the CW decoder listens to. Lower it until the signal passes.',
+    ],
+    flagHash: 'dc5e8fb39331f6f91229b2e810ebbf70',
+    centerFreqHz: 10.12 * MHZ,
+    noiseSigma: 0.02,
+    emitters: [
+      { id: 'weak', kind: 'cw', freqHz: 10.125 * MHZ, powerDb: -26, wpm: 14, text: 'DE SPECTRA OPEN THE GATE  ', seed: 505 },
+    ],
+    suggest: 'cw',
+  },
 ];
 
 export const challengeById = (id: string) => CHALLENGES.find((c) => c.id === id);
@@ -284,4 +346,5 @@ export const CATEGORY_LABEL: Record<CtfCategory, string> = {
   decode: 'Decode',
   identify: 'Identify',
   analysis: 'Analysis',
+  intercept: 'Intercept',
 };

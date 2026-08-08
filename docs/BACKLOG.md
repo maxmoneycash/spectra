@@ -117,3 +117,29 @@ scene (for CW, through the real encode -> decode -> checkFlag chain).
 Its one salvageable finding, worth keeping: CW emitters can read as
 "continuous" mid-message, so a duty-cycle question about a CW signal would be
 graded wrong.
+
+## Intercept challenges — the operating layer
+
+Several of the original ten could be answered by reading the Stations panel
+without touching the receiver. The `intercept` category fixes that: the flag
+is only *copyable* once the radio is set up correctly, so the answer itself
+proves the operating and nothing has to inspect the user's settings.
+
+Each is enforced by the DSP, not by a rule:
+
+- **Split the Pair** — two CW beacons 350 Hz apart, inside the stock 500 Hz
+  CW filter, so the copy interleaves into nonsense. `Receiver.buildChain`
+  derives the channel filter from `bandwidthHz`, so narrowing genuinely
+  rejects the neighbour.
+- **Working the Input** — the flag is on a repeater's input, 600 kHz below
+  the output you find first. Requires knowing the offset convention.
+- **Below the Gate** — the beacon sits under the default squelch.
+  `applySquelchAgc` runs before the worker's `decodeCW`, so a closed gate
+  really does starve the decoder while the waterfall still shows the carrier.
+
+The challenge sheet carries a live receiver strip (frequency, mode,
+bandwidth, and what the decoder is copying right now) so wrong operating
+reads as garbage and correct operating resolves into text as you work.
+
+Next for this category: zero-beat tuning precision, catching one beacon in a
+timed rotation, and copying through deliberate adjacent-channel splatter.

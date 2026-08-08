@@ -45,6 +45,46 @@ function Row({ c, onOpen }: { c: Challenge; onOpen: (id: string) => void }) {
   );
 }
 
+
+/** Live receiver state + what the CW decoder is copying this second. */
+function InterceptStrip() {
+  const centerFreqHz = useStore((s) => s.centerFreqHz);
+  const tuningOffsetHz = useStore((s) => s.tuningOffsetHz);
+  const mode = useStore((s) => s.mode);
+  const bandwidthHz = useStore((s) => s.bandwidthHz);
+  const morseText = useStore((s) => s.morseText);
+  const running = useStore((s) => s.running);
+  const copy = morseText.slice(-44);
+
+  return (
+    <div className="rounded-lg border border-line bg-background p-3">
+      <div className="mono-feats flex items-center gap-2 font-mono text-[9.5px] uppercase tracking-[0.14em] text-muted-foreground">
+        <span className={cn('size-1.5 rounded-full', running ? 'bg-emerald-500' : 'bg-border')} />
+        Receiver
+        <span className="flex-1" />
+        <span>{((centerFreqHz + tuningOffsetHz) / 1e6).toFixed(4)} MHz</span>
+        <span>{mode.toUpperCase()}</span>
+        <span>{bandwidthHz >= 1000 ? `${(bandwidthHz / 1000).toFixed(1)}k` : `${bandwidthHz}`}</span>
+      </div>
+      <p
+        className="mono-feats mt-2 min-h-[2.2em] break-all font-mono text-[12px] leading-snug text-foreground"
+        aria-live="polite"
+        aria-label="Live decoder copy"
+      >
+        {copy || (
+          <span className="text-muted-foreground">
+            {running
+              ? mode === 'cw'
+                ? 'listening…'
+                : 'switch to CW to copy a keyed signal'
+              : 'receiver stopped'}
+          </span>
+        )}
+      </p>
+    </div>
+  );
+}
+
 function ChallengeSheet({ id, onClose }: { id: string | null; onClose: () => void }) {
   const c = id ? challengeById(id) : null;
   const solve = useCtf((s) => (id ? s.solved[id] : undefined));
@@ -77,6 +117,8 @@ function ChallengeSheet({ id, onClose }: { id: string | null; onClose: () => voi
         </div>
 
         <p className="text-[13px] leading-relaxed text-foreground">{c.brief}</p>
+
+        {(c.category === 'intercept' || c.category === 'decode') && <InterceptStrip />}
 
         <div className="rounded-lg border border-line bg-background p-3">
           <p className="mono-feats font-mono text-[9.5px] uppercase tracking-wider text-muted-foreground">

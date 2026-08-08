@@ -84,7 +84,7 @@ describe('share text', () => {
 
   it('carries score, rank and a link', () => {
     const t = built();
-    expect(t).toContain('2/10 flags');
+    expect(t).toContain(`2/${CHALLENGES.length} flags`);
     expect(t).toContain('https://x.test/?view=ctf');
     expect(t.split('\n').length).toBeGreaterThanOrEqual(4);
   });
