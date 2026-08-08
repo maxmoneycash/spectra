@@ -48,13 +48,17 @@ export function useUrlSync(): void {
         .loadPool(url.pool as ElementId)
         .then(() => {
           if (!url.topic) return;
-          const known = useExam.getState().questions.some((q) => q.id.startsWith(url.topic!));
-          if (known) useExam.getState().setSubFilter(url.topic!.toUpperCase());
+          const topic = url.topic.toUpperCase();
+          const known = useExam.getState().questions.some((q) => q.id.startsWith(topic));
+          if (known) useExam.getState().setSubFilter(topic);
         });
     }
 
     // View last, so it wins over any default a loader above may have set.
-    if (url.view) useStore.getState().setView(url.view);
+    // A bare ?c= or ?pool= implies the view it belongs to — otherwise the
+    // outbound writer, which only emits params for the visible view, drops it.
+    const implied = url.view ?? (url.c ? 'ctf' : url.pool ? 'exam' : undefined);
+    if (implied) useStore.getState().setView(implied);
   }, []);
 
   // ---- outbound: reflect state back into the address bar -----------------

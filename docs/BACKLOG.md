@@ -79,7 +79,8 @@ and answer keys that accepted a spelling the UI never shows.
       `index` to 0 without resetting `scrollTop`; cards outside the ±3 window
       render `aria-hidden`, and A–D grades the off-screen `queue[0]`.
       `ExamView.tsx:286-288,392-394`.
-- [ ] **Submit wedges on a `checkFlag` throw.** No try/catch around
+- [x] **Submit wedges on a `checkFlag` throw.** FIXED — try/catch, and it now says why.
+      Was: No try/catch around
       `crypto.subtle.digest`, which is undefined outside a secure context —
       `checking` never clears, Submit stays disabled. `ctf/store.ts:90-98`.
 - [ ] **Sibling cards cancel live narration.** The inactive branch calls the
@@ -89,9 +90,11 @@ and answer keys that accepted a spelling the UI never shows.
 - [ ] **Canvas panels keep the old palette after a theme flip while stopped.**
       Draws are driven by engine events; only the waterfall is cleared. The
       spectrum plot, ruler, scopes and Academy `LogAxis` stay stale.
-- [ ] **`loadPool` drops a rapid second click** — bails on `loading` after
+- [x] **`loadPool` drops a rapid second click** FIXED — concurrent calls allowed, latest-wins.
+      Was: — bails on `loading` after
       already committing `pool`. Needs latest-wins.
-- [ ] **Deep-link `?topic=` is case-sensitive**, and a `?c=` link with no
+- [x] **Deep-link `?topic=` is case-sensitive** FIXED — normalised, and a bare `?c=`/`?pool=` now implies its view.
+      Was:, and a `?c=` link with no
       `view` param loses `c` on the first outbound write.
 - [ ] `index.html` hardcodes `color-scheme: dark` while the theme defaults to
       light and ignores `prefers-color-scheme`.

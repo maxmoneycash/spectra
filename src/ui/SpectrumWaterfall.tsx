@@ -93,8 +93,12 @@ export function SpectrumWaterfall() {
   // don't end up stacked in the same waterfall.
   const { theme } = useTheme();
   const clearWaterfallRef = useRef<() => void>(() => {});
+  const redrawRef = useRef<() => void>(() => {});
   useEffect(() => {
     clearWaterfallRef.current();
+    // Nothing repaints the plot until the next engine frame, so a theme flip
+    // while the sim is stopped would otherwise leave it in the old palette.
+    redrawRef.current();
   }, [theme]);
 
   useEffect(() => {
@@ -138,6 +142,10 @@ export function SpectrumWaterfall() {
       c.fillRect(0, 0, width, wfHeight);
     };
     clearWaterfallRef.current = clearWaterfall;
+    redrawRef.current = () => {
+      drawSpectrum();
+      updateOverlays();
+    };
 
     const onSpectrum = (db: Float32Array) => {
       if (!rowImg) return;

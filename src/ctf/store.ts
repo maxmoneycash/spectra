@@ -90,7 +90,18 @@ export const useCtf = create<CtfState>((set, get) => {
     async submit(id, answer) {
       if (!answer.trim() || get().checking) return false;
       set({ checking: true });
-      const ok = await checkFlag(id, answer);
+      let ok = false;
+      try {
+        ok = await checkFlag(id, answer);
+      } catch {
+        // crypto.subtle is undefined outside a secure context. Surface it
+        // rather than leaving Submit disabled for the rest of the session.
+        set({
+          checking: false,
+          verdict: { id, ok: false, msg: 'Could not check the flag here — needs https or localhost.' },
+        });
+        return false;
+      }
       const st = get();
       if (!ok) {
         set({ checking: false, verdict: { id, ok: false, msg: 'Not it — try again.' } });

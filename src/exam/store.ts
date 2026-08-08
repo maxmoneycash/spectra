@@ -118,9 +118,13 @@ export const useExam = create<ExamState>((set, get) => {
     correct: 0,
 
     async loadPool(id) {
-      if (get().loading) return;
+      // Deliberately not gated on `loading`: bailing there dropped a second
+      // click entirely. Concurrent calls are allowed and resolved latest-wins.
       set({ loading: true, pool: id, chosenById: {}, index: 0, subFilter: null });
       const mod = await LOADERS[id]();
+      // A newer selection landed while this chunk was in flight — it owns the
+      // store now, including clearing `loading`. Drop this result.
+      if (get().pool !== id) return;
       const questions = mod.default;
       const byId: Record<string, PoolQuestion> = {};
       for (const q of questions) byId[q.id] = q;
