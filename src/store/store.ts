@@ -100,6 +100,8 @@ interface AppState {
   cardOpen: boolean;
   operator: OperatorRecord;
   audioStarted: boolean;
+  /** True once any view has pushed a scene to the worker. */
+  sceneLoaded: boolean;
   cmapIndex: number;
   floorDb: number;
   ceilDb: number;
@@ -128,6 +130,7 @@ interface AppState {
   setView: (v: AppView) => void;
   setCardOpen: (open: boolean) => void;
   recordMission: (id: string) => void;
+  markSceneLoaded: () => void;
   setCmap: (i: number) => void;
   setDbRange: (floorDb: number, ceilDb: number) => void;
 }
@@ -164,6 +167,7 @@ export const useStore = create<AppState>((set, get) => {
     cardOpen: false,
     operator: loadOperator(),
     audioStarted: false,
+    sceneLoaded: false,
     cmapIndex: 0,
     floorDb: -80,
     ceilDb: -22,
@@ -173,9 +177,13 @@ export const useStore = create<AppState>((set, get) => {
     start: async () => {
       const st = get();
       if (!st.audioStarted) {
-        // First start: load the current scenario into the worker.
-        const sc = scenarioById(st.scenarioId)!;
-        engine.loadScene(toSceneSpec(sc));
+        // First start: push the default scenario only if nothing else has
+        // already loaded a scene. The CTF and deep links load their own, and
+        // clobbering them here left the UI labelling the wrong spectrum.
+        if (!st.sceneLoaded) {
+          const sc = scenarioById(st.scenarioId)!;
+          engine.loadScene(toSceneSpec(sc));
+        }
         engine.setTuning(st.tuningOffsetHz);
         engine.setMode(st.mode);
         engine.setBandwidth(st.bandwidthHz);
@@ -183,7 +191,7 @@ export const useStore = create<AppState>((set, get) => {
         engine.setVolume(st.volume);
       }
       await engine.start();
-      set({ running: true, audioStarted: true, playingSince: Date.now() });
+      set({ running: true, audioStarted: true, sceneLoaded: true, playingSince: Date.now() });
     },
 
     stop: () => {
@@ -196,6 +204,7 @@ export const useStore = create<AppState>((set, get) => {
       if (!sc) return;
       engine.loadScene(toSceneSpec(sc));
       set({
+        sceneLoaded: true,
         scenarioId: id,
         centerFreqHz: sc.centerFreqHz,
         noiseSigma: sc.noiseSigma,
@@ -342,6 +351,8 @@ export const useStore = create<AppState>((set, get) => {
       saveOperator(next);
       set({ operator: next });
     },
+    markSceneLoaded: () => set({ sceneLoaded: true }),
+
     setCmap: (i) => set({ cmapIndex: i }),
     setDbRange: (floorDb, ceilDb) => set({ floorDb, ceilDb }),
   };

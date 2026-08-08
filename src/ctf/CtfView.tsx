@@ -182,7 +182,13 @@ export function CtfView() {
     const c = challengeById(id);
     if (!c) return;
     getEngine().loadScene(toSceneSpec(c));
-    useStore.setState({ centerFreqHz: c.centerFreqHz, tuningOffsetHz: 0, detections: [] });
+    useStore.setState({
+      centerFreqHz: c.centerFreqHz,
+      noiseSigma: c.noiseSigma,
+      sceneLoaded: true,
+      tuningOffsetHz: 0,
+      detections: [],
+    });
     getEngine().setTuning(0);
     setActive(id);
   };

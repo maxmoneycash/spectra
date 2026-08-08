@@ -282,10 +282,14 @@ export function ExamView() {
 
   useEffect(() => cancelSpeech, []);
 
-  // A new pool or topic resets the feed to the top.
+  // Any queue rebuild must take the scroll position with it. Resetting
+  // progress, or re-tapping the current pool/topic, reshuffles and sets
+  // index to 0 without changing pool or subFilter — leaving scrollTop
+  // stranded, which blanked the feed (cards outside the +/-3 window render
+  // aria-hidden) and graded the off-screen queue[0].
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0, behavior: 'auto' });
-  }, [pool, subFilter]);
+  }, [pool, subFilter, queue]);
 
   const snapTo = useCallback(
     (next: number) => {

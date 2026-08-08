@@ -31,6 +31,8 @@ export function useUrlSync(): void {
         getEngine().loadScene(toSceneSpec(c));
         useStore.setState({
           centerFreqHz: c.centerFreqHz,
+          noiseSigma: c.noiseSigma,
+          sceneLoaded: true,
           tuningOffsetHz: 0,
           detections: [],
         });

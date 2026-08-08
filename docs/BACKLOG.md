@@ -67,12 +67,14 @@ and answer keys that accepted a spelling the UI never shows.
 
 **Correctness, ranked**
 
-- [ ] **CTF scene discarded on first play.** `start()` reloads `scenarioId`
+- [x] **CTF scene discarded on first play.** FIXED — `sceneLoaded` flag; `start()` no longer clobbers a scene another view loaded.
+      Was: `start()` reloads `scenarioId`
       when `audioStarted` is false, so opening a challenge (or a `?c=` link)
       then pressing play swaps in the default scenario while the store still
       reports the challenge's frequencies. `store.ts:174-186` vs
       `CtfView.tsx:181-188`.
-- [ ] **Reels blank + mis-grade after a queue rebuild.** `resetProgress()`,
+- [x] **Reels blank + mis-grade after a queue rebuild.** FIXED — scroll reset now keyed on `queue` identity.
+      Was: `resetProgress()`,
       re-tapping the current topic, or re-tapping the current pool reset
       `index` to 0 without resetting `scrollTop`; cards outside the ±3 window
       render `aria-hidden`, and A–D grades the off-screen `queue[0]`.
@@ -99,3 +101,19 @@ and answer keys that accepted a spelling the UI never shows.
 **Clean on review:** `urlState.ts`, `colormaps.ts`, CTF scoring/hints/
 persistence, the exam spaced-repetition weighting, the narration manifest
 logic, `controls.tsx`.
+
+## Second CTF set — needs redoing
+
+An agent produced 10 challenges then stalled mid-fix. The file carried ten
+flag hashes and **no record of the intended answers**, and SHA-256 is one-way,
+so not one challenge could be shown to be solvable. Discarded rather than
+shipped — an unsolvable challenge set is worse than none, as the brace bug
+just demonstrated.
+
+If retried, the brief must require: the plaintext answers recorded alongside
+the hashes, and a test proving each flag is reachable from the simulated
+scene (for CW, through the real encode -> decode -> checkFlag chain).
+
+Its one salvageable finding, worth keeping: CW emitters can read as
+"continuous" mid-message, so a duty-cycle question about a CW signal would be
+graded wrong.
