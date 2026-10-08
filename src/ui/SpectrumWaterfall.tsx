@@ -617,7 +617,7 @@ export function SpectrumWaterfall() {
   autoLevelRef.current = autoLevel;
 
   return (
-    <div ref={wrapRef} className="absolute inset-0 flex cursor-crosshair flex-col touch-none">
+    <div ref={wrapRef} data-guide="waterfall" className="absolute inset-0 flex cursor-crosshair flex-col touch-none">
       <WaterfallControls onAuto={autoLevel} zoomLabelRef={zoomLabelRef} />
       <div ref={vfoBandRef} className="vfo-band" />
       <div

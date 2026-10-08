@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { getEngine } from '../engine/engine';
-import type { TrackMsg } from '../engine/protocol';
+import type { SceneSpec, TrackMsg } from '../engine/protocol';
 import type { DemodMode, SignalKind } from '../sim/signal-kinds';
 import { KIND_INFO } from '../sim/signal-kinds';
 import { SCENARIOS, scenarioById, toSceneSpec } from '../scenarios/scenarios';
@@ -8,21 +8,15 @@ import { scoreIdentification } from '../scenarios/scoring';
 import { Scanner, type ScanSnapshot } from '../engine/scanner';
 import { SAMPLE_RATE } from '../engine/protocol';
 
-export const MODE_BW: Record<DemodMode, number> = {
-  wfm: 180_000,
-  nfm: 12_000,
-  am: 8_000,
-  usb: 2_700,
-  lsb: 2_700,
-  cw: 500,
-  raw: 20_000,
-};
-
-export const DEMOD_MODES: DemodMode[] = ['wfm', 'nfm', 'am', 'usb', 'lsb', 'cw', 'raw'];
+export { MODE_BW, BW_RANGE, DEMOD_MODES } from './modes';
+import { MODE_BW } from './modes';
 
 export type PanelTab = 'signals' | 'scan' | 'log' | 'library' | 'scenario';
 
 export type AppView = 'console' | 'academy' | 'exam' | 'ctf';
+
+/** Pages of the phone receiver deck (lifted here so walkthroughs can steer it). */
+export type DeckPage = 'mode' | 'filter' | 'audio' | 'scan';
 
 /** Persisted operator record powering the shareable Operator Card. */
 export interface OperatorRecord {
@@ -144,10 +138,13 @@ interface AppState {
   onAir: Record<string, OnAir>;
   intercepts: Intercept[];
   scan: ScanSnapshot | null;
+  deckPage: DeckPage;
 
   start: () => Promise<void>;
   stop: () => void;
   loadScenario: (id: string) => void;
+  /** Load an ad-hoc scene (a CTF challenge or a walkthrough) into the engine. */
+  loadSpec: (spec: SceneSpec) => void;
   setCenter: (hz: number) => void;
   setTuning: (offsetHz: number) => void;
   tuneTo: (freqHz: number) => void;
@@ -161,6 +158,7 @@ interface AppState {
   tuneToTrack: (track: TrackMsg) => void;
   /** Snap onto a detected signal: center, recommended mode and filter. */
   lockOn: (track: TrackMsg, opts?: { fromScanner?: boolean }) => void;
+  setDeckPage: (p: DeckPage) => void;
   scanToggle: () => void;
   scanStep: (hz: number) => void;
   scanLockout: () => void;
@@ -271,6 +269,7 @@ export const useStore = create<AppState>((set, get) => {
     onAir: {},
     intercepts: [],
     scan: null,
+    deckPage: 'mode',
 
     start: async () => {
       const st = get();
@@ -295,6 +294,23 @@ export const useStore = create<AppState>((set, get) => {
     stop: () => {
       engine.stop();
       set({ running: false, playingSince: null });
+    },
+
+    loadSpec: (spec) => {
+      scanner.reset();
+      engine.loadScene(spec);
+      set({
+        sceneLoaded: true,
+        centerFreqHz: spec.centerFreqHz,
+        noiseSigma: spec.noiseSigma,
+        tuningOffsetHz: 0,
+        detections: [],
+        morseText: '',
+        correctlyIdentified: [],
+        idFeedback: null,
+        selectedId: null,
+      });
+      engine.setTuning(0);
     },
 
     loadScenario: (id) => {
@@ -449,6 +465,7 @@ export const useStore = create<AppState>((set, get) => {
         scanner.start(get().tuningOffsetHz);
       }
     },
+    setDeckPage: (p) => set({ deckPage: p }),
     scanStep: (hz) => scanner.setStep(hz),
     scanLockout: () => scanner.lockout(),
     scanNext: () => scanner.next(),

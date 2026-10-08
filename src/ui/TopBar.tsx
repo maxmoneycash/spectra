@@ -154,6 +154,7 @@ export function TopBar({
               <SkipBack className="size-4" strokeWidth={1.75} />
             </IconButton>
             <motion.button
+              data-guide="power"
               aria-label={running ? 'Stop the simulation' : 'Start the simulation'}
               title={running ? 'Stop' : 'Start'}
               onClick={() => (running ? stop() : start())}

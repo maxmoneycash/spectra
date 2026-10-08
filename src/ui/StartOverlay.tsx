@@ -50,6 +50,7 @@ export function StartOverlay() {
                   void start();
                 }}
                 whileTap={{ scale: 0.92 }}
+                data-guide="power"
                 aria-label="Power on the receiver"
                 className="relative grid size-[72px] place-items-center rounded-full bg-stage-foreground text-stage shadow-[0_10px_40px_-8px_rgba(0,0,0,0.6)] outline-none ring-offset-2 ring-offset-stage focus-visible:ring-2 focus-visible:ring-stage-foreground"
               >

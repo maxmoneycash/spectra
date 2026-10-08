@@ -8,10 +8,12 @@ import { Lessons } from './Lessons';
 import { CourseView } from './course/CourseView';
 import { ReferenceView } from './course/ReferenceView';
 import { UnderlineTabs } from '@/ui/controls';
+import { WalkthroughList } from '../guide/WalkthroughList';
 
-type AcademyTab = 'explorer' | 'course' | 'reference';
+type AcademyTab = 'walkthroughs' | 'explorer' | 'course' | 'reference';
 
 const TABS: { id: AcademyTab; label: string }[] = [
+  { id: 'walkthroughs', label: 'Walkthroughs' },
   { id: 'explorer', label: 'Explorer' },
   { id: 'course', label: 'Course' },
   { id: 'reference', label: 'Reference' },
@@ -73,7 +75,7 @@ function ExplorerView({ onTune }: { onTune: (scenarioId: string) => void }) {
  * (glossary + widget playground). Everything hands off into the simulator.
  */
 export function Academy() {
-  const [tab, setTab] = useState<AcademyTab>('explorer');
+  const [tab, setTab] = useState<AcademyTab>('walkthroughs');
 
   const openInSimulator = useCallback((scenarioId: string) => {
     const s = useStore.getState();
@@ -100,6 +102,7 @@ export function Academy() {
       />
 
       <div className="min-h-0 flex-1">
+        {tab === 'walkthroughs' && <WalkthroughList />}
         {tab === 'explorer' && <ExplorerView onTune={openInSimulator} />}
         {tab === 'course' && (
           <div className="h-full">

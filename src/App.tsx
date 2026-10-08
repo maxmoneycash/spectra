@@ -8,6 +8,7 @@ import { TopBar } from './ui/TopBar';
 import { SpectrumWaterfall } from './ui/SpectrumWaterfall';
 import { StartOverlay } from './ui/StartOverlay';
 import { OnAirCaption } from './ui/OnAirCaption';
+import { GuideCoach } from './guide/GuideCoach';
 import { ReceiverDeck } from './ui/deck/ReceiverDeck';
 import { MobileDeck } from './ui/deck/MobileDeck';
 import { useMediaQuery } from './hooks/useMediaQuery';
@@ -109,6 +110,7 @@ export function App() {
                     <SpectrumWaterfall />
                     <OnAirCaption />
                     <StartOverlay />
+                    <GuideCoach />
                   </div>
                   <aside
                     aria-label="Inspector"

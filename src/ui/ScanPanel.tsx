@@ -126,6 +126,7 @@ export function ScanPanel({ compact = false }: { compact?: boolean }) {
       {/* controls */}
       <div className="flex items-center gap-2">
         <button
+          data-guide="scan"
           onClick={() => {
             lock();
             toggle();

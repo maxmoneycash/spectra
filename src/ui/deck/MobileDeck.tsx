@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { ChevronsLeft, ChevronsRight } from 'lucide-react';
-import { useStore, nearestLabel } from '@/store/store';
+import { useStore, nearestLabel, type DeckPage, BW_RANGE } from '@/store/store';
 import { getEngine } from '@/engine/engine';
 import { SAMPLE_RATE } from '@/engine/protocol';
 import type { DemodMode } from '@/sim/signal-kinds';
@@ -28,15 +28,6 @@ const TUNE_STEP: Record<DemodMode, number> = {
   raw: 5_000,
 };
 
-const BW_RANGE: Record<DemodMode, [number, number, number]> = {
-  wfm: [100_000, 240_000, 5_000],
-  nfm: [6_000, 25_000, 500],
-  am: [3_000, 16_000, 500],
-  usb: [1_200, 4_000, 100],
-  lsb: [1_200, 4_000, 100],
-  cw: [200, 2_000, 50],
-  raw: [5_000, 300_000, 5_000],
-};
 
 const MODE_TILES: { mode: DemodMode; hint: string }[] = [
   { mode: 'nfm', hint: 'Two-way voice · repeaters' },
@@ -47,7 +38,7 @@ const MODE_TILES: { mode: DemodMode; hint: string }[] = [
   { mode: 'cw', hint: 'Morse code' },
 ];
 
-type Page = 'mode' | 'filter' | 'audio' | 'scan';
+type Page = DeckPage;
 const PAGES: Page[] = ['mode', 'filter', 'audio', 'scan'];
 
 /**
@@ -75,31 +66,31 @@ export function MobileDeck() {
   const running = useStore((s) => s.running);
 
   const [tuneOpen, setTuneOpen] = useState(false);
-  const [page, setPage] = useState<Page>('mode');
+  const page = useStore((s) => s.deckPage);
+  const setPage = useStore((s) => s.setDeckPage);
   const [emblaRef, embla] = useEmblaCarousel({ align: 'start', containScroll: 'trimSnaps', skipSnaps: false });
 
+  // Swipes update the store; store changes (tabs, walkthroughs) drive the carousel.
   useEffect(() => {
     if (!embla) return;
     const onSelect = () => {
       const p = PAGES[embla.selectedScrollSnap()];
-      setPage((prev) => {
-        if (prev !== p) tick();
-        return p;
-      });
+      if (p !== useStore.getState().deckPage) {
+        tick();
+        setPage(p);
+      }
     };
     embla.on('select', onSelect);
     return () => {
       embla.off('select', onSelect);
     };
-  }, [embla]);
+  }, [embla, setPage]);
+  useEffect(() => {
+    const i = PAGES.indexOf(page);
+    if (embla && embla.selectedScrollSnap() !== i) embla.scrollTo(i);
+  }, [embla, page]);
 
-  const goPage = useCallback(
-    (p: Page) => {
-      setPage(p);
-      embla?.scrollTo(PAGES.indexOf(p));
-    },
-    [embla],
-  );
+  const goPage = useCallback((p: Page) => setPage(p), [setPage]);
 
   const tuned = centerFreqHz + tuningOffsetHz;
   const station = nearestLabel(detections, tuningOffsetHz);
@@ -112,6 +103,7 @@ export function MobileDeck() {
       <div className="flex items-center gap-1 px-2 pt-2">
         <SeekButton dir={-1} disabled={!canSeek} onSeek={() => tuneStep(-1)} />
         <button
+          data-guide="tune"
           onClick={() => setTuneOpen(true)}
           aria-label={`Tuned to ${fmtMHz(tuned)} megahertz. Open the tuner.`}
           className="flex min-w-0 flex-1 flex-col items-center rounded-xl py-1 transition-colors active:bg-accent"
@@ -159,7 +151,7 @@ export function MobileDeck() {
         <div className="flex touch-pan-y">
           {/* MODE */}
           <div className="min-w-0 shrink-0 grow-0 basis-full px-3 py-2.5">
-            <div className="grid grid-cols-3 gap-1.5" role="radiogroup" aria-label="Demodulation mode">
+            <div data-guide="mode" className="grid grid-cols-3 gap-1.5" role="radiogroup" aria-label="Demodulation mode">
               {MODE_TILES.map(({ mode: m, hint }) => {
                 const active = m === mode;
                 return (
@@ -196,6 +188,7 @@ export function MobileDeck() {
           {/* FILTER */}
           <div className="min-w-0 shrink-0 grow-0 basis-full px-3 py-2">
             <div className="flex items-center justify-around gap-2">
+              <div data-guide="bandwidth">
               <Knob
                 label="Bandwidth"
                 value={bandwidthHz}
@@ -208,6 +201,8 @@ export function MobileDeck() {
                 mapFrom01={logFrom01}
                 size={68}
               />
+              </div>
+              <div data-guide="squelch">
               <Knob
                 label="Squelch"
                 value={squelchDb}
@@ -219,6 +214,7 @@ export function MobileDeck() {
                 format={(v) => `${v} dB`}
                 size={68}
               />
+              </div>
               <div className="w-[118px] shrink-0">
                 <Meter />
               </div>

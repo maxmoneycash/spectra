@@ -5,7 +5,6 @@ import { useCtf } from '../ctf/store';
 import { challengeById, toSceneSpec } from '../ctf/challenges';
 import { scenarioById } from '../scenarios/scenarios';
 import { POOLS, type ElementId } from '../exam/types';
-import { getEngine } from '../engine/engine';
 import { readUrl, writeUrl } from '../lib/urlState';
 
 /**
@@ -28,15 +27,7 @@ export function useUrlSync(): void {
     if (url.c) {
       const c = challengeById(url.c);
       if (c) {
-        getEngine().loadScene(toSceneSpec(c));
-        useStore.setState({
-          centerFreqHz: c.centerFreqHz,
-          noiseSigma: c.noiseSigma,
-          sceneLoaded: true,
-          tuningOffsetHz: 0,
-          detections: [],
-        });
-        getEngine().setTuning(0);
+        useStore.getState().loadSpec(toSceneSpec(c));
         useCtf.getState().setActive(c.id);
       }
     }

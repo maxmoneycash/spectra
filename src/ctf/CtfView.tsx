@@ -4,7 +4,6 @@ import { Check, Lightbulb, Flag, RotateCcw, Radio, Trophy, Share2 } from 'lucide
 import { useCtf, score, rankFor, shareText } from './store';
 import { CHALLENGES, CATEGORY_LABEL, challengeById, toSceneSpec, type Challenge } from './challenges';
 import { useStore } from '../store/store';
-import { getEngine } from '../engine/engine';
 import { BottomSheet } from '@/ui/BottomSheet';
 import { IconButton } from '@/ui/controls';
 import { cn } from '@/lib/utils';
@@ -223,15 +222,11 @@ export function CtfView() {
   const open = (id: string) => {
     const c = challengeById(id);
     if (!c) return;
-    getEngine().loadScene(toSceneSpec(c));
-    useStore.setState({
-      centerFreqHz: c.centerFreqHz,
-      noiseSigma: c.noiseSigma,
-      sceneLoaded: true,
-      tuningOffsetHz: 0,
-      detections: [],
-    });
-    getEngine().setTuning(0);
+    const s = useStore.getState();
+    s.loadSpec(toSceneSpec(c));
+    // Fresh receiver per challenge: a squelch someone lowered earlier would
+    // otherwise solve "Below the Gate" before it starts.
+    s.setSquelch(-80);
     setActive(id);
   };
 

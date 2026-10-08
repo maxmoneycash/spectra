@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { useStore, nearestLabel, DEMOD_MODES } from '../../store/store';
+import { useStore, nearestLabel, DEMOD_MODES, BW_RANGE } from '../../store/store';
 import { getEngine } from '../../engine/engine';
 import type { DemodMode } from '../../sim/signal-kinds';
 import { Odometer } from './Odometer';
@@ -14,15 +14,6 @@ import { BarVisualizer } from '@/components/ui/bar-visualizer';
 import { GroupLabel } from '../controls';
 import { cn } from '@/lib/utils';
 
-const BW_RANGE: Record<DemodMode, [number, number, number]> = {
-  wfm: [100_000, 240_000, 5_000],
-  nfm: [6_000, 25_000, 500],
-  am: [3_000, 16_000, 500],
-  usb: [1_200, 4_000, 100],
-  lsb: [1_200, 4_000, 100],
-  cw: [200, 2_000, 50],
-  raw: [5_000, 300_000, 5_000],
-};
 
 
 function AudioBars() {
@@ -113,6 +104,7 @@ export function ReceiverDeck() {
           </button>
         </div>
         <button
+          data-guide="tune"
           onClick={() => setTuneOpen(true)}
           title="Open the tuner"
           aria-label={`Tuned to ${fmtMHz(tuned)} megahertz. Open the tuner.`}
@@ -143,6 +135,7 @@ export function ReceiverDeck() {
           value={mode}
           onValueChange={(v) => v && setMode(v as DemodMode)}
           className="justify-start"
+          data-guide="mode"
           aria-label="Demodulation mode"
         >
           {DEMOD_MODES.map((m) => (
@@ -167,7 +160,7 @@ export function ReceiverDeck() {
           foldable,
         )}
       >
-        <div className="min-w-0">
+        <div className="min-w-0" data-guide="bandwidth">
           <Fader
             name="Bandwidth"
             value={bandwidthHz}
@@ -178,7 +171,7 @@ export function ReceiverDeck() {
             onChange={setBandwidth}
           />
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0" data-guide="squelch">
           <Fader
             name="Squelch"
             value={squelchDb}
