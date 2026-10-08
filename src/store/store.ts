@@ -432,8 +432,11 @@ export const useStore = create<AppState>((set, get) => {
 
     tuneToTrack: (track) => {
       const info = Object.values(KIND_INFO).find((k) => k.label === track.guessLabel);
-      const mode = info?.recommendedDemod ?? get().mode;
-      const bw = MODE_BW[mode];
+      const st = get();
+      const mode = info?.recommendedDemod ?? st.mode;
+      // Keep the operator's filter if the mode isn't changing: re-tapping a CW
+      // signal to center it must not throw a narrowed filter back to 500 Hz.
+      const bw = mode === st.mode ? st.bandwidthHz : MODE_BW[mode];
       engine.setTuning(track.offsetHz);
       engine.setMode(mode);
       engine.setBandwidth(bw);

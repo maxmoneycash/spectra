@@ -48,10 +48,10 @@ function solutions(lesson: Lesson): (Partial<GuideCtx> | null)[] {
   const heard = decodedCw(lesson);
   switch (lesson.id) {
     case 'tune':
-      return [{ running: true }, { tunedHz: 100.9 * MHZ }, { tunedHz: 100.9 * MHZ, mode: 'wfm' }, { tunedHz: 101.5 * MHZ, mode: 'wfm' }];
+      return [{ running: true }, { tunedHz: 100.9 * MHZ, mode: 'wfm' }, { tunedHz: 101.5 * MHZ, mode: 'wfm' }];
     case 'modes':
       return [
-        { tunedHz: 119.25 * MHZ },
+        { tunedHz: 119.25 * MHZ, mode: 'am' },
         { tunedHz: 119.25 * MHZ, mode: 'nfm' },
         { tunedHz: 119.25 * MHZ, mode: 'am' },
         { tunedHz: 118.8 * MHZ, mode: 'nfm' },
@@ -105,6 +105,20 @@ describe('walkthroughs', () => {
 
       it('has a solution entry for every step', () => {
         expect(sols.length).toBe(lesson.steps.length);
+      });
+
+      it('never completes a step the moment it appears', () => {
+        // Each step is entered in the state the previous steps left behind.
+        // A check that already holds there finishes itself before the
+        // student does anything: the bug where tapping a station auto-picked
+        // WFM and silently completed "set the mode to WFM".
+        let carry: Partial<GuideCtx> = {};
+        lesson.steps.forEach((step, i) => {
+          if (step.check && i > 0) {
+            expect(step.check({ ...entryCtx(lesson, i), ...carry }), `step ${i + 1} "${step.title}"`).toBe(false);
+          }
+          if (sols[i]) carry = { ...carry, ...sols[i] };
+        });
       });
 
       lesson.steps.forEach((step, i) => {

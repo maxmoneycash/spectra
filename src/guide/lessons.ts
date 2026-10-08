@@ -85,16 +85,8 @@ export const LESSONS: Lesson[] = [
       {
         title: 'Lock onto a station',
         body: 'Tap one of the bright bands on the waterfall.',
-        why: 'Bright means strong. Each wide band here is an FM broadcast station; tapping one snaps your receiver to its center.',
+        why: 'Bright means strong. Tapping snaps the receiver to the station’s center and picks a demodulator to fit its shape: WFM here, because broadcast FM is about 180 kHz wide.',
         target: 'waterfall',
-        check: (c) => [100.9, 101.5, 101.7].some((f) => near(c, f * MHZ, 60_000)),
-      },
-      {
-        title: 'Choose the demodulator',
-        body: 'Set the mode to WFM.',
-        why: 'Broadcast FM swings ±75 kHz, so it needs wideband FM. In narrowband FM it sounds harsh and clipped.',
-        target: 'mode',
-        deckPage: 'mode',
         check: (c) => c.mode === 'wfm' && [100.9, 101.5, 101.7].some((f) => near(c, f * MHZ, 60_000)),
       },
       {
@@ -147,9 +139,9 @@ export const LESSONS: Lesson[] = [
       },
       {
         title: 'Read the other signal',
-        body: 'Tune 118.8 MHz and choose the mode that fits it.',
-        why: 'No center carrier, one smooth hump about 12 kHz wide: that is narrowband FM.',
-        target: 'tune',
+        body: 'Tap the signal at 118.8 MHz and see which mode the receiver picks.',
+        why: 'It picks NFM: no center carrier, one smooth hump about 12 kHz wide. Real radios have no auto-pick, and now you know how to choose yourself.',
+        target: 'waterfall',
         check: (c) => c.mode === 'nfm' && near(c, 118.8 * MHZ, 8_000),
       },
     ],
@@ -192,7 +184,7 @@ export const LESSONS: Lesson[] = [
       },
       {
         title: 'Center one station',
-        body: 'Fine-tune until the decoder prints words.',
+        body: 'Fine-tune with the dial until the decoder prints words.',
         why: 'With one carrier in the passband the copy turns clean. This is exactly how operators pull a weak station out from beside a loud one.',
         target: 'tune',
         check: (c) => c.morseText.includes('COPY'),

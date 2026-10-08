@@ -9,6 +9,7 @@ import { SpectrumWaterfall } from './ui/SpectrumWaterfall';
 import { StartOverlay } from './ui/StartOverlay';
 import { OnAirCaption } from './ui/OnAirCaption';
 import { GuideCoach } from './guide/GuideCoach';
+import { SignalCard } from './ui/SignalCard';
 import { ReceiverDeck } from './ui/deck/ReceiverDeck';
 import { MobileDeck } from './ui/deck/MobileDeck';
 import { useMediaQuery } from './hooks/useMediaQuery';
@@ -110,6 +111,7 @@ export function App() {
                     <SpectrumWaterfall />
                     <OnAirCaption />
                     <StartOverlay />
+                    <SignalCard />
                     <GuideCoach />
                   </div>
                   <aside
