@@ -7,7 +7,8 @@ import { Odometer } from './Odometer';
 import { Fader } from './Fader';
 import { Meter } from '../Meter';
 import { IQScope } from '../Scopes';
-import { fmtMHz, fmtElapsed, fmtBw, parseFreqInput } from '../format';
+import { fmtMHz, fmtElapsed, fmtBw } from '../format';
+import { TuneSheet } from './TuneSheet';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { BarVisualizer } from '@/components/ui/bar-visualizer';
 import { GroupLabel } from '../controls';
@@ -54,13 +55,12 @@ function AudioBars() {
 }
 
 /**
- * The receiver console: VFO readout (click to type), demod modes,
+ * The receiver console (desktop): VFO readout (click for the tuner), demod modes,
  * bandwidth / squelch / volume / noise faders, S-meter, live scopes.
  */
 export function ReceiverDeck() {
   const centerFreqHz = useStore((s) => s.centerFreqHz);
   const tuningOffsetHz = useStore((s) => s.tuningOffsetHz);
-  const tuneTo = useStore((s) => s.tuneTo);
   const mode = useStore((s) => s.mode);
   const setMode = useStore((s) => s.setMode);
   const bandwidthHz = useStore((s) => s.bandwidthHz);
@@ -75,8 +75,7 @@ export function ReceiverDeck() {
   const running = useStore((s) => s.running);
   const playingSince = useStore((s) => s.playingSince);
 
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState('');
+  const [tuneOpen, setTuneOpen] = useState(false);
 
   // Elapsed-time ticker (1 Hz, only while running).
   const [, force] = useState(0);
@@ -89,12 +88,6 @@ export function ReceiverDeck() {
   const tuned = centerFreqHz + tuningOffsetHz;
   const station = nearestLabel(detections, tuningOffsetHz);
   const [bwMin, bwMax, bwStep] = BW_RANGE[mode];
-
-  const commit = () => {
-    const hz = parseFreqInput(draft);
-    if (hz !== null) tuneTo(hz);
-    setEditing(false);
-  };
 
   // Phones: fold the controls away so the waterfall gets the screen.
   const [collapsed, setCollapsed] = useState(true);
@@ -119,39 +112,17 @@ export function ReceiverDeck() {
             {collapsed ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
           </button>
         </div>
-        {editing ? (
-          <input
-            autoFocus
-            value={draft}
-            spellCheck={false}
-            aria-label="Enter frequency in MHz"
-            onChange={(e) => setDraft(e.target.value)}
-            onBlur={commit}
-            onKeyDown={(e) => {
-              e.stopPropagation();
-              if (e.key === 'Enter') commit();
-              if (e.key === 'Escape') setEditing(false);
-            }}
-            className="mono-feats w-[11ch] rounded-lg border border-ring bg-secondary px-2 py-1 font-mono text-xl text-foreground caret-foreground outline-none"
-          />
-        ) : (
-          <button
-            onClick={() => {
-              setDraft(fmtMHz(tuned));
-              setEditing(true);
-            }}
-            title="Click to type a frequency"
-            aria-label="Tuned frequency, click to edit"
-            className="-mx-1 rounded-lg px-1 text-left transition-colors hover:bg-accent"
-          >
-            <span className="mono-feats font-mono text-[32px] leading-none tracking-tight text-foreground">
-              <Odometer text={fmtMHz(tuned)} />
-            </span>
-            <span className="mono-feats ml-1.5 font-mono text-[11px] text-muted-foreground">
-              MHz
-            </span>
-          </button>
-        )}
+        <button
+          onClick={() => setTuneOpen(true)}
+          title="Open the tuner"
+          aria-label={`Tuned to ${fmtMHz(tuned)} megahertz. Open the tuner.`}
+          className="-mx-1 rounded-lg px-1 text-left transition-colors hover:bg-accent"
+        >
+          <span className="mono-feats font-mono text-[32px] leading-none tracking-tight text-foreground">
+            <Odometer text={fmtMHz(tuned)} />
+          </span>
+          <span className="mono-feats ml-1.5 font-mono text-[11px] text-muted-foreground">MHz</span>
+        </button>
         <div className="mono-feats flex items-center gap-2 truncate font-mono text-[10px] text-muted-foreground">
           <span className="truncate font-medium text-foreground">{station ?? 'No signal'}</span>
           <span className="text-muted-foreground">{mode.toUpperCase()}</span>
@@ -251,6 +222,8 @@ export function ReceiverDeck() {
       >
         <Meter />
       </div>
+
+      <TuneSheet open={tuneOpen} onOpenChange={setTuneOpen} />
 
       {/* Scopes */}
       <div className="flex w-[330px] items-center gap-3 border-l border-border px-4 py-3 max-xl:hidden">

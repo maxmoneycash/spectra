@@ -11,8 +11,10 @@ import {
   VoiceMessage,
   MusicMessage,
   ToneMessage,
+  SpeechMessage,
   type Message,
 } from './messages';
+import { emitTx } from './voicebank';
 import { encodeMorse } from './morse';
 
 export interface EmitterContext {
@@ -32,7 +34,13 @@ export interface EmitterConfig {
   label?: string;
   seed?: number;
   // Analog options
+  /** Synthetic audio source. Omit for voice modes to get recorded traffic. */
   message?: 'voice' | 'music' | 'tone';
+  /** Recorded-traffic script from public/radio (overrides `message`). */
+  speech?: string;
+  /** Seconds between transmissions in the conversation, and the rest after it loops. */
+  speechGap?: [number, number];
+  speechRest?: [number, number];
   devHz?: number;
   depth?: number;
   // Keying / data options
@@ -61,6 +69,65 @@ function makeMessage(kind: 'voice' | 'music' | 'tone', rng: Rng): Message {
     case 'voice':
     default:
       return new VoiceMessage(rng);
+  }
+}
+
+/** What a voice-mode station says when a scene doesn't specify. */
+const DEFAULT_SPEECH: Partial<Record<SignalKind, string>> = {
+  nfm: 'repeater-2m',
+  am: 'airband',
+  usb: 'hf-ssb',
+  lsb: 'hf-ssb',
+  wfm: 'talk-fm-a',
+};
+
+/**
+ * Audio source for an analog emitter: recorded traffic unless the config
+ * asks for a synthetic message. Returns the SpeechMessage too, so the
+ * emitter can key its carrier from it.
+ */
+function audioFor(cfg: EmitterConfig, rng: Rng): { msg: Message; speech: SpeechMessage | null } {
+  const setId = cfg.speech ?? (cfg.message ? undefined : DEFAULT_SPEECH[cfg.kind]);
+  if (setId) {
+    const speech = new SpeechMessage(setId, rng, {
+      gap: cfg.speechGap,
+      rest: cfg.speechRest,
+      continuous: cfg.kind === 'wfm',
+      onLine: (line, set) => {
+        const ln = set.lines[line];
+        emitTx({
+          emitterId: cfg.id,
+          freqHz: cfg.freqHz,
+          set: setId,
+          line,
+          who: ln.who,
+          text: ln.text,
+          durSec: ln.pcm.length / 24000,
+        });
+      },
+    });
+    return { msg: speech, speech };
+  }
+  return { msg: makeMessage(cfg.message ?? 'voice', rng), speech: null };
+}
+
+/**
+ * Carrier envelope following a SpeechMessage's PTT: ~3 ms attack/release so
+ * keying up doesn't splatter across the band.
+ */
+class Keyer {
+  env = 0;
+  private readonly k: number;
+  constructor(private readonly speech: SpeechMessage | null, sampleRate: number) {
+    this.k = 1 - Math.exp(-1 / (0.003 * sampleRate));
+  }
+  get active(): boolean {
+    return this.speech !== null;
+  }
+  next(): number {
+    if (!this.speech) return 1;
+    this.env += ((this.speech.keyed ? 1 : 0) - this.env) * this.k;
+    return this.env;
   }
 }
 
@@ -123,14 +190,16 @@ export abstract class Emitter {
 /** WFM / NFM — constant-envelope frequency modulation. */
 class FMEmitter extends Emitter {
   private pump: MessagePump;
+  private keyer: Keyer;
   private phase = 0;
   private dev: number;
   private drive: number;
 
   constructor(cfg: EmitterConfig, sr: number) {
     super(cfg, sr);
-    const msgKind = cfg.message ?? (cfg.kind === 'wfm' ? 'music' : 'voice');
-    this.pump = new MessagePump(makeMessage(msgKind, this.rng), sr);
+    const { msg, speech } = audioFor(cfg, this.rng);
+    this.pump = new MessagePump(msg, sr);
+    this.keyer = new Keyer(speech, sr);
     this.dev = cfg.devHz ?? (cfg.kind === 'wfm' ? 75_000 : 3_500);
     // Broadcast FM audio is heavily compressed so it fills the channel
     // consistently; emulate that so WFM reads as a solid ~180 kHz block.
@@ -141,13 +210,15 @@ class FMEmitter extends Emitter {
     const k = (2 * Math.PI * this.dev) / this.sampleRate;
     const drive = this.drive;
     let ph = this.phase;
+    const keyer = this.keyer;
     for (let i = 0; i < len; i++) {
       const m = Math.tanh(this.pump.next() * drive);
       ph += k * m;
       if (ph > Math.PI) ph -= 2 * Math.PI;
       else if (ph < -Math.PI) ph += 2 * Math.PI;
-      re[i] = Math.cos(ph);
-      im[i] = Math.sin(ph);
+      const a = keyer.next();
+      re[i] = a * Math.cos(ph);
+      im[i] = a * Math.sin(ph);
     }
     this.phase = ph;
   }
@@ -156,18 +227,23 @@ class FMEmitter extends Emitter {
 /** AM — carrier plus double-sideband audio. */
 class AMEmitter extends Emitter {
   private pump: MessagePump;
+  private keyer: Keyer;
   private depth: number;
 
   constructor(cfg: EmitterConfig, sr: number) {
     super(cfg, sr);
-    this.pump = new MessagePump(makeMessage(cfg.message ?? 'voice', this.rng), sr);
-    this.depth = cfg.depth ?? 0.6;
+    const { msg, speech } = audioFor(cfg, this.rng);
+    this.pump = new MessagePump(msg, sr);
+    this.keyer = new Keyer(speech, sr);
+    // Recorded voice is limiter-processed; a little less depth keeps it clean.
+    this.depth = cfg.depth ?? (speech ? 0.75 : 0.6);
   }
 
   protected generateBaseband(re: Float32Array, im: Float32Array, len: number): void {
     const d = this.depth;
+    const keyer = this.keyer;
     for (let i = 0; i < len; i++) {
-      re[i] = 0.5 * (1 + d * this.pump.next());
+      re[i] = keyer.next() * 0.5 * (1 + d * this.pump.next());
       im[i] = 0;
     }
   }
@@ -176,22 +252,27 @@ class AMEmitter extends Emitter {
 /** SSB — suppressed-carrier single sideband via the phasing method. */
 class SSBEmitter extends Emitter {
   private pump: ComplexPump;
+  private keyer: Keyer;
   private sign: number;
   private tmp: [number, number] = [0, 0];
 
   constructor(cfg: EmitterConfig, sr: number) {
     super(cfg, sr);
-    const analytic = new AnalyticMessage(makeMessage(cfg.message ?? 'voice', this.rng));
+    const { msg, speech } = audioFor(cfg, this.rng);
+    const analytic = new AnalyticMessage(msg);
     this.pump = new ComplexPump(analytic, sr);
+    this.keyer = new Keyer(speech, sr);
     this.sign = cfg.kind === 'usb' ? 1 : -1;
   }
 
   protected generateBaseband(re: Float32Array, im: Float32Array, len: number): void {
     const g = 1.4;
+    const keyer = this.keyer;
     for (let i = 0; i < len; i++) {
       this.pump.next(this.tmp);
-      re[i] = this.tmp[0] * g;
-      im[i] = this.sign * this.tmp[1] * g;
+      const a = keyer.next() * g;
+      re[i] = this.tmp[0] * a;
+      im[i] = this.sign * this.tmp[1] * a;
     }
   }
 }
@@ -207,19 +288,30 @@ class NcdxfEmitter extends Emitter {
   private silenceLeft = 0;
   private env = 0;
   private alpha: number;
+  /**
+   * Wall-clock time (ms) at sample 0. The rotation is anchored to the real
+   * UTC schedule once, then advanced in simulated time. Reading Date.now()
+   * per sample (as this used to) let slot changes run ahead of the keying
+   * whenever the simulation fell behind real time, truncating transmissions.
+   */
+  private readonly t0: number;
 
   constructor(cfg: EmitterConfig, sr: number) {
     super(cfg, sr);
     this.band = cfg.ncdxfBand ?? 0;
     this.alpha = 1 - Math.exp(-1 / (0.004 * sr));
+    this.t0 = Date.now();
   }
 
   protected generateBaseband(re: Float32Array, im: Float32Array, len: number): void {
+    const msPerSample = 1000 / this.sampleRate;
+    const blockMs = this.t0 + this.t * msPerSample;
     for (let i = 0; i < len; i++) {
-      const slot = slotIndex();
+      const now = blockMs + i * msPerSample;
+      const slot = slotIndex(now);
       if (slot !== this.slot) {
         this.slot = slot;
-        const b = activeBeacon(this.band);
+        const b = activeBeacon(this.band, now);
         const segs = encodeMorse(beaconText(b), 22);
         this.durs = segs.map((s) => Math.max(1, Math.round(s.durSec * this.sampleRate)));
         this.ons = segs.map((s) => s.on);

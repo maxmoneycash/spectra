@@ -37,6 +37,31 @@ export interface TrackMsg {
   candidates: { kind: SignalKind; label: string; confidence: number; reason: string }[];
 }
 
+/** One decoded transmission for the worker's voice bank (24 kHz PCM). */
+export interface BankLineMsg {
+  pcm: Float32Array;
+  who: string;
+  text: string;
+}
+export interface BankSetMsg {
+  lines: BankLineMsg[];
+  /** Repeater: hang time, a courtesy beep, then the carrier drops. */
+  courtesy: boolean;
+  /** Broadcast: the carrier never drops between lines. */
+  continuous: boolean;
+}
+
+/** A transmission starting on the air (for captions and the intercept log). */
+export interface TxEvent {
+  emitterId: string;
+  freqHz: number;
+  set: string;
+  line: number;
+  who: string;
+  text: string;
+  durSec: number;
+}
+
 // --- Main -> Worker ---
 export type ToWorker =
   | { type: 'loadScene'; scene: SceneSpec }
@@ -53,7 +78,8 @@ export type ToWorker =
   | { type: 'startRecording' }
   | { type: 'stopRecording' }
   | { type: 'playIQ'; re: Float32Array; im: Float32Array; centerFreqHz: number }
-  | { type: 'stopPlayback' };
+  | { type: 'stopPlayback' }
+  | { type: 'voiceBank'; sets: Record<string, BankSetMsg> };
 
 // --- Worker -> Main ---
 export type FromWorker =
@@ -64,4 +90,5 @@ export type FromWorker =
   | { type: 'meter'; signalDb: number }
   | { type: 'groundTruth'; list: GroundTruth[] }
   | { type: 'morse'; text: string }
-  | { type: 'recording'; iq: Float32Array; centerFreqHz: number; durationSec: number };
+  | { type: 'recording'; iq: Float32Array; centerFreqHz: number; durationSec: number }
+  | ({ type: 'tx' } & TxEvent);

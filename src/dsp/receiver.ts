@@ -47,6 +47,8 @@ export class Receiver {
   private agcGain = 1;
   private squelchDb = -140;
   private signalDb = -140;
+  /** Set when a retune lands on a new channel: the next reading starts fresh. */
+  private levelReset = false;
   private muteRamp = 1;
 
   // Channel-IQ tap for the UI's IQ scope (post-channel-filter, pre-demod).
@@ -95,6 +97,10 @@ export class Receiver {
   }
 
   setTuning(offsetHz: number): void {
+    // A jump of more than half a channel is a different channel; carrying
+    // the old smoothed level over would read a dead channel as busy (the
+    // scanner relies on this to step at real-scanner speed).
+    if (Math.abs(offsetHz - this.offsetHz) > this.bandwidthHz / 2) this.levelReset = true;
     this.offsetHz = offsetHz;
   }
 
@@ -174,7 +180,12 @@ export class Receiver {
     for (let i = 0; i < n1; i++) p += this.cfRe[i] * this.cfRe[i] + this.cfIm[i] * this.cfIm[i];
     const rms = Math.sqrt(p / Math.max(1, n1));
     const instDb = 20 * Math.log10(rms + 1e-9);
-    this.signalDb = this.signalDb + 0.3 * (instDb - this.signalDb);
+    if (this.levelReset) {
+      this.signalDb = instDb;
+      this.levelReset = false;
+    } else {
+      this.signalDb = this.signalDb + 0.3 * (instDb - this.signalDb);
+    }
 
     // 4. Demodulate.
     let count = n1;

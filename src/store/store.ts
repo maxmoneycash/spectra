@@ -5,6 +5,8 @@ import type { DemodMode, SignalKind } from '../sim/signal-kinds';
 import { KIND_INFO } from '../sim/signal-kinds';
 import { SCENARIOS, scenarioById, toSceneSpec } from '../scenarios/scenarios';
 import { scoreIdentification } from '../scenarios/scoring';
+import { Scanner, type ScanSnapshot } from '../engine/scanner';
+import { SAMPLE_RATE } from '../engine/protocol';
 
 export const MODE_BW: Record<DemodMode, number> = {
   wfm: 180_000,
@@ -18,7 +20,7 @@ export const MODE_BW: Record<DemodMode, number> = {
 
 export const DEMOD_MODES: DemodMode[] = ['wfm', 'nfm', 'am', 'usb', 'lsb', 'cw', 'raw'];
 
-export type PanelTab = 'signals' | 'library' | 'scenario';
+export type PanelTab = 'signals' | 'scan' | 'log' | 'library' | 'scenario';
 
 export type AppView = 'console' | 'academy' | 'exam' | 'ctf';
 
@@ -72,6 +74,37 @@ export function nearestLabel(detections: TrackMsg[], tuningOffsetHz: number): st
   return best ? best.guessLabel : null;
 }
 
+/** Someone transmitting right now (from the simulator's tx events). */
+export interface OnAir {
+  freqHz: number;
+  who: string;
+  text: string;
+  set: string;
+  line: number;
+  startedAt: number;
+  until: number;
+}
+
+/** A transmission you were tuned to — the SIGINT intercept log. */
+export interface Intercept {
+  id: string;
+  at: number;
+  freqHz: number;
+  mode: DemodMode;
+  who: string;
+  text: string;
+}
+
+/** A tap on the waterfall that snapped the VFO onto a signal. */
+export interface LockFx {
+  offsetHz: number;
+  bandwidthHz: number;
+  label: string;
+  mode: DemodMode;
+  trackId: string;
+  at: number;
+}
+
 interface IdFeedback {
   correct: boolean;
   message: string;
@@ -107,6 +140,10 @@ interface AppState {
   ceilDb: number;
   recordings: Recording[];
   playingSince: number | null;
+  lockFx: LockFx | null;
+  onAir: Record<string, OnAir>;
+  intercepts: Intercept[];
+  scan: ScanSnapshot | null;
 
   start: () => Promise<void>;
   stop: () => void;
@@ -122,6 +159,13 @@ interface AppState {
   setNoise: (sigma: number) => void;
   identify: (trackId: string, kind: SignalKind) => void;
   tuneToTrack: (track: TrackMsg) => void;
+  /** Snap onto a detected signal: center, recommended mode and filter. */
+  lockOn: (track: TrackMsg, opts?: { fromScanner?: boolean }) => void;
+  scanToggle: () => void;
+  scanStep: (hz: number) => void;
+  scanLockout: () => void;
+  scanNext: () => void;
+  scanClearLockouts: () => void;
   toggleReveal: () => void;
   toggleRecording: () => void;
   injectSignal: (kind: SignalKind) => void;
@@ -141,6 +185,56 @@ export const useStore = create<AppState>((set, get) => {
   // Wire engine events into the store (once).
   engine.on('detections', (tracks) => set({ detections: tracks }));
   engine.on('morse', (text) => set({ morseText: text }));
+  engine.on('tx', (e) => {
+    const now = Date.now();
+    const st = get();
+    const onAir = { ...st.onAir };
+    // Forget transmissions that ended a while ago.
+    for (const [k, v] of Object.entries(onAir)) if (v.until < now - 5000) delete onAir[k];
+    onAir[e.emitterId] = {
+      freqHz: e.freqHz,
+      who: e.who,
+      text: e.text,
+      set: e.set,
+      line: e.line,
+      startedAt: now,
+      until: now + e.durSec * 1000 + 350,
+    };
+    // Log it if the receiver is actually tuned to it: inside the passband.
+    const tuned = st.centerFreqHz + st.tuningOffsetHz;
+    const heard = st.running && Math.abs(tuned - e.freqHz) <= Math.max(1500, st.bandwidthHz / 2);
+    const intercepts = heard
+      ? [
+          { id: `${e.emitterId}-${now}`, at: now, freqHz: e.freqHz, mode: st.mode, who: e.who, text: e.text },
+          ...st.intercepts,
+        ].slice(0, 300)
+      : st.intercepts;
+    set({ onAir, intercepts });
+  });
+  const scanner = new Scanner({
+    centerHz: () => get().centerFreqHz,
+    setTuning: (off) => {
+      const clamped = Math.max(-SAMPLE_RATE / 2, Math.min(SAMPLE_RATE / 2, off));
+      engine.setTuning(clamped);
+      set({ tuningOffsetHz: clamped, selectedId: null });
+    },
+    squelchDb: () => get().squelchDb,
+    publish: (snap) => set({ scan: snap }),
+    onHold: (freqHz) => {
+      // Snap exactly onto the detected emission behind the hit, if any.
+      const st = get();
+      const off = freqHz - st.centerFreqHz;
+      let best: TrackMsg | null = null;
+      for (const d of st.detections) {
+        if (Math.abs(d.offsetHz - off) <= d.bandwidthHz / 2 + 12_500) {
+          if (!best || Math.abs(d.offsetHz - off) < Math.abs(best.offsetHz - off)) best = d;
+        }
+      }
+      if (best) st.lockOn(best, { fromScanner: true });
+    },
+  });
+  engine.on('meter', (db) => scanner.onLevel(db));
+
   engine.on('recordingSaved', (r) =>
     set((s) => ({ recordings: [{ ...r, at: Date.now() }, ...s.recordings].slice(0, 20) })),
   );
@@ -173,6 +267,10 @@ export const useStore = create<AppState>((set, get) => {
     ceilDb: -22,
     recordings: [],
     playingSince: null,
+    lockFx: null,
+    onAir: {},
+    intercepts: [],
+    scan: null,
 
     start: async () => {
       const st = get();
@@ -202,6 +300,7 @@ export const useStore = create<AppState>((set, get) => {
     loadScenario: (id) => {
       const sc = scenarioById(id);
       if (!sc) return;
+      scanner.reset();
       engine.loadScene(toSceneSpec(sc));
       set({
         sceneLoaded: true,
@@ -220,11 +319,14 @@ export const useStore = create<AppState>((set, get) => {
     },
 
     setCenter: (hz) => {
+      scanner.reset();
       engine.setCenter(hz);
       set({ centerFreqHz: hz, tuningOffsetHz: 0, detections: [] });
     },
 
     setTuning: (offsetHz) => {
+      // Turning the dial takes the receiver back from the scanner.
+      if (scanner.active) scanner.stop();
       engine.setTuning(offsetHz);
       set({ tuningOffsetHz: offsetHz });
     },
@@ -259,7 +361,7 @@ export const useStore = create<AppState>((set, get) => {
       let ni = idx + dir;
       if (ni < 0) ni = list.length - 1;
       else if (ni >= list.length) ni = 0;
-      get().tuneToTrack(list[ni]);
+      get().lockOn(list[ni]);
     },
 
     setMode: (mode) => {
@@ -321,6 +423,36 @@ export const useStore = create<AppState>((set, get) => {
       engine.setBandwidth(bw);
       set({ tuningOffsetHz: track.offsetHz, mode, bandwidthHz: bw, selectedId: track.id });
     },
+
+    lockOn: (track, opts) => {
+      if (!opts?.fromScanner && scanner.active) scanner.stop();
+      get().tuneToTrack(track);
+      const { mode, bandwidthHz } = get();
+      set({
+        lockFx: {
+          offsetHz: track.offsetHz,
+          bandwidthHz: Math.max(bandwidthHz, track.bandwidthHz),
+          label: track.guessLabel,
+          mode,
+          trackId: track.id,
+          at: Date.now(),
+        },
+      });
+    },
+
+    scanToggle: () => {
+      if (scanner.active) scanner.stop();
+      else {
+        const mode = get().mode;
+        // Sensible raster for the mode, unless the operator already chose one.
+        if (!get().scan) scanner.stepHz = mode === 'wfm' ? 100_000 : mode === 'am' ? 25_000 : mode === 'nfm' ? 12_500 : 5_000;
+        scanner.start(get().tuningOffsetHz);
+      }
+    },
+    scanStep: (hz) => scanner.setStep(hz),
+    scanLockout: () => scanner.lockout(),
+    scanNext: () => scanner.next(),
+    scanClearLockouts: () => scanner.clearLockouts(),
 
     toggleReveal: () => set((s) => ({ revealTruth: !s.revealTruth })),
 

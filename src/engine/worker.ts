@@ -6,6 +6,7 @@ import { detectEmissions, EmissionTracker } from '../dsp/detector';
 import { classify } from '../id/classifier';
 import { MorseDecoder } from '../sim/morse';
 import { interleave } from '../recording/sigmf';
+import { setVoiceBank, onTx } from '../sim/voicebank';
 import {
   SAMPLE_RATE,
   BLOCK_SIZE,
@@ -206,9 +207,15 @@ function stopLoop() {
   timer = null;
 }
 
+// Transmissions starting on the air go straight to the UI (captions, log).
+onTx((e) => post({ type: 'tx', ...e }));
+
 self.onmessage = (ev: MessageEvent<ToWorker>) => {
   const msg = ev.data;
   switch (msg.type) {
+    case 'voiceBank':
+      setVoiceBank(msg.sets);
+      break;
     case 'loadScene': {
       playRe = playIm = null;
       scene = new Scene(

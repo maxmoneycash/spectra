@@ -29,15 +29,15 @@ export const SCENARIOS: Scenario[] = [
     name: 'First Contact',
     tagline: 'Learn the receiver on the FM broadcast band.',
     brief:
-      'You are parked in the middle of the commercial FM band. Wide green blocks are music stations. Tune to one in WFM mode and listen, then identify it.',
+      'You are parked in the middle of the commercial FM band. The wide, bright blocks are broadcast stations — each one a host talking. Tap one to lock on, listen in WFM, then identify it.',
     difficulty: 'tutorial',
     band: 'FM broadcast (88–108 MHz)',
     centerFreqHz: 98.5 * MHZ,
     noiseSigma: 0.02,
     emitters: [
-      { id: 's1', kind: 'wfm', freqHz: 98.1 * MHZ, powerDb: -2, message: 'music', seed: 11 },
-      { id: 's2', kind: 'wfm', freqHz: 98.7 * MHZ, powerDb: -4, message: 'music', seed: 22 },
-      { id: 's3', kind: 'wfm', freqHz: 98.9 * MHZ, powerDb: -6, message: 'music', seed: 33 },
+      { id: 's1', kind: 'wfm', freqHz: 98.1 * MHZ, powerDb: -2, speech: 'talk-fm-a', seed: 11 },
+      { id: 's2', kind: 'wfm', freqHz: 98.7 * MHZ, powerDb: -4, speech: 'talk-fm-b', seed: 22 },
+      { id: 's3', kind: 'wfm', freqHz: 98.9 * MHZ, powerDb: -6, speech: 'talk-fm-c', seed: 33 },
     ],
     objectives: [
       { type: 'count', count: 2, label: 'Find at least 2 stations' },
@@ -56,9 +56,9 @@ export const SCENARIOS: Scenario[] = [
     centerFreqHz: 124.0 * MHZ,
     noiseSigma: 0.03,
     emitters: [
-      { id: 'a1', kind: 'am', freqHz: 124.2 * MHZ, powerDb: -6, message: 'voice', seed: 5 },
-      { id: 'a2', kind: 'am', freqHz: 123.7 * MHZ, powerDb: -9, message: 'voice', seed: 6 },
-      { id: 'n1', kind: 'nfm', freqHz: 124.35 * MHZ, powerDb: -8, seed: 7 },
+      { id: 'a1', kind: 'am', freqHz: 124.2 * MHZ, powerDb: -6, speech: 'airband', speechGap: [0.6, 1.8], speechRest: [3, 7], seed: 5 },
+      { id: 'a2', kind: 'am', freqHz: 123.7 * MHZ, powerDb: -9, speech: 'airband', seed: 6 },
+      { id: 'n1', kind: 'nfm', freqHz: 124.35 * MHZ, powerDb: -8, speech: 'simplex-2m', seed: 7 },
       { id: 'c1', kind: 'cw', freqHz: 123.55 * MHZ, powerDb: -10, wpm: 16, seed: 8 },
     ],
     objectives: [
@@ -79,8 +79,8 @@ export const SCENARIOS: Scenario[] = [
     noiseSigma: 0.035,
     emitters: [
       { id: 'cw1', kind: 'cw', freqHz: 7.06 * MHZ, powerDb: -4, wpm: 18, text: 'CQ CQ DE SPECTRA SPECTRA K', seed: 3 },
-      { id: 'l1', kind: 'lsb', freqHz: 7.02 * MHZ, powerDb: -8, message: 'voice', seed: 9 },
-      { id: 'l2', kind: 'lsb', freqHz: 7.08 * MHZ, powerDb: -11, message: 'voice', seed: 12 },
+      { id: 'l1', kind: 'lsb', freqHz: 7.02 * MHZ, powerDb: -8, speech: 'hf-ssb', seed: 9 },
+      { id: 'l2', kind: 'lsb', freqHz: 7.08 * MHZ, powerDb: -11, speech: 'hf-ssb', seed: 12 },
     ],
     objectives: [
       { type: 'tune', offsetHz: 10_000, mode: 'cw', tolHz: 3_000, label: 'Tune the CW beacon in CW mode' },
@@ -144,7 +144,7 @@ export const SCENARIOS: Scenario[] = [
     centerFreqHz: 144.2 * MHZ,
     noiseSigma: 0.055,
     emitters: [
-      { id: 'fox', kind: 'nfm', freqHz: 144.33 * MHZ, powerDb: -16, message: 'voice', devHz: 3000, seed: 77 },
+      { id: 'fox', kind: 'nfm', freqHz: 144.33 * MHZ, powerDb: -16, speech: 'fox-beacon', speechRest: [5, 11], devHz: 3000, seed: 77 },
       { id: 'd1', kind: 'fsk2', freqHz: 144.05 * MHZ, powerDb: -10, seed: 78 },
     ],
     objectives: [
@@ -166,7 +166,7 @@ export const SCENARIOS: Scenario[] = [
       // Self-rotating NCDXF beacon on the real schedule (20 m band index 0).
       { id: 'ncdxf-live', kind: 'cw', freqHz: 14.1 * MHZ, powerDb: -4, ncdxfBand: 0 },
       { id: 'ncdxf-n1', kind: 'cw', freqHz: 14.052 * MHZ, powerDb: -14, wpm: 18, text: 'CQ CQ DE HB9 XYZ K', seed: 4 },
-      { id: 'ncdxf-n2', kind: 'lsb', freqHz: 14.19 * MHZ, powerDb: -11, message: 'voice', seed: 9 },
+      { id: 'ncdxf-n2', kind: 'usb', freqHz: 14.19 * MHZ, powerDb: -11, speech: 'hf-ssb', seed: 9 },
     ],
     objectives: [
       { type: 'tune', offsetHz: 0, mode: 'cw', tolHz: 2_000, label: 'Tune 14.100 MHz in CW' },
@@ -185,7 +185,7 @@ export const SCENARIOS: Scenario[] = [
     centerFreqHz: 433.0 * MHZ,
     noiseSigma: 0.03,
     emitters: [
-      { id: 'w', kind: 'wfm', freqHz: 432.62 * MHZ, powerDb: -4, message: 'music', seed: 101 },
+      { id: 'w', kind: 'wfm', freqHz: 432.62 * MHZ, powerDb: -4, speech: 'talk-fm-a', seed: 101 },
       { id: 'n', kind: 'nfm', freqHz: 432.8 * MHZ, powerDb: -6, seed: 102 },
       { id: 'a', kind: 'am', freqHz: 432.95 * MHZ, powerDb: -6, seed: 103 },
       { id: 'u', kind: 'usb', freqHz: 433.08 * MHZ, powerDb: -8, seed: 104 },

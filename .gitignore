@@ -16,3 +16,6 @@ public/exam/audio/*
 !public/exam/audio/technician/
 !public/exam/audio/general/
 !public/exam/audio/extra/
+
+# Python bytecode from the narration/traffic renderers
+__pycache__/

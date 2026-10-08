@@ -4,12 +4,21 @@ import { setCanvasTheme } from '../ui/theme';
 export type Theme = 'light' | 'dark';
 const KEY = 'spectra-theme';
 
+/** A saved choice wins; otherwise follow the system, and a listening post
+ * defaults to dark when the system won't say. */
 function initTheme(): Theme {
   try {
-    return localStorage.getItem(KEY) === 'dark' ? 'dark' : 'light';
+    const saved = localStorage.getItem(KEY);
+    if (saved === 'dark' || saved === 'light') return saved;
   } catch {
-    return 'light';
+    /* ignore */
   }
+  try {
+    if (window.matchMedia('(prefers-color-scheme: light)').matches) return 'light';
+  } catch {
+    /* ignore */
+  }
+  return 'dark';
 }
 
 let theme: Theme = initTheme();

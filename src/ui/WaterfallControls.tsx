@@ -48,7 +48,8 @@ export function WaterfallControls({
 
   return (
     <div
-      className="absolute bottom-3 right-3 z-[10] flex items-center gap-0.5 rounded-lg border border-stage-border bg-stage/85 p-1 shadow-lg backdrop-blur-md"
+      data-stage-ui
+      className="absolute bottom-3 right-3 z-[10] max-lg:hidden flex items-center gap-0.5 rounded-lg border border-stage-border bg-stage/85 p-1 shadow-lg backdrop-blur-md"
       onPointerDown={(e) => e.stopPropagation()}
     >
       <div

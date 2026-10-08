@@ -1,0 +1,435 @@
+{
+ "version": 1,
+ "rate": 24000,
+ "sets": {
+  "repeater-2m": {
+   "title": "Repeater conversation",
+   "style": "comms",
+   "courtesy": true,
+   "continuous": false,
+   "lines": [
+    {
+     "who": "KX6RTQ",
+     "text": "K X 6 R T Q, monitoring.",
+     "file": "/radio/repeater-2m/0.m4a",
+     "dur": 2.6,
+     "hash": "583bc96149f8"
+    },
+    {
+     "who": "W6YLN",
+     "text": "K X 6 R T Q, this is W 6 Y L N. Good morning, Mike.",
+     "file": "/radio/repeater-2m/1.m4a",
+     "dur": 4.59,
+     "hash": "a505df3db5c1"
+    },
+    {
+     "who": "KX6RTQ",
+     "text": "Good morning, Lena. You're full quieting into the repeater. How are things up on the ridge?",
+     "file": "/radio/repeater-2m/2.m4a",
+     "dur": 5.29,
+     "hash": "e05efcaab6a1"
+    },
+    {
+     "who": "W6YLN",
+     "text": "Clear skies and a little wind. I'm portable on the handheld, five watts. Any word on the fox hunt Saturday?",
+     "file": "/radio/repeater-2m/3.m4a",
+     "dur": 6.42,
+     "hash": "309c0bbc9883"
+    },
+    {
+     "who": "KX6RTQ",
+     "text": "It starts at nine from the park. Bring your tape measure Yagi. W 6 Y L N, this is K X 6 R T Q.",
+     "file": "/radio/repeater-2m/4.m4a",
+     "dur": 8.36,
+     "hash": "b6b88fb91cc8"
+    },
+    {
+     "who": "W6YLN",
+     "text": "Sounds great, I'll be there. W 6 Y L N, clear.",
+     "file": "/radio/repeater-2m/5.m4a",
+     "dur": 3.46,
+     "hash": "5b940cc84e47"
+    },
+    {
+     "who": "KJ6DVQ",
+     "text": "Break. This is K J 6 D V Q. Could I get a quick signal report?",
+     "file": "/radio/repeater-2m/6.m4a",
+     "dur": 3.84,
+     "hash": "35755fdd7778"
+    },
+    {
+     "who": "KX6RTQ",
+     "text": "K J 6 D V Q, you're a little scratchy, but readable. Try moving a few feet. K X 6 R T Q.",
+     "file": "/radio/repeater-2m/7.m4a",
+     "dur": 7.4,
+     "hash": "46353d149449"
+    },
+    {
+     "who": "KJ6DVQ",
+     "text": "How about now? K J 6 D V Q.",
+     "file": "/radio/repeater-2m/8.m4a",
+     "dur": 2.39,
+     "hash": "606b186a4230"
+    },
+    {
+     "who": "KX6RTQ",
+     "text": "Much better, full quieting. K X 6 R T Q, clear and monitoring.",
+     "file": "/radio/repeater-2m/9.m4a",
+     "dur": 4.95,
+     "hash": "fbb6a8fafea5"
+    }
+   ]
+  },
+  "simplex-2m": {
+   "title": "Calling CQ on simplex",
+   "style": "comms",
+   "courtesy": false,
+   "continuous": false,
+   "lines": [
+    {
+     "who": "KX6QEX",
+     "text": "C Q, C Q. This is K X 6 Q E X, Kilo X-ray Six Quebec Echo X-ray, on one four six point five two simplex. Anyone around?",
+     "file": "/radio/simplex-2m/0.m4a",
+     "dur": 9.47,
+     "hash": "fbeddfae2c14"
+    },
+    {
+     "who": "KI6RVA",
+     "text": "K X 6 Q E X, this is K I 6 R V A, Kilo India Six Romeo Victor Alpha. You're five by nine. My name is Rita.",
+     "file": "/radio/simplex-2m/1.m4a",
+     "dur": 14.19,
+     "hash": "3c5c0eca1a70"
+    },
+    {
+     "who": "KX6QEX",
+     "text": "K I 6 R V A, thanks Rita. My name is Sam, mobile near the bay. Let's move off the calling frequency. How about one four six point five five?",
+     "file": "/radio/simplex-2m/2.m4a",
+     "dur": 8.85,
+     "hash": "3cef13146bbc"
+    },
+    {
+     "who": "KI6RVA",
+     "text": "Good idea. See you on one four six point five five. K I 6 R V A.",
+     "file": "/radio/simplex-2m/3.m4a",
+     "dur": 7.89,
+     "hash": "2aca9804d5a8"
+    }
+   ]
+  },
+  "net-70cm": {
+   "title": "Directed net",
+   "style": "comms",
+   "courtesy": true,
+   "continuous": false,
+   "lines": [
+    {
+     "who": "KX6NET",
+     "text": "This is K X 6 N E T, net control for the Bay Valley Training Net. This is a directed net. Are there any stations with emergency or priority traffic?",
+     "file": "/radio/net-70cm/0.m4a",
+     "dur": 9.66,
+     "hash": "b4bc362f9aec"
+    },
+    {
+     "who": "KX6NET",
+     "text": "Hearing none. We'll now take check-ins. Please give your call sign phonetically, and say if you have traffic.",
+     "file": "/radio/net-70cm/1.m4a",
+     "dur": 6.04,
+     "hash": "3cac9f4919cc"
+    },
+    {
+     "who": "KI6LMZ",
+     "text": "K I 6 L M Z. Kilo India Six Lima Mike Zulu. No traffic.",
+     "file": "/radio/net-70cm/2.m4a",
+     "dur": 5.01,
+     "hash": "29102e7d6c78"
+    },
+    {
+     "who": "W6GRX",
+     "text": "W 6 G R X. Whiskey Six Golf Romeo X-ray. One item of traffic.",
+     "file": "/radio/net-70cm/3.m4a",
+     "dur": 5.1,
+     "hash": "61c635b9071a"
+    },
+    {
+     "who": "KX6NET",
+     "text": "K I 6 L M Z and W 6 G R X, thank you. W 6 G R X, go ahead with your traffic.",
+     "file": "/radio/net-70cm/4.m4a",
+     "dur": 7.02,
+     "hash": "740f68af2e9b"
+    },
+    {
+     "who": "W6GRX",
+     "text": "The club meeting moves to the library this Thursday at seven. That's all. W 6 G R X.",
+     "file": "/radio/net-70cm/5.m4a",
+     "dur": 5.65,
+     "hash": "993eab01baec"
+    },
+    {
+     "who": "KX6NET",
+     "text": "Thank you. This concludes the Bay Valley Training Net. The net is now closed. K X 6 N E T.",
+     "file": "/radio/net-70cm/6.m4a",
+     "dur": 6.12,
+     "hash": "5aaef6659174"
+    }
+   ]
+  },
+  "airband": {
+   "title": "Tower frequency",
+   "style": "comms",
+   "courtesy": false,
+   "continuous": false,
+   "lines": [
+    {
+     "who": "N427EB",
+     "text": "Valley Tower, Cessna Four Two Seven Echo Bravo, ten miles south at two thousand five hundred, inbound for landing with information Charlie.",
+     "file": "/radio/airband/0.m4a",
+     "dur": 8.92,
+     "hash": "52fe0563fc08"
+    },
+    {
+     "who": "TOWER",
+     "text": "Cessna Four Two Seven Echo Bravo, Valley Tower. Enter left downwind runway one niner. Report midfield.",
+     "file": "/radio/airband/1.m4a",
+     "dur": 7.47,
+     "hash": "0e5327c40887"
+    },
+    {
+     "who": "N427EB",
+     "text": "Left downwind runway one niner, report midfield. Seven Echo Bravo.",
+     "file": "/radio/airband/2.m4a",
+     "dur": 4.44,
+     "hash": "682f45ea12da"
+    },
+    {
+     "who": "N61P",
+     "text": "Valley Tower, Skyhawk Six One Papa, holding short runway one niner, ready for departure.",
+     "file": "/radio/airband/3.m4a",
+     "dur": 5.5,
+     "hash": "4ce610e7221e"
+    },
+    {
+     "who": "TOWER",
+     "text": "Skyhawk Six One Papa, wind one eight zero at eight. Runway one niner, cleared for takeoff.",
+     "file": "/radio/airband/4.m4a",
+     "dur": 6.29,
+     "hash": "4f14eb1267b1"
+    },
+    {
+     "who": "N61P",
+     "text": "Cleared for takeoff, runway one niner. Six One Papa.",
+     "file": "/radio/airband/5.m4a",
+     "dur": 3.78,
+     "hash": "740299fb2f52"
+    },
+    {
+     "who": "N427EB",
+     "text": "Valley Tower, Seven Echo Bravo, midfield left downwind.",
+     "file": "/radio/airband/6.m4a",
+     "dur": 3.39,
+     "hash": "d8b8eaa4c42a"
+    },
+    {
+     "who": "TOWER",
+     "text": "Seven Echo Bravo, runway one niner, cleared to land.",
+     "file": "/radio/airband/7.m4a",
+     "dur": 3.37,
+     "hash": "fa374a5e577f"
+    },
+    {
+     "who": "N427EB",
+     "text": "Cleared to land, one niner. Seven Echo Bravo.",
+     "file": "/radio/airband/8.m4a",
+     "dur": 2.84,
+     "hash": "dbc0c0c3eace"
+    }
+   ]
+  },
+  "hf-ssb": {
+   "title": "HF DX contact",
+   "style": "comms",
+   "courtesy": false,
+   "continuous": false,
+   "lines": [
+    {
+     "who": "GX4RTB",
+     "text": "C Q, C Q, C Q D X. This is G X 4 R T B, Golf X-ray Four Romeo Tango Bravo, calling C Q D X and listening.",
+     "file": "/radio/hf-ssb/0.m4a",
+     "dur": 10.41,
+     "hash": "86994d2dff56"
+    },
+    {
+     "who": "KX6RTQ",
+     "text": "G X 4 R T B, this is K X 6 R T Q. Kilo X-ray Six Romeo Tango Quebec.",
+     "file": "/radio/hf-ssb/1.m4a",
+     "dur": 7.62,
+     "hash": "39138785932d"
+    },
+    {
+     "who": "GX4RTB",
+     "text": "K X 6 R T Q, good evening, and thanks for the call. You're five seven into England. Name here is Tom. How copy?",
+     "file": "/radio/hf-ssb/2.m4a",
+     "dur": 8.02,
+     "hash": "a98ef2671db2"
+    },
+    {
+     "who": "KX6RTQ",
+     "text": "Good copy, Tom. You're five nine into California. Name is Mike. I'm running one hundred watts into a dipole. Back to you.",
+     "file": "/radio/hf-ssb/3.m4a",
+     "dur": 8.45,
+     "hash": "bd30b43706ef"
+    },
+    {
+     "who": "GX4RTB",
+     "text": "Lovely signal, Mike. I'll Q S L through the bureau. Seventy three, and good D X. K X 6 R T Q, this is G X 4 R T B.",
+     "file": "/radio/hf-ssb/4.m4a",
+     "dur": 10.28,
+     "hash": "afd3c1de542c"
+    },
+    {
+     "who": "KX6RTQ",
+     "text": "Seventy three, Tom. G X 4 R T B, this is K X 6 R T Q, clear.",
+     "file": "/radio/hf-ssb/5.m4a",
+     "dur": 6.19,
+     "hash": "afb0a9df983e"
+    }
+   ]
+  },
+  "talk-fm-a": {
+   "title": "KSPX talk radio",
+   "style": "broadcast",
+   "courtesy": false,
+   "continuous": true,
+   "lines": [
+    {
+     "who": "KSPX",
+     "text": "You're listening to K S P X, ninety eight point one F M. It's a beautiful morning in the valley.",
+     "file": "/radio/talk-fm-a/0.m4a",
+     "dur": 5.31,
+     "hash": "e350178029bf"
+    },
+    {
+     "who": "KSPX",
+     "text": "This hour, we're talking about how F M radio works, and why your car radio sounds so clear.",
+     "file": "/radio/talk-fm-a/1.m4a",
+     "dur": 5.06,
+     "hash": "343c1083bc3f"
+    },
+    {
+     "who": "KSPX",
+     "text": "F M stands for frequency modulation. Instead of changing how strong the signal is, the station wiggles its frequency in step with the sound.",
+     "file": "/radio/talk-fm-a/2.m4a",
+     "dur": 7.85,
+     "hash": "44624eaeef00"
+    },
+    {
+     "who": "KSPX",
+     "text": "Static from lightning mostly changes signal strength, so it barely bothers F M.",
+     "file": "/radio/talk-fm-a/3.m4a",
+     "dur": 4.52,
+     "hash": "622f6f9f58cb"
+    },
+    {
+     "who": "KSPX",
+     "text": "Each station gets a channel about two hundred kilohertz wide. On a waterfall display, that's the wide, bright stripe.",
+     "file": "/radio/talk-fm-a/4.m4a",
+     "dur": 6.14,
+     "hash": "36079632910a"
+    },
+    {
+     "who": "KSPX",
+     "text": "That's K S P X, ninety eight point one. Stay with us.",
+     "file": "/radio/talk-fm-a/5.m4a",
+     "dur": 3.14,
+     "hash": "83fdd89a99ff"
+    }
+   ]
+  },
+  "talk-fm-b": {
+   "title": "KVLY news and weather",
+   "style": "broadcast",
+   "courtesy": false,
+   "continuous": true,
+   "lines": [
+    {
+     "who": "KVLY",
+     "text": "This is K V L Y, ninety eight point seven. Here's your weather: sunny and mild, with highs near seventy two.",
+     "file": "/radio/talk-fm-b/0.m4a",
+     "dur": 5.93,
+     "hash": "7e1956d954fe"
+    },
+    {
+     "who": "KVLY",
+     "text": "On the community calendar, the amateur radio club is offering a free license class Saturday at the library. No experience needed.",
+     "file": "/radio/talk-fm-b/1.m4a",
+     "dur": 7.32,
+     "hash": "eef4fe206583"
+    },
+    {
+     "who": "KVLY",
+     "text": "The technician exam has thirty five questions. You need twenty six correct to pass.",
+     "file": "/radio/talk-fm-b/2.m4a",
+     "dur": 4.63,
+     "hash": "eddc3118c9b9"
+    },
+    {
+     "who": "KVLY",
+     "text": "Traffic is light on the freeway this morning. You're listening to K V L Y, ninety eight point seven.",
+     "file": "/radio/talk-fm-b/3.m4a",
+     "dur": 5.57,
+     "hash": "db95875c4f56"
+    }
+   ]
+  },
+  "talk-fm-c": {
+   "title": "KQRD radio science",
+   "style": "broadcast",
+   "courtesy": false,
+   "continuous": true,
+   "lines": [
+    {
+     "who": "KQRD",
+     "text": "Welcome back to Radio Science Minute, on K Q R D, ninety eight point nine.",
+     "file": "/radio/talk-fm-c/0.m4a",
+     "dur": 5.57,
+     "hash": "334c3f7236a7"
+    },
+    {
+     "who": "KQRD",
+     "text": "Today's question: why do A M stations travel farther at night?",
+     "file": "/radio/talk-fm-c/1.m4a",
+     "dur": 4.05,
+     "hash": "7dfddaa58b85"
+    },
+    {
+     "who": "KQRD",
+     "text": "After sunset, the lowest layer of the ionosphere fades away. That lets medium wave signals bounce off higher layers, and skip hundreds of miles.",
+     "file": "/radio/talk-fm-c/2.m4a",
+     "dur": 9.58,
+     "hash": "22f1dd2d5610"
+    },
+    {
+     "who": "KQRD",
+     "text": "That's called sky wave propagation. Now you know. This is K Q R D, ninety eight point nine.",
+     "file": "/radio/talk-fm-c/3.m4a",
+     "dur": 6.72,
+     "hash": "15e7900d1bb5"
+    }
+   ]
+  },
+  "fox-beacon": {
+   "title": "Fox hunt transmitter",
+   "style": "comms",
+   "courtesy": false,
+   "continuous": false,
+   "lines": [
+    {
+     "who": "KX6FOX",
+     "text": "This is the fox. K X 6 F O X, Kilo X-ray Six Foxtrot Oscar X-ray, transmitting for the hunt. Find me if you can.",
+     "file": "/radio/fox-beacon/0.m4a",
+     "dur": 8.85,
+     "hash": "a54f7e8cecdd"
+    }
+   ]
+  }
+ }
+}

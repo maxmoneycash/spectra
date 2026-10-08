@@ -1,5 +1,7 @@
 import { Rng } from './prng';
 import { SineOsc, OnePole } from './osc';
+import { voiceSet } from './voicebank';
+import type { BankSetMsg } from '../engine/protocol';
 
 /** Sample rate at which message audio is synthesised before modulation. */
 export const MSG_RATE = 24000;
@@ -118,6 +120,132 @@ export class NoiseMessage implements Message {
   fill(buf: Float32Array, len: number): void {
     for (let i = 0; i < len; i++) {
       buf[i] = this.lp.process(this.rng.gaussian() * 0.5);
+    }
+  }
+}
+
+/* ------------------------------------------------------------ speech */
+
+type SpeechState = 'gap' | 'talk' | 'hang' | 'beep' | 'tail';
+
+export interface SpeechOptions {
+  /** Pause between transmissions in a conversation, seconds. */
+  gap?: [number, number];
+  /** Pause after the last line before the conversation repeats, seconds. */
+  rest?: [number, number];
+  /** Called when a transmission starts (line index into the set). */
+  onLine?: (line: number, set: BankSetMsg) => void;
+  /**
+   * Broadcast stations stay on the air between lines and before the bank
+   * has loaded (dead air still has a carrier). Taken from the set once it
+   * arrives; this covers the moments before.
+   */
+  continuous?: boolean;
+}
+
+/**
+ * Plays recorded transmissions from the voice bank as a conversation, and
+ * reports whether the transmitter is keyed, so emitters can drop the carrier
+ * between overs like a real push-to-talk radio.
+ *
+ *   talk ─▶ (repeater) hang ─▶ beep ─▶ tail ─▶ gap ─▶ talk …
+ *   talk ─▶ (simplex)  tail ─▶ gap
+ *
+ * The keyed flag is read by the modulator once per pump chunk (~85 ms), so
+ * every transmission ends with a tail longer than that; the last syllable
+ * is never clipped by the carrier dropping.
+ */
+export class SpeechMessage implements Message {
+  keyed = false;
+  private state: SpeechState = 'gap';
+  private counter: number;
+  private line: number;
+  private pos = 0;
+  private beepPh = 0;
+  private readonly gap: [number, number];
+  private readonly rest: [number, number];
+
+  constructor(
+    private readonly setId: string,
+    private readonly rng: Rng,
+    private readonly opts: SpeechOptions = {},
+  ) {
+    this.gap = opts.gap ?? [0.7, 2.2];
+    this.rest = opts.rest ?? [7, 15];
+    // Stagger: start somewhere in the conversation, after a short delay, so
+    // two stations sharing a script never talk in unison.
+    this.line = Math.floor(rng.range(0, 64)) - 1;
+    this.counter = Math.floor(rng.range(0.3, 3) * MSG_RATE);
+  }
+
+  private nextGap(set: BankSetMsg): number {
+    const lastLine = this.line >= set.lines.length - 1;
+    const [a, b] = set.continuous ? [0.35, 0.9] : lastLine ? this.rest : this.gap;
+    return Math.floor(this.rng.range(a, b) * MSG_RATE);
+  }
+
+  fill(buf: Float32Array, len: number): void {
+    const set = voiceSet(this.setId);
+    for (let i = 0; i < len; i++) {
+      switch (this.state) {
+        case 'gap':
+          buf[i] = 0;
+          this.keyed = set ? set.continuous : !!this.opts.continuous;
+          if (--this.counter > 0) break;
+          if (!set || set.lines.length === 0) {
+            this.counter = MSG_RATE; // bank not here yet — look again in a second
+            break;
+          }
+          this.line = (((this.line + 1) % set.lines.length) + set.lines.length) % set.lines.length;
+          this.pos = 0;
+          this.state = 'talk';
+          this.keyed = true;
+          this.opts.onLine?.(this.line, set);
+          break;
+        case 'talk': {
+          const pcm = set!.lines[this.line].pcm;
+          buf[i] = this.pos < pcm.length ? pcm[this.pos] : 0;
+          if (++this.pos >= pcm.length) {
+            if (set!.courtesy) {
+              this.state = 'hang';
+              this.counter = Math.floor(0.32 * MSG_RATE);
+            } else {
+              this.state = 'tail';
+              this.counter = Math.floor((set!.continuous ? 0.12 : 0.16) * MSG_RATE);
+            }
+          }
+          break;
+        }
+        case 'hang':
+          buf[i] = 0;
+          if (--this.counter <= 0) {
+            this.state = 'beep';
+            this.counter = Math.floor(0.13 * MSG_RATE);
+            this.beepPh = 0;
+          }
+          break;
+        case 'beep': {
+          // Courtesy tone: a soft 1 kHz blip with raised-cosine edges.
+          const n = Math.floor(0.13 * MSG_RATE);
+          const k = n - this.counter;
+          const edge = Math.min(1, k / 240, this.counter / 240);
+          this.beepPh += (2 * Math.PI * 1000) / MSG_RATE;
+          buf[i] = 0.32 * edge * Math.sin(this.beepPh);
+          if (--this.counter <= 0) {
+            this.state = 'tail';
+            this.counter = Math.floor(0.45 * MSG_RATE);
+          }
+          break;
+        }
+        case 'tail':
+          buf[i] = 0;
+          if (--this.counter <= 0) {
+            this.state = 'gap';
+            this.counter = this.nextGap(set!);
+            this.keyed = !!set!.continuous;
+          }
+          break;
+      }
     }
   }
 }

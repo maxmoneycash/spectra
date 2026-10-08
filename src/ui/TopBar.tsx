@@ -25,6 +25,9 @@ function GithubMark({ className }: { className?: string }) {
   );
 }
 import { useStore, type AppView } from '../store/store';
+import { NAV } from './shell/nav';
+import { UtcClock } from './shell/UtcClock';
+import { tick } from './kit/haptics';
 import { scenarioById } from '../scenarios/scenarios';
 import { useTheme } from '../hooks/useTheme';
 import { cn } from '@/lib/utils';
@@ -94,22 +97,31 @@ export function TopBar({
   const isConsole = view === 'console';
 
   return (
-    <header className="flex h-14 items-center gap-2 overflow-hidden border-b border-line bg-background px-3 sm:px-4">
-      <div className="flex shrink-0 select-none items-center gap-2">
-        <Radio className="size-4 shrink-0 text-foreground" strokeWidth={1.75} />
-        <span className="hidden text-[13px] font-semibold tracking-[0.2em] min-[420px]:inline">
-          SPECTRA
+    <header className="flex h-14 items-center gap-2 overflow-hidden border-b border-line bg-background px-3.5 pt-[env(safe-area-inset-top)] sm:px-4">
+      <div className="flex shrink-0 select-none items-center gap-2.5">
+        <span className="grid size-7 place-items-center rounded-lg bg-foreground text-background">
+          <Radio className="size-[15px]" strokeWidth={2} />
         </span>
-        <span className="mono-feats hidden font-mono text-[9px] uppercase tracking-[0.16em] text-muted-foreground sm:inline">
-          SDR Lab
+        <span className="flex flex-col leading-none">
+          <span className="text-[12.5px] font-semibold tracking-[0.22em]">SPECTRA</span>
+          <UtcClock className="mt-[3px] text-[9.5px] tracking-[0.08em] text-muted-foreground" />
         </span>
       </div>
 
-      <div className="ml-2 flex items-center gap-3" role="tablist" aria-label="View">
-        <NavTab id="console" label="Console" active={isConsole} onClick={setView} />
-        <NavTab id="academy" label="Academy" active={view === 'academy'} onClick={setView} />
-        <NavTab id="exam" label="Exam" active={view === 'exam'} onClick={setView} />
-        <NavTab id="ctf" label="CTF" active={view === 'ctf'} onClick={setView} />
+      {/* Desktop tabs. Phones get the bottom tab bar instead. */}
+      <div className="ml-4 flex items-center gap-4 max-lg:hidden" role="tablist" aria-label="Sections">
+        {NAV.map((n) => (
+          <NavTab
+            key={n.id}
+            id={n.id}
+            label={n.label}
+            active={view === n.id}
+            onClick={(v) => {
+              if (v !== view) tick();
+              setView(v);
+            }}
+          />
+        ))}
       </div>
 
       {isConsole && sc && (

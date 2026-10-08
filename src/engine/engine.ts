@@ -5,6 +5,8 @@ import {
   type SceneSpec,
   type GroundTruth,
   type TrackMsg,
+  type TxEvent,
+  type BankSetMsg,
 } from './protocol';
 import type { DemodMode } from '../sim/signal-kinds';
 import type { EmitterConfig } from '../sim/emitters';
@@ -25,6 +27,7 @@ type Listeners = {
   recordingSaved: (r: { name: string; durationSec: number; centerFreqHz: number }) => void;
   audio: (pcm: Float32Array) => void;
   chanIQ: (re: Float32Array, im: Float32Array) => void;
+  tx: (e: TxEvent) => void;
 };
 
 /**
@@ -55,6 +58,7 @@ export class SpectraEngine {
     recordingSaved: new Set(),
     audio: new Set(),
     chanIQ: new Set(),
+    tx: new Set(),
   };
 
   constructor() {
@@ -105,6 +109,12 @@ export class SpectraEngine {
       case 'recording':
         this.finishRecording(msg.iq, msg.centerFreqHz, msg.durationSec);
         break;
+      case 'tx': {
+        const { type: _t, ...e } = msg;
+        void _t;
+        this.emit('tx', e);
+        break;
+      }
     }
   }
 
@@ -143,6 +153,49 @@ export class SpectraEngine {
     await this.initAudio();
     this.node?.port.postMessage('clear');
     this.send({ type: 'setRunning', running: true });
+    void this.loadVoiceBank();
+  }
+
+  private voiceBank: Promise<void> | null = null;
+
+  /**
+   * Decode the recorded on-air traffic (public/radio) once and hand it to the
+   * worker. Decoding goes through a 24 kHz OfflineAudioContext, which lands
+   * the PCM at exactly the simulator's message rate. Stations stay silent
+   * until this arrives, then start keying up on their own schedules.
+   */
+  loadVoiceBank(): Promise<void> {
+    if (this.voiceBank) return this.voiceBank;
+    this.voiceBank = (async () => {
+      try {
+        const idx = (await fetch('/radio/index.json').then((r) => r.json())) as {
+          sets: Record<string, { courtesy: boolean; continuous: boolean; lines: { who: string; text: string; file: string }[] }>;
+        };
+        const ctx = new OfflineAudioContext(1, 1, 24000);
+        const sets: Record<string, BankSetMsg> = {};
+        const transfer: ArrayBuffer[] = [];
+        await Promise.all(
+          Object.entries(idx.sets).map(async ([id, set]) => {
+            const lines = await Promise.all(
+              set.lines.map(async (ln) => {
+                const buf = await fetch(ln.file).then((r) => r.arrayBuffer());
+                const audio = await ctx.decodeAudioData(buf);
+                const pcm = audio.getChannelData(0).slice();
+                transfer.push(pcm.buffer);
+                return { pcm, who: ln.who, text: ln.text };
+              }),
+            );
+            sets[id] = { lines, courtesy: set.courtesy, continuous: set.continuous };
+          }),
+        );
+        this.worker.postMessage({ type: 'voiceBank', sets } satisfies ToWorker, transfer);
+      } catch (err) {
+        // Radio traffic is atmosphere, not a dependency: carry on without it.
+        console.warn('[spectra] voice bank unavailable', err);
+        this.voiceBank = null;
+      }
+    })();
+    return this.voiceBank;
   }
 
   stop(): void {

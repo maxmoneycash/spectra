@@ -45,9 +45,9 @@ export const CHALLENGES: Challenge[] = [
     centerFreqHz: 98.5 * MHZ,
     noiseSigma: 0.022,
     emitters: [
-      { id: 'a', kind: 'wfm', freqHz: 98.1 * MHZ, powerDb: -3, message: 'music', seed: 401 },
-      { id: 'b', kind: 'wfm', freqHz: 98.7 * MHZ, powerDb: -5, message: 'music', seed: 402 },
-      { id: 'c', kind: 'wfm', freqHz: 98.9 * MHZ, powerDb: -7, message: 'music', seed: 403 },
+      { id: 'a', kind: 'wfm', freqHz: 98.1 * MHZ, powerDb: -3, speech: 'talk-fm-a', seed: 401 },
+      { id: 'b', kind: 'wfm', freqHz: 98.7 * MHZ, powerDb: -5, speech: 'talk-fm-b', seed: 402 },
+      { id: 'c', kind: 'wfm', freqHz: 98.9 * MHZ, powerDb: -7, speech: 'talk-fm-c', seed: 403 },
       { id: 'd', kind: 'nfm', freqHz: 98.32 * MHZ, powerDb: -9, seed: 404 },
     ],
     suggest: 'wfm',
@@ -77,7 +77,7 @@ export const CHALLENGES: Challenge[] = [
         text: 'CQ DE SPECTRA LISTEN UP  ',
         seed: 405,
       },
-      { id: 'v1', kind: 'lsb', freqHz: 7.022 * MHZ, powerDb: -9, message: 'voice', seed: 406 },
+      { id: 'v1', kind: 'lsb', freqHz: 7.022 * MHZ, powerDb: -9, speech: 'hf-ssb', seed: 406 },
     ],
     suggest: 'cw',
   },
@@ -118,7 +118,7 @@ export const CHALLENGES: Challenge[] = [
     centerFreqHz: 124.0 * MHZ,
     noiseSigma: 0.03,
     emitters: [
-      { id: 'am', kind: 'am', freqHz: 124.2 * MHZ, powerDb: -5, message: 'voice', seed: 409 },
+      { id: 'am', kind: 'am', freqHz: 124.2 * MHZ, powerDb: -5, speech: 'airband', seed: 409 },
       { id: 'n', kind: 'nfm', freqHz: 123.78 * MHZ, powerDb: -8, seed: 410 },
       { id: 'f', kind: 'fsk2', freqHz: 124.42 * MHZ, powerDb: -9, seed: 411 },
     ],
@@ -234,7 +234,7 @@ export const CHALLENGES: Challenge[] = [
     centerFreqHz: 7.15 * MHZ,
     noiseSigma: 0.03,
     emitters: [
-      { id: 'v', kind: 'lsb', freqHz: 7.16 * MHZ, powerDb: -5, message: 'voice', seed: 422 },
+      { id: 'v', kind: 'lsb', freqHz: 7.16 * MHZ, powerDb: -5, speech: 'hf-ssb', seed: 422 },
     ],
     suggest: 'lsb',
   },
@@ -304,7 +304,7 @@ export const CHALLENGES: Challenge[] = [
     centerFreqHz: 146.64 * MHZ,
     noiseSigma: 0.03,
     emitters: [
-      { id: 'output', kind: 'nfm', freqHz: 146.94 * MHZ, powerDb: -4, message: 'voice', seed: 503 },
+      { id: 'output', kind: 'nfm', freqHz: 146.94 * MHZ, powerDb: -4, speech: 'repeater-2m', seed: 503 },
       { id: 'input', kind: 'cw', freqHz: 146.34 * MHZ, powerDb: -7, wpm: 16, text: 'DE SPECTRA SPLIT SHIFT  ', seed: 504 },
     ],
     suggest: 'nfm',

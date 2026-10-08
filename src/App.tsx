@@ -7,10 +7,14 @@ import { CtfView } from './ctf/CtfView';
 import { TopBar } from './ui/TopBar';
 import { SpectrumWaterfall } from './ui/SpectrumWaterfall';
 import { StartOverlay } from './ui/StartOverlay';
+import { OnAirCaption } from './ui/OnAirCaption';
 import { ReceiverDeck } from './ui/deck/ReceiverDeck';
+import { MobileDeck } from './ui/deck/MobileDeck';
+import { useMediaQuery } from './hooks/useMediaQuery';
 import { RailTabs, PanelView } from './ui/RailTabs';
 import { PanelSheet } from './ui/PanelSheet';
 import { StatusBar } from './ui/StatusBar';
+import { BottomNav } from './ui/shell/BottomNav';
 import { useHotkeys } from './hooks/useHotkeys';
 import { useUrlSync } from './hooks/useUrlSync';
 import { OperatorCard } from './ui/OperatorCard';
@@ -71,7 +75,7 @@ function KeysPop({ onClose }: { onClose: () => void }) {
         </div>
       ))}
       <div className="mt-2 border-t border-border pt-2 text-[10.5px] text-muted-foreground">
-        Click the VFO readout to type a frequency.
+        Click the frequency to open the tuner.
       </div>
     </motion.div>
   );
@@ -82,6 +86,7 @@ export function App() {
   const view = useStore((s) => s.view);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [keysOpen, setKeysOpen] = useState(false);
+  const wide = useMediaQuery('(min-width: 1024px)');
   const toggleKeys = useCallback(() => setKeysOpen((o) => !o), []);
   useHotkeys(toggleKeys);
   useUrlSync();
@@ -94,37 +99,43 @@ export function App() {
   return (
     <MotionConfig reducedMotion="user">
       <TooltipProvider delayDuration={300}>
-        <div className="grid h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[3.5rem_minmax(0,1fr)_auto_auto] bg-background">
+        <div className="grid h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)_auto] bg-background">
           <TopBar onOpenPanels={() => setSheetOpen(true)} onToggleKeys={toggleKeys} />
-          {view === 'console' ? (
-            <>
-              <div className="grid min-h-0 min-w-0 grid-cols-[minmax(0,1fr)_360px] max-lg:grid-cols-[minmax(0,1fr)] xl:grid-cols-[minmax(0,1fr)_380px]">
-                <div className="relative min-h-0 min-w-0 overflow-hidden bg-stage">
-                  <SpectrumWaterfall />
-                  <StartOverlay />
+          <main className="min-h-0 min-w-0">
+            {view === 'console' ? (
+              <div className="flex h-full min-h-0 flex-col">
+                <div className="grid min-h-0 min-w-0 flex-1 grid-cols-[minmax(0,1fr)_360px] max-lg:grid-cols-[minmax(0,1fr)] xl:grid-cols-[minmax(0,1fr)_380px]">
+                  <div className="relative min-h-0 min-w-0 overflow-hidden bg-stage">
+                    <SpectrumWaterfall />
+                    <OnAirCaption />
+                    <StartOverlay />
+                  </div>
+                  <aside
+                    aria-label="Inspector"
+                    className="flex min-h-0 flex-col border-l border-line bg-background max-lg:hidden"
+                  >
+                    <div className="border-b border-line px-3 pt-3">
+                      <RailTabs />
+                    </div>
+                    <div className="thin-scroll min-h-0 flex-1 overflow-y-auto p-3">
+                      <PanelView panel={panel} />
+                    </div>
+                  </aside>
                 </div>
-                <aside
-                  aria-label="Inspector"
-                  className="flex min-h-0 flex-col border-l border-line bg-background max-lg:hidden"
-                >
-                  <div className="border-b border-line px-3 pt-3">
-                    <RailTabs />
-                  </div>
-                  <div className="thin-scroll min-h-0 flex-1 overflow-y-auto p-3">
-                    <PanelView panel={panel} />
-                  </div>
-                </aside>
+                {wide ? <ReceiverDeck /> : <MobileDeck />}
+                <div className="max-lg:hidden">
+                  <StatusBar />
+                </div>
               </div>
-              <ReceiverDeck />
-            </>
-          ) : view === 'exam' ? (
-            <ExamView />
-          ) : view === 'ctf' ? (
-            <CtfView />
-          ) : (
-            <Academy />
-          )}
-          {view === 'console' && <StatusBar />}
+            ) : view === 'exam' ? (
+              <ExamView />
+            ) : view === 'ctf' ? (
+              <CtfView />
+            ) : (
+              <Academy />
+            )}
+          </main>
+          <BottomNav />
           <OperatorCard />
           <PanelSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
           <AnimatePresence>

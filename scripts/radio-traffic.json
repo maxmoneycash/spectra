@@ -1,0 +1,128 @@
+{
+  "_comment": "Simulated on-air traffic for SPECTRA. Original scripts; all call signs, stations, and places are fictional. Each set is one conversation that loops. 'style' picks the audio processing: comms = 300-3000 Hz band-limited and compressed like a handheld; broadcast = full-range and lightly compressed. Rendered by scripts/render_traffic.py.",
+  "sets": {
+    "repeater-2m": {
+      "title": "Repeater conversation",
+      "style": "comms",
+      "courtesy": true,
+      "speed": 1.05,
+      "lines": [
+        { "who": "KX6RTQ", "voice": "am_michael", "text": "K X 6 R T Q, monitoring." },
+        { "who": "W6YLN", "voice": "af_sarah", "text": "K X 6 R T Q, this is W 6 Y L N. Good morning, Mike." },
+        { "who": "KX6RTQ", "voice": "am_michael", "text": "Good morning, Lena. You're full quieting into the repeater. How are things up on the ridge?" },
+        { "who": "W6YLN", "voice": "af_sarah", "text": "Clear skies and a little wind. I'm portable on the handheld, five watts. Any word on the fox hunt Saturday?" },
+        { "who": "KX6RTQ", "voice": "am_michael", "text": "It starts at nine from the park. Bring your tape measure Yagi. W 6 Y L N, this is K X 6 R T Q." },
+        { "who": "W6YLN", "voice": "af_sarah", "text": "Sounds great, I'll be there. W 6 Y L N, clear." },
+        { "who": "KJ6DVQ", "voice": "am_eric", "text": "Break. This is K J 6 D V Q. Could I get a quick signal report?" },
+        { "who": "KX6RTQ", "voice": "am_michael", "text": "K J 6 D V Q, you're a little scratchy, but readable. Try moving a few feet. K X 6 R T Q." },
+        { "who": "KJ6DVQ", "voice": "am_eric", "text": "How about now? K J 6 D V Q." },
+        { "who": "KX6RTQ", "voice": "am_michael", "text": "Much better, full quieting. K X 6 R T Q, clear and monitoring." }
+      ]
+    },
+    "simplex-2m": {
+      "title": "Calling CQ on simplex",
+      "style": "comms",
+      "courtesy": false,
+      "speed": 1.05,
+      "lines": [
+        { "who": "KX6QEX", "voice": "am_adam", "text": "C Q, C Q. This is K X 6 Q E X, Kilo X-ray Six Quebec Echo X-ray, on one four six point five two simplex. Anyone around?" },
+        { "who": "KI6RVA", "voice": "af_nicole", "text": "K X 6 Q E X, this is K I 6 R V A, Kilo India Six Romeo Victor Alpha. You're five by nine. My name is Rita." },
+        { "who": "KX6QEX", "voice": "am_adam", "text": "K I 6 R V A, thanks Rita. My name is Sam, mobile near the bay. Let's move off the calling frequency. How about one four six point five five?" },
+        { "who": "KI6RVA", "voice": "af_nicole", "text": "Good idea. See you on one four six point five five. K I 6 R V A." }
+      ]
+    },
+    "net-70cm": {
+      "title": "Directed net",
+      "style": "comms",
+      "courtesy": true,
+      "speed": 1.0,
+      "lines": [
+        { "who": "KX6NET", "voice": "am_onyx", "text": "This is K X 6 N E T, net control for the Bay Valley Training Net. This is a directed net. Are there any stations with emergency or priority traffic?" },
+        { "who": "KX6NET", "voice": "am_onyx", "text": "Hearing none. We'll now take check-ins. Please give your call sign phonetically, and say if you have traffic." },
+        { "who": "KI6LMZ", "voice": "af_bella", "text": "K I 6 L M Z. Kilo India Six Lima Mike Zulu. No traffic." },
+        { "who": "W6GRX", "voice": "am_liam", "text": "W 6 G R X. Whiskey Six Golf Romeo X-ray. One item of traffic." },
+        { "who": "KX6NET", "voice": "am_onyx", "text": "K I 6 L M Z and W 6 G R X, thank you. W 6 G R X, go ahead with your traffic." },
+        { "who": "W6GRX", "voice": "am_liam", "text": "The club meeting moves to the library this Thursday at seven. That's all. W 6 G R X." },
+        { "who": "KX6NET", "voice": "am_onyx", "text": "Thank you. This concludes the Bay Valley Training Net. The net is now closed. K X 6 N E T." }
+      ]
+    },
+    "airband": {
+      "title": "Tower frequency",
+      "style": "comms",
+      "courtesy": false,
+      "speed": 1.08,
+      "lines": [
+        { "who": "N427EB", "voice": "am_puck", "text": "Valley Tower, Cessna Four Two Seven Echo Bravo, ten miles south at two thousand five hundred, inbound for landing with information Charlie." },
+        { "who": "TOWER", "voice": "af_kore", "text": "Cessna Four Two Seven Echo Bravo, Valley Tower. Enter left downwind runway one niner. Report midfield." },
+        { "who": "N427EB", "voice": "am_puck", "text": "Left downwind runway one niner, report midfield. Seven Echo Bravo." },
+        { "who": "N61P", "voice": "am_echo", "text": "Valley Tower, Skyhawk Six One Papa, holding short runway one niner, ready for departure." },
+        { "who": "TOWER", "voice": "af_kore", "text": "Skyhawk Six One Papa, wind one eight zero at eight. Runway one niner, cleared for takeoff." },
+        { "who": "N61P", "voice": "am_echo", "text": "Cleared for takeoff, runway one niner. Six One Papa." },
+        { "who": "N427EB", "voice": "am_puck", "text": "Valley Tower, Seven Echo Bravo, midfield left downwind." },
+        { "who": "TOWER", "voice": "af_kore", "text": "Seven Echo Bravo, runway one niner, cleared to land." },
+        { "who": "N427EB", "voice": "am_puck", "text": "Cleared to land, one niner. Seven Echo Bravo." }
+      ]
+    },
+    "hf-ssb": {
+      "title": "HF DX contact",
+      "style": "comms",
+      "courtesy": false,
+      "speed": 1.02,
+      "lines": [
+        { "who": "GX4RTB", "voice": "bm_lewis", "text": "C Q, C Q, C Q D X. This is G X 4 R T B, Golf X-ray Four Romeo Tango Bravo, calling C Q D X and listening." },
+        { "who": "KX6RTQ", "voice": "am_michael", "text": "G X 4 R T B, this is K X 6 R T Q. Kilo X-ray Six Romeo Tango Quebec." },
+        { "who": "GX4RTB", "voice": "bm_lewis", "text": "K X 6 R T Q, good evening, and thanks for the call. You're five seven into England. Name here is Tom. How copy?" },
+        { "who": "KX6RTQ", "voice": "am_michael", "text": "Good copy, Tom. You're five nine into California. Name is Mike. I'm running one hundred watts into a dipole. Back to you." },
+        { "who": "GX4RTB", "voice": "bm_lewis", "text": "Lovely signal, Mike. I'll Q S L through the bureau. Seventy three, and good D X. K X 6 R T Q, this is G X 4 R T B." },
+        { "who": "KX6RTQ", "voice": "am_michael", "text": "Seventy three, Tom. G X 4 R T B, this is K X 6 R T Q, clear." }
+      ]
+    },
+    "talk-fm-a": {
+      "title": "KSPX talk radio",
+      "style": "broadcast",
+      "continuous": true,
+      "speed": 1.0,
+      "lines": [
+        { "who": "KSPX", "voice": "am_eric", "text": "You're listening to K S P X, ninety eight point one F M. It's a beautiful morning in the valley." },
+        { "who": "KSPX", "voice": "am_eric", "text": "This hour, we're talking about how F M radio works, and why your car radio sounds so clear." },
+        { "who": "KSPX", "voice": "am_eric", "text": "F M stands for frequency modulation. Instead of changing how strong the signal is, the station wiggles its frequency in step with the sound." },
+        { "who": "KSPX", "voice": "am_eric", "text": "Static from lightning mostly changes signal strength, so it barely bothers F M." },
+        { "who": "KSPX", "voice": "am_eric", "text": "Each station gets a channel about two hundred kilohertz wide. On a waterfall display, that's the wide, bright stripe." },
+        { "who": "KSPX", "voice": "am_eric", "text": "That's K S P X, ninety eight point one. Stay with us." }
+      ]
+    },
+    "talk-fm-b": {
+      "title": "KVLY news and weather",
+      "style": "broadcast",
+      "continuous": true,
+      "speed": 1.0,
+      "lines": [
+        { "who": "KVLY", "voice": "af_jessica", "text": "This is K V L Y, ninety eight point seven. Here's your weather: sunny and mild, with highs near seventy two." },
+        { "who": "KVLY", "voice": "af_jessica", "text": "On the community calendar, the amateur radio club is offering a free license class Saturday at the library. No experience needed." },
+        { "who": "KVLY", "voice": "af_jessica", "text": "The technician exam has thirty five questions. You need twenty six correct to pass." },
+        { "who": "KVLY", "voice": "af_jessica", "text": "Traffic is light on the freeway this morning. You're listening to K V L Y, ninety eight point seven." }
+      ]
+    },
+    "talk-fm-c": {
+      "title": "KQRD radio science",
+      "style": "broadcast",
+      "continuous": true,
+      "speed": 1.0,
+      "lines": [
+        { "who": "KQRD", "voice": "bm_george", "text": "Welcome back to Radio Science Minute, on K Q R D, ninety eight point nine." },
+        { "who": "KQRD", "voice": "bm_george", "text": "Today's question: why do A M stations travel farther at night?" },
+        { "who": "KQRD", "voice": "bm_george", "text": "After sunset, the lowest layer of the ionosphere fades away. That lets medium wave signals bounce off higher layers, and skip hundreds of miles." },
+        { "who": "KQRD", "voice": "bm_george", "text": "That's called sky wave propagation. Now you know. This is K Q R D, ninety eight point nine." }
+      ]
+    },
+    "fox-beacon": {
+      "title": "Fox hunt transmitter",
+      "style": "comms",
+      "courtesy": false,
+      "speed": 1.0,
+      "lines": [
+        { "who": "KX6FOX", "voice": "am_fenrir", "text": "This is the fox. K X 6 F O X, Kilo X-ray Six Foxtrot Oscar X-ray, transmitting for the hunt. Find me if you can." }
+      ]
+    }
+  }
+}

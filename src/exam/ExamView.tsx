@@ -7,7 +7,6 @@ import {
   useTransform,
   type MotionValue,
 } from 'motion/react';
-import { useWebHaptics } from 'web-haptics/react';
 import {
   Check,
   X,
@@ -16,16 +15,22 @@ import {
   Volume2,
   VolumeX,
   RotateCcw,
-  ClipboardCheck,
   ChevronRight,
   ChevronUp,
+  Headphones,
+  Layers,
+  Timer,
+  Target,
 } from 'lucide-react';
-import { useExam, masteryStats, subelementReadiness } from './store';
+import { useExam, masteryStats, subelementReadiness, type StudyMode } from './store';
 import { ExamMode } from './ExamMode';
-import { POOLS, poolMeta, subelementOf, type ElementId, type PoolQuestion } from './types';
+import { ListenMode } from './ListenMode';
+import { POOLS, poolMeta, subelementOf, type PoolQuestion } from './types';
 import { subelementTitle } from './syllabus';
-import { warmVoices, speechSupported, speakQuestion, cancelSpeech } from './speech';
-import { clipUrl, useRenderedSet } from './narration';
+import { warmVoices, speechSupported } from './speech';
+import { narrator, playAnswer, playQuestion, SPEEDS, useClips, type ClipIndex } from './narration';
+import { Segmented } from '@/ui/kit/Segmented';
+import { ok as hapticOk, bad as hapticBad } from '@/ui/kit/haptics';
 import { BottomSheet } from '@/ui/BottomSheet';
 import { cn } from '@/lib/utils';
 import { Roll } from '@/ui/Roll';
@@ -38,20 +43,18 @@ const BOTTOM_CLEARANCE = 24;
 
 function ReelCard({
   q,
-  pool,
+  clips,
   active,
   audioOn,
-  hasClip,
   onPick,
   slot,
   cardH,
   scrollY,
 }: {
   q: PoolQuestion;
-  pool: ElementId;
+  clips: ClipIndex;
   active: boolean;
   audioOn: boolean;
-  hasClip: boolean;
   onPick: (i: number) => void;
   /** This card's index in the feed — its resting scroll offset is slot * cardH. */
   slot: number;
@@ -62,7 +65,6 @@ function ReelCard({
   const streak = useExam((s) => s.streak);
   const box = useExam((s) => s.progress[q.id]?.box ?? 0);
   const toggleAudio = useExam((s) => s.toggleAudio);
-  const audioRef = useRef<HTMLAudioElement>(null);
   const [blocked, setBlocked] = useState(false);
   const reduce = useReducedMotion();
 
@@ -79,39 +81,31 @@ function ReelCard({
   const opacity = useTransform(scrollY, range, [0.2, 1, 0.2]);
   const depth = reduce || !cardH ? undefined : { scale, opacity };
 
-  // Audio follows the active card: play on arrival, stop on leave.
+  // The question is read when the card arrives; the answer is read by the
+  // feed when you pick (see ExamView.pick). Leaving the card stops audio.
   useEffect(() => {
-    if (!active || !audioOn) {
-      audioRef.current?.pause();
-      cancelSpeech();
-      setBlocked(false);
-      return;
-    }
-    if (hasClip) {
-      const el = audioRef.current;
-      if (!el) return;
-      el.currentTime = 0;
-      void el.play().catch((err: unknown) => {
-        // Autoplay refused until the user interacts — offer a tap target.
-        if (err instanceof DOMException && err.name === 'NotAllowedError') setBlocked(true);
-      });
-      return () => el.pause();
-    }
-    speakQuestion(q.q, q.a, { withAnswers: true });
-    return cancelSpeech;
-  }, [active, audioOn, hasClip, q]);
+    setBlocked(false);
+    if (!active || !audioOn) return;
+    let alive = true;
+    void playQuestion(clips.get(q.id), q.q).then((r) => {
+      if (alive && r === 'blocked') setBlocked(true);
+    });
+    return () => {
+      alive = false;
+      narrator.stop();
+    };
+    // clips identity changes once when the manifest lands; re-reading the
+    // question then would double-play, so key on the question only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, audioOn, q.id]);
 
   return (
     <article
       className="relative h-full snap-start snap-always overflow-hidden"
       aria-label={`Question ${q.id}`}
     >
-      {hasClip && active && (
-        <audio ref={audioRef} src={clipUrl(pool, q.id)} preload="auto" playsInline />
-      )}
-
       <motion.div
-        className="absolute inset-x-0 top-0 flex origin-center flex-col px-5 pt-[68px] sm:px-8"
+        className="absolute inset-x-0 top-0 flex origin-center flex-col px-5 pt-2 sm:px-8"
         style={{ bottom: `calc(${BOTTOM_CLEARANCE}px + env(safe-area-inset-bottom))`, ...depth }}
       >
         {/* question — the caption, presidio-reels proportions */}
@@ -128,7 +122,11 @@ function ReelCard({
           )}
           {blocked && active && (
             <button
-              onClick={() => void audioRef.current?.play().then(() => setBlocked(false))}
+              onClick={() => {
+                narrator.unlock();
+                setBlocked(false);
+                void playQuestion(clips.get(q.id), q.q);
+              }}
               className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full border border-border px-4 text-[12px] text-foreground"
             >
               <Volume2 className="size-4" /> Tap to hear it
@@ -276,12 +274,14 @@ function FilterSheet({ open, onClose }: { open: boolean; onClose: () => void }) 
   const setSubFilter = useExam((s) => s.setSubFilter);
   const missedOnly = useExam((s) => s.missedOnly);
   const setMissedOnly = useExam((s) => s.setMissedOnly);
-  const startExam = useExam((s) => s.startExam);
   const resetProgress = useExam((s) => s.resetProgress);
+  const audio = useExam((s) => s.audio);
+  const toggleAudio = useExam((s) => s.toggleAudio);
+  const rate = useExam((s) => s.rate);
+  const setRate = useExam((s) => s.setRate);
   const queue = useExam((s) => s.queue);
   const [confirmReset, setConfirmReset] = useState(false);
 
-  const meta = poolMeta(pool);
   // Readiness is computed weakest-first, but the list keeps syllabus order so
   // rows don't jump around between visits — the bars carry the ranking.
   const readiness = useMemo(() => {
@@ -332,27 +332,38 @@ function FilterSheet({ open, onClose }: { open: boolean; onClose: () => void }) 
         </div>
       </div>
 
-      {/* practice exam */}
+      {/* narration */}
       <div className="px-4 pt-3">
-        <button
-          onClick={() => {
-            onClose();
-            startExam();
-          }}
-          disabled={!questions.length}
-          className="group flex w-full items-center gap-3 rounded-lg border border-line bg-card p-3.5 text-left transition-colors hover:border-foreground/40 disabled:opacity-50"
-        >
-          <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-foreground text-background">
-            <ClipboardCheck className="size-[18px]" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-[14px] font-medium text-foreground">Take a practice exam</span>
-            <span className="mt-0.5 block text-[12px] leading-snug text-muted-foreground">
-              {meta.examQuestions} questions, one from each group — pass at {meta.passing}
+        <div className="rounded-lg border border-line p-3">
+          <div className="flex items-center gap-3">
+            <span className="min-w-0 flex-1">
+              <span className="block text-[13px] text-foreground">Read questions aloud</span>
+              <span className="block text-[11.5px] text-muted-foreground">Question, then the answer after you pick</span>
             </span>
-          </span>
-          <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-        </button>
+            <button
+              role="switch"
+              aria-checked={audio}
+              aria-label="Read questions aloud"
+              onClick={toggleAudio}
+              className={cn('relative h-6 w-10 shrink-0 rounded-full transition-colors', audio ? 'bg-foreground' : 'bg-border')}
+            >
+              <span
+                className={cn(
+                  'absolute top-0.5 size-5 rounded-full bg-background shadow-sm transition-[left] duration-200',
+                  audio ? 'left-[18px]' : 'left-0.5',
+                )}
+              />
+            </button>
+          </div>
+          <Segmented
+            className="mt-3"
+            size="sm"
+            label="Narration speed"
+            value={rate as (typeof SPEEDS)[number]}
+            onChange={(v) => setRate(v)}
+            options={SPEEDS.map((v) => ({ value: v, label: `${v}×`, aria: `${v} times speed` }))}
+          />
+        </div>
       </div>
 
       {/* missed only */}
@@ -470,6 +481,8 @@ function FilterSheet({ open, onClose }: { open: boolean; onClose: () => void }) 
 
 /* ------------------------------------------------------------------ feed */
 
+type Tab = 'quiz' | 'listen' | 'exam';
+
 export function ExamView() {
   const pool = useExam((s) => s.pool);
   const loading = useExam((s) => s.loading);
@@ -479,26 +492,32 @@ export function ExamView() {
   const index = useExam((s) => s.index);
   const setIndex = useExam((s) => s.setIndex);
   const audio = useExam((s) => s.audio);
+  const rate = useExam((s) => s.rate);
+  const mode = useExam((s) => s.mode);
+  const setMode = useExam((s) => s.setMode);
   const progress = useExam((s) => s.progress);
   const loadPool = useExam((s) => s.loadPool);
   const subFilter = useExam((s) => s.subFilter);
   const missedOnly = useExam((s) => s.missedOnly);
   const session = useExam((s) => s.session);
-  const startExam = useExam((s) => s.startExam);
 
+  const [tab, setTab] = useState<Tab>(mode);
   const [filterOpen, setFilterOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollY = useMotionValue(0);
   const [cardH, setCardH] = useState(0);
   const reduce = useReducedMotion();
-  const rendered = useRenderedSet(pool);
+  const clips = useClips(pool);
 
   useEffect(() => {
     if (!questions.length && !loading) void loadPool(pool);
     warmVoices();
   }, [questions.length, loading, pool, loadPool]);
 
-  useEffect(() => cancelSpeech, []);
+  useEffect(() => {
+    narrator.setRate(rate);
+  }, [rate]);
+  useEffect(() => () => narrator.stop(), []);
 
   // Any queue rebuild must take the scroll position with it. Resetting
   // progress, or re-tapping the current pool/topic, reshuffles and sets
@@ -519,7 +538,7 @@ export function ExamView() {
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [loading, queue.length]);
+  }, [loading, queue.length, tab]);
 
   const snapTo = useCallback(
     (next: number) => {
@@ -531,11 +550,11 @@ export function ExamView() {
     [queue.length, reduce],
   );
 
-  const { trigger } = useWebHaptics();
   const advanceTimer = useRef<number | undefined>(undefined);
 
-  // One answer path for tap and keyboard. A right answer keeps the feed
-  // moving; a wrong one stays put so the correct answer actually gets read.
+  // One answer path for tap and keyboard. The correct answer is read back
+  // either way — confirmation when you were right, the lesson when you
+  // weren't. A right answer moves on once that clip finishes; a miss stays.
   const pick = useCallback(
     (id: string, i: number, at: number) => {
       const st = useExam.getState();
@@ -543,12 +562,23 @@ export function ExamView() {
       const q = st.byId[id];
       if (!q) return;
       st.answer(id, i);
-      const ok = i === q.c;
-      void trigger(ok ? 'success' : 'error');
+      const right = i === q.c;
+      if (right) hapticOk();
+      else hapticBad();
       window.clearTimeout(advanceTimer.current);
-      if (ok) advanceTimer.current = window.setTimeout(() => snapTo(at + 1), 900);
+      const advance = (ms: number) => {
+        if (!right) return;
+        advanceTimer.current = window.setTimeout(() => {
+          if (useExam.getState().index === at) snapTo(at + 1);
+        }, ms);
+      };
+      if (st.audio) {
+        void playAnswer(clips.get(id), q.a[q.c]).then((r) => advance(r === 'ended' ? 380 : 900));
+      } else {
+        advance(900);
+      }
     },
-    [trigger, snapTo],
+    [snapTo, clips],
   );
 
   // Moving by hand cancels a pending auto-advance, so it can't yank you.
@@ -557,12 +587,11 @@ export function ExamView() {
     window.clearTimeout(advanceTimer.current);
   }, [index]);
 
-  // Keyboard: j/k or arrows move the feed, A-D answer the visible card.
+  // Keyboard (quiz only): j/k or arrows move the feed, A-D answer.
   useEffect(() => {
+    if (tab !== 'quiz') return;
     const onKey = (e: KeyboardEvent) => {
       if (filterOpen || e.metaKey || e.ctrlKey || e.altKey) return;
-      const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
       const k = e.key.toLowerCase();
       if (k === 'arrowdown' || k === 'pagedown' || k === 'j') {
         e.preventDefault();
@@ -581,14 +610,22 @@ export function ExamView() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [filterOpen, index, queue, snapTo, pick]);
+  }, [tab, filterOpen, index, queue, snapTo, pick]);
 
   const stats = useMemo(() => masteryStats(questions, progress), [questions, progress]);
 
   if (session) return <ExamMode />;
 
+  const switchTab = (t: Tab) => {
+    narrator.stop();
+    setTab(t);
+    if (t !== 'exam') setMode(t as StudyMode);
+  };
+
   return (
-    <div className="relative h-full w-full overflow-hidden bg-background">
+    // Any tap unlocks the shared audio element, so later cards can speak
+    // without asking (iOS requires a gesture on the element once).
+    <div className="relative flex h-full w-full flex-col overflow-hidden bg-background" onPointerDownCapture={() => narrator.unlock()}>
       {/* mastery hairline — fills as the pool is mastered */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-30 h-[2px] bg-border/60">
         <div
@@ -597,41 +634,25 @@ export function ExamView() {
         />
       </div>
 
-      {/* scrim — content sliding up under the header fades out instead of
-          colliding with the title mid-swipe */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-[88px] bg-gradient-to-b from-background from-55% to-transparent" />
-
-      {/* header overlay */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-2 px-4 pt-3.5">
-        <div className="min-w-0">
-          <p className="mono-feats font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-            {queue.length ? (
-              <>
-                <Roll value={Math.min(index + 1, queue.length)} />/{queue.length}
-              </>
-            ) : (
-              '—'
-            )}{' '}
-            · <Roll value={stats.mastered} /> mastered
-          </p>
-          <h1 className="mt-0.5 truncate text-[17px] font-semibold leading-none text-foreground">
-            {POOLS.find((p) => p.id === pool)?.name}
-          </h1>
-        </div>
-        <div className="pointer-events-auto flex shrink-0 items-center gap-1.5">
-          <button
-            onClick={startExam}
-            disabled={!questions.length}
-            aria-label="Take a practice exam"
-            className="flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-line bg-background/65 px-3 text-foreground/85 backdrop-blur transition-transform active:scale-95 disabled:opacity-50"
-          >
-            <ClipboardCheck className="size-4" />
-            <span className="mono-feats font-mono text-[10px] uppercase tracking-wider">Exam</span>
-          </button>
+      <header className="relative z-20 shrink-0 px-4 pb-3 pt-3.5">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="mono-feats font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+              {tab === 'quiz' && queue.length ? (
+                <>
+                  <Roll value={Math.min(index + 1, queue.length)} />/{queue.length} ·{' '}
+                </>
+              ) : null}
+              <Roll value={stats.mastered} /> of {stats.total} mastered
+            </p>
+            <h1 className="mt-0.5 truncate text-[17px] font-semibold leading-none text-foreground">
+              {POOLS.find((p) => p.id === pool)?.name}
+            </h1>
+          </div>
           <button
             onClick={() => setFilterOpen(true)}
-            aria-label="Browse questions"
-            className="flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-line bg-background/65 px-3 text-foreground/85 backdrop-blur transition-transform active:scale-95"
+            aria-label="Study settings"
+            className="flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-line bg-card px-3 text-foreground/85 transition-transform active:scale-95"
           >
             <ListFilter className="size-4" />
             <span className="mono-feats max-w-[92px] truncate font-mono text-[10px] uppercase tracking-wider">
@@ -639,56 +660,213 @@ export function ExamView() {
             </span>
           </button>
         </div>
+        <Segmented
+          className="mt-3"
+          label="Study mode"
+          value={tab}
+          onChange={switchTab}
+          options={[
+            { value: 'quiz', label: 'Quiz', icon: <Layers className="size-3.5" /> },
+            { value: 'listen', label: 'Listen', icon: <Headphones className="size-3.5" /> },
+            { value: 'exam', label: 'Exam', icon: <Timer className="size-3.5" /> },
+          ]}
+        />
+      </header>
+
+      <div className="relative min-h-0 flex-1">
+        {tab === 'listen' ? (
+          <ListenMode />
+        ) : tab === 'exam' ? (
+          <ExamLobby />
+        ) : loading || !queue.length ? (
+          <div className="grid h-full place-items-center">
+            {loading ? (
+              <Loader2 className="size-5 animate-spin text-muted-foreground" aria-label="Loading" />
+            ) : (
+              <p className="text-[13px] text-muted-foreground">
+                {missedOnly ? 'Nothing missed here — nice.' : 'No questions in this topic.'}
+              </p>
+            )}
+          </div>
+        ) : (
+          <>
+            {/* content sliding up under the header fades instead of clipping */}
+            <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-6 bg-gradient-to-b from-background to-transparent" />
+            <div
+              ref={scrollRef}
+              aria-label="Exam question reels"
+              onScroll={(e) => {
+                const t = e.currentTarget;
+                scrollY.set(t.scrollTop);
+                setIndex(
+                  Math.max(0, Math.min(queue.length - 1, Math.round(t.scrollTop / Math.max(1, t.clientHeight)))),
+                );
+              }}
+              className="no-scrollbar absolute inset-0 snap-y snap-mandatory overflow-y-auto overscroll-y-contain"
+            >
+              {queue.map((id, i) => {
+                const q = byId[id];
+                if (!q) return null;
+                // Only mount cards near the viewport; the rest hold their height.
+                if (Math.abs(i - index) > 3) {
+                  return <div key={id} className="h-full snap-start snap-always" aria-hidden />;
+                }
+                return (
+                  <ReelCard
+                    key={id}
+                    q={q}
+                    clips={clips}
+                    active={i === index && !filterOpen}
+                    audioOn={audio}
+                    onPick={(c) => pick(id, c, i)}
+                    slot={i}
+                    cardH={cardH}
+                    scrollY={scrollY}
+                  />
+                );
+              })}
+            </div>
+          </>
+        )}
       </div>
 
-      {/* feed */}
-      {loading || !queue.length ? (
-        <div className="grid h-full place-items-center">
-          {loading ? (
-            <Loader2 className="size-5 animate-spin text-muted-foreground" aria-label="Loading" />
-          ) : (
-            <p className="text-[13px] text-muted-foreground">{missedOnly ? "Nothing missed here — nice." : "No questions in this topic."}</p>
-          )}
-        </div>
-      ) : (
-        <div
-          ref={scrollRef}
-          aria-label="Exam question reels"
-          onScroll={(e) => {
-            const t = e.currentTarget;
-            scrollY.set(t.scrollTop);
-            setIndex(
-              Math.max(0, Math.min(queue.length - 1, Math.round(t.scrollTop / Math.max(1, t.clientHeight)))),
-            );
-          }}
-          className="no-scrollbar absolute inset-0 snap-y snap-mandatory overflow-y-auto overscroll-y-contain"
-        >
-          {queue.map((id, i) => {
-            const q = byId[id];
-            if (!q) return null;
-            // Only mount cards near the viewport; the rest hold their height.
-            if (Math.abs(i - index) > 3) {
-              return <div key={id} className="h-full snap-start snap-always" aria-hidden />;
-            }
-            return (
-              <ReelCard
-                key={id}
-                q={q}
-                pool={pool}
-                active={i === index && !filterOpen}
-                audioOn={audio}
-                hasClip={rendered.has(id)}
-                onPick={(c) => pick(id, c, i)}
-                slot={i}
-                cardH={cardH}
-                scrollY={scrollY}
-              />
-            );
-          })}
-        </div>
-      )}
-
       <FilterSheet open={filterOpen} onClose={() => setFilterOpen(false)} />
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------ exam lobby */
+
+/**
+ * Chance of answering a question right, by Leitner box. Unseen questions are
+ * scored as a four-way guess; the rest climb toward certainty as they're
+ * answered right repeatedly. Deliberately conservative.
+ */
+const P_BY_BOX = [0.3, 0.6, 0.78, 0.9, 0.96];
+
+/** Expected score and pass probability for a one-per-group practice exam. */
+function readiness(questions: PoolQuestion[], progress: ReturnType<typeof useExam.getState>['progress'], passing: number) {
+  const groups = new Map<string, number[]>();
+  for (const q of questions) {
+    const p = progress[q.id];
+    const pr = p ? P_BY_BOX[Math.min(4, p.box)] : 0.25;
+    const g = q.id.slice(0, 3);
+    const arr = groups.get(g);
+    if (arr) arr.push(pr);
+    else groups.set(g, [pr]);
+  }
+  // Each exam question is a random draw from its group: a Bernoulli trial
+  // with the group's mean probability. Sum them (Poisson-binomial), then
+  // the normal approximation with continuity correction for P(score ≥ pass).
+  let mean = 0;
+  let variance = 0;
+  for (const arr of groups.values()) {
+    const p = arr.reduce((a, b) => a + b, 0) / arr.length;
+    mean += p;
+    variance += p * (1 - p);
+  }
+  const z = (passing - 0.5 - mean) / Math.sqrt(Math.max(variance, 1e-6));
+  const passProb = 1 - normalCdf(z);
+  return { expected: mean, passProb, groups: groups.size };
+}
+
+function normalCdf(z: number): number {
+  // Abramowitz & Stegun 7.1.26 via erf.
+  const t = 1 / (1 + 0.3275911 * Math.abs(z / Math.SQRT2));
+  const y =
+    1 -
+    ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) *
+      t *
+      Math.exp(-((z / Math.SQRT2) ** 2));
+  return 0.5 * (1 + Math.sign(z) * y);
+}
+
+function ExamLobby() {
+  const pool = useExam((s) => s.pool);
+  const questions = useExam((s) => s.questions);
+  const progress = useExam((s) => s.progress);
+  const startExam = useExam((s) => s.startExam);
+  const meta = poolMeta(pool);
+  const r = useMemo(() => readiness(questions, progress, meta.passing), [questions, progress, meta.passing]);
+  const pct = Math.round(r.passProb * 100);
+  const seen = useMemo(() => questions.filter((q) => progress[q.id]).length, [questions, progress]);
+
+  return (
+    <div className="flex h-full flex-col px-5 pb-[calc(20px+env(safe-area-inset-bottom))] sm:px-8">
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center">
+        <div className="flex items-center gap-3">
+          <span className="grid size-11 place-items-center rounded-xl bg-foreground text-background">
+            <Timer className="size-5" />
+          </span>
+          <div>
+            <p className="text-[17px] font-semibold tracking-tight text-foreground">Practice exam</p>
+            <p className="text-[12.5px] text-muted-foreground">Built the way a VE session builds yours.</p>
+          </div>
+        </div>
+
+        <div className="mt-5 grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-line bg-border">
+          {[
+            ['Questions', meta.examQuestions],
+            ['To pass', meta.passing],
+            ['Groups', r.groups],
+          ].map(([k, v]) => (
+            <div key={k} className="bg-card px-3 py-3">
+              <p className="mono-feats font-mono text-[9.5px] uppercase tracking-[0.14em] text-muted-foreground">{k}</p>
+              <p className="mt-1 text-[20px] font-semibold tabular-nums tracking-tight text-foreground">{v}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* readiness gauge */}
+        <div className="mt-3 rounded-xl border border-line bg-card p-4">
+          <div className="flex items-baseline justify-between">
+            <p className="mono-feats flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+              <Target className="size-3.5" /> Readiness estimate
+            </p>
+            <p className="mono-feats font-mono text-[10px] text-muted-foreground">
+              {seen}/{questions.length} studied
+            </p>
+          </div>
+          <div className="mt-3 flex items-end gap-4">
+            <p className="text-[34px] font-semibold leading-none tabular-nums tracking-tight text-foreground">
+              <Roll value={pct} />%
+            </p>
+            <p className="pb-1 text-[12.5px] leading-snug text-muted-foreground">
+              chance to pass today · predicted score{' '}
+              <span className="font-medium text-foreground tabular-nums">
+                {r.expected.toFixed(1)}/{meta.examQuestions}
+              </span>
+            </p>
+          </div>
+          <div className="relative mt-3 h-2 overflow-hidden rounded-full bg-border">
+            <div
+              className={cn(
+                'h-full rounded-full transition-[width] duration-700',
+                pct >= 80 ? 'bg-emerald-500' : pct >= 50 ? 'bg-amber-500' : 'bg-rose-500',
+              )}
+              style={{ width: `${(r.expected / meta.examQuestions) * 100}%` }}
+            />
+            {/* pass line */}
+            <span
+              className="absolute inset-y-[-3px] w-[2px] rounded bg-foreground"
+              style={{ left: `${(meta.passing / meta.examQuestions) * 100}%` }}
+              aria-hidden
+            />
+          </div>
+          <p className="mt-2 text-[11.5px] leading-relaxed text-muted-foreground">
+            Unstudied questions count as a guess. Every quiz answer and “knew it” sharpens this.
+          </p>
+        </div>
+      </div>
+
+      <button
+        onClick={startExam}
+        disabled={!questions.length}
+        className="mx-auto flex h-14 w-full max-w-md shrink-0 items-center justify-center gap-2 rounded-2xl bg-foreground text-[15px] font-semibold text-background shadow-[0_10px_30px_-12px_rgba(0,0,0,0.5)] transition-transform active:scale-[0.98] disabled:opacity-50"
+      >
+        Start the exam
+        <ChevronRight className="size-5" />
+      </button>
     </div>
   );
 }

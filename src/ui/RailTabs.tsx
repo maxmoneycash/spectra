@@ -3,10 +3,14 @@ import { useStore, type PanelTab } from '../store/store';
 import { DetectionsPanel } from './DetectionsPanel';
 import { SignalLibrary } from './SignalLibrary';
 import { ScenarioPanel } from './ScenarioPanel';
+import { ScanPanel } from './ScanPanel';
+import { LogPanel } from './LogPanel';
 import { UnderlineTabs } from './controls';
 
 const TABS: { id: PanelTab; label: string }[] = [
   { id: 'signals', label: 'Stations' },
+  { id: 'scan', label: 'Scan' },
+  { id: 'log', label: 'Log' },
   { id: 'library', label: 'Library' },
   { id: 'scenario', label: 'Mission' },
 ];
@@ -16,10 +20,13 @@ export function RailTabs({ lineId = 'rail-line' }: { lineId?: string }) {
   const panel = useStore((s) => s.panel);
   const setPanel = useStore((s) => s.setPanel);
   const detections = useStore((s) => s.detections);
+  const intercepts = useStore((s) => s.intercepts.length);
 
   return (
     <UnderlineTabs
-      items={TABS.map((t) => (t.id === 'signals' ? { ...t, badge: detections.length } : t))}
+      items={TABS.map((t) =>
+        t.id === 'signals' ? { ...t, badge: detections.length } : t.id === 'log' ? { ...t, badge: intercepts } : t,
+      )}
       value={panel}
       onChange={setPanel}
       layoutId={lineId}
@@ -41,6 +48,8 @@ export function PanelView({ panel }: { panel: PanelTab }) {
         transition={{ duration: 0.15, ease: 'easeOut' }}
       >
         {panel === 'signals' && <DetectionsPanel />}
+        {panel === 'scan' && <ScanPanel />}
+        {panel === 'log' && <LogPanel />}
         {panel === 'library' && <SignalLibrary />}
         {panel === 'scenario' && <ScenarioPanel />}
       </motion.div>

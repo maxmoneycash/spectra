@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react';
+import { motion } from 'motion/react';
+import { lock, tick } from './kit/haptics';
 import { getEngine } from '../engine/engine';
 import { SAMPLE_RATE } from '../engine/protocol';
-import { useStore } from '../store/store';
+import { useStore, type LockFx } from '../store/store';
 import type { TrackMsg } from '../engine/protocol';
 import { KIND_INFO } from '../sim/signal-kinds';
 import { lutFor } from './colormaps';
@@ -59,6 +61,7 @@ export function SpectrumWaterfall() {
   const hoverRef = useRef<HTMLDivElement>(null);
   const hoverLabelRef = useRef<HTMLDivElement>(null);
   const zoomLabelRef = useRef<HTMLDivElement>(null);
+  const lockRef = useRef<HTMLDivElement>(null);
 
   const setTuning = useStore((s) => s.setTuning);
   const tuning = useStore((s) => s.tuningOffsetHz);
@@ -70,6 +73,11 @@ export function SpectrumWaterfall() {
   const floorDb = useStore((s) => s.floorDb);
   const ceilDb = useStore((s) => s.ceilDb);
   const setDbRange = useStore((s) => s.setDbRange);
+  const lockFx = useStore((s) => s.lockFx);
+  const lockFxRef = useRef<LockFx | null>(null);
+  useEffect(() => {
+    lockFxRef.current = lockFx;
+  }, [lockFx]);
 
   // Mutable state read by the (non-React) draw loop.
   const sig = useRef({ tuning: 0, bandwidth: 12000, detections: [] as TrackMsg[], selectedId: null as string | null, centerFreqHz: 100e6 });
@@ -84,9 +92,13 @@ export function SpectrumWaterfall() {
   useEffect(() => {
     disp.current = { floorDb, ceilDb, cmap: cmapIndex };
   }, [floorDb, ceilDb, cmapIndex]);
-  // Reset zoom when the band center changes (new scenario / retune).
+  // Reset zoom when the band center changes (new scenario / retune), and
+  // re-level the waterfall for the new band once it has a few frames.
+  const framesSinceBand = useRef(0);
+  const autoLevelRef = useRef<() => void>(() => {});
   useEffect(() => {
     view.current = { centerHz: 0, spanHz: SAMPLE_RATE };
+    framesSinceBand.current = 0;
   }, [centerFreqHz]);
 
   // Wipe the painted history on a theme flip so light and dark ramps
@@ -185,6 +197,7 @@ export function SpectrumWaterfall() {
       wfCtx.putImageData(rowImg, 0, 0);
       drawSpectrum();
       updateOverlays();
+      if (++framesSinceBand.current === 28) autoLevelRef.current();
     };
 
     const drawSpectrum = () => {
@@ -379,6 +392,23 @@ export function SpectrumWaterfall() {
         label.textContent = `${fmtFreqMHz(st.centerFreqHz + off)} MHz   ${dbv.toFixed(0)} dB`;
       }
 
+      // Lock-on reticle tracks the locked signal through zoom/pan, and fades
+      // once the VFO has been tuned off it.
+      const lk = lockRef.current;
+      const fx = lockFxRef.current;
+      if (lk) {
+        if (!fx) lk.style.display = 'none';
+        else {
+          const lx = offToX(fx.offsetHz);
+          const lw = Math.max(28, (fx.bandwidthHz / view.current.spanHz) * width + 14);
+          lk.style.display = 'block';
+          lk.style.left = `${lx - lw / 2}px`;
+          lk.style.width = `${lw}px`;
+          const away = Math.abs(st.tuning - fx.offsetHz) > Math.max(fx.bandwidthHz / 2, 1500);
+          lk.style.opacity = away ? '0' : '1';
+        }
+      }
+
       if (zoomLabelRef.current) {
         const z = SAMPLE_RATE / view.current.spanHz;
         zoomLabelRef.current.textContent = z > 1.05 ? `${z.toFixed(1)}×` : '';
@@ -387,20 +417,63 @@ export function SpectrumWaterfall() {
 
     const unsub = getEngine().on('spectrum', onSpectrum);
 
-    // Pointer: drag to tune, shift-drag to pan.
-    let mode: 'tune' | 'pan' | null = null;
+    // Pointer model.
+    //  - Tap: lock onto the nearest detected signal (or tune to the spot).
+    //  - Drag: mouse tunes to the cursor; touch slides the dial relative to
+    //    where the finger started, so the finger never hides the passband.
+    //  - Two fingers: pinch-zoom around their midpoint.
+    //  - Shift-drag (zoomed, mouse): pan.
+    type G = 'none' | 'pending' | 'tune' | 'pan' | 'pinch';
+    let gesture: G = 'none';
+    const pts = new Map<number, { x: number; y: number; type: string }>();
+    let downX = 0;
+    let downY = 0;
+    let downTuning = 0;
+    let downType = 'mouse';
     let panStartX = 0;
     let panStartCenter = 0;
+    let pinchDist = 0;
+    let pinchSpan = 0;
+    let pinchAnchor = 0;
+    let pinchZoomed = false;
+    const TAP_SLOP = 7;
     const rectLeft = () => wrap.getBoundingClientRect().left;
+    const clampTune = (hz: number) => Math.max(-SAMPLE_RATE / 2, Math.min(SAMPLE_RATE / 2, hz));
+    const twoFingers = () => {
+      const [a, b] = [...pts.values()];
+      return { d: Math.hypot(a.x - b.x, a.y - b.y), mx: (a.x + b.x) / 2 };
+    };
+
     const down = (e: PointerEvent) => {
+      // Controls floating over the stage handle their own input.
+      if ((e.target as HTMLElement).closest('[data-stage-ui]')) return;
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY, type: e.pointerType });
+      try {
+        wrap.setPointerCapture(e.pointerId);
+      } catch {
+        /* capture is a nicety */
+      }
+      if (pts.size === 2) {
+        const { d, mx } = twoFingers();
+        gesture = 'pinch';
+        pinchDist = Math.max(20, d);
+        pinchSpan = view.current.spanHz;
+        pinchAnchor = xToOff(mx - rectLeft());
+        pinchZoomed = false;
+        return;
+      }
+      if (pts.size > 2) return;
       if (e.shiftKey && view.current.spanHz < SAMPLE_RATE) {
-        mode = 'pan';
+        gesture = 'pan';
         panStartX = e.clientX;
         panStartCenter = view.current.centerHz;
-      } else {
-        mode = 'tune';
-        setTuning(Math.round(xToOff(e.clientX - rectLeft())));
+        return;
       }
+      gesture = 'pending';
+      downX = e.clientX;
+      downY = e.clientY;
+      downTuning = sig.current.tuning;
+      downType = e.pointerType;
     };
     // Touch devices have no hover, so a readout there would strand on screen.
     const canHover =
@@ -412,15 +485,79 @@ export function SpectrumWaterfall() {
       const x = e.clientX - rectLeft();
       hoverX.current =
         canHover && e.pointerType === 'mouse' && x >= 0 && x <= width ? x : null;
-      if (mode === 'tune') setTuning(Math.round(xToOff(x)));
-      else if (mode === 'pan') {
+      const p = pts.get(e.pointerId);
+      if (!p) return;
+      p.x = e.clientX;
+      p.y = e.clientY;
+
+      if (gesture === 'pinch' && pts.size === 2) {
+        const { d, mx } = twoFingers();
+        let span = pinchSpan * (pinchDist / Math.max(20, d));
+        span = Math.max(40_000, Math.min(SAMPLE_RATE, span));
+        const mxLocal = mx - rectLeft();
+        let center = pinchAnchor - (mxLocal / width - 0.5) * span;
+        const maxC = (SAMPLE_RATE - span) / 2;
+        center = Math.max(-maxC, Math.min(maxC, center));
+        view.current = { centerHz: center, spanHz: span };
+        pinchZoomed = true;
+        return;
+      }
+      if (gesture === 'pending') {
+        if (Math.abs(e.clientX - downX) < TAP_SLOP && Math.abs(e.clientY - downY) < TAP_SLOP) return;
+        gesture = 'tune';
+      }
+      if (gesture === 'tune') {
+        if (downType === 'mouse') setTuning(Math.round(clampTune(xToOff(x))));
+        else {
+          const dHz = ((e.clientX - downX) / width) * view.current.spanHz;
+          setTuning(Math.round(clampTune(downTuning + dHz)));
+        }
+      } else if (gesture === 'pan') {
         const dHz = ((e.clientX - panStartX) / width) * view.current.spanHz;
         const maxC = (SAMPLE_RATE - view.current.spanHz) / 2;
         view.current.centerHz = Math.max(-maxC, Math.min(maxC, panStartCenter - dHz));
       }
     };
-    const up = () => {
-      mode = null;
+
+    const up = (e: PointerEvent) => {
+      if (!pts.has(e.pointerId)) return;
+      pts.delete(e.pointerId);
+      if (gesture === 'pinch') {
+        if (pts.size < 2) {
+          if (pinchZoomed) clearWaterfall();
+          gesture = 'none';
+          // A finger still down after a pinch shouldn't turn into a tap.
+          pts.clear();
+        }
+        return;
+      }
+      if (gesture === 'pending') {
+        const off = xToOff(e.clientX - rectLeft());
+        // Nearest detected emission whose footprint (plus a finger's width)
+        // covers the tap wins; otherwise tune exactly where you tapped.
+        const slopHz = (18 / Math.max(1, width)) * view.current.spanHz;
+        let best: TrackMsg | null = null;
+        let bestD = Infinity;
+        for (const d of sig.current.detections) {
+          const dist = Math.abs(d.offsetHz - off);
+          if (dist <= d.bandwidthHz / 2 + slopHz && dist < bestD) {
+            best = d;
+            bestD = dist;
+          }
+        }
+        if (best) {
+          lock();
+          useStore.getState().lockOn(best);
+        } else {
+          tick();
+          setTuning(Math.round(clampTune(off)));
+        }
+      }
+      if (pts.size === 0) gesture = 'none';
+    };
+    const cancel = (e: PointerEvent) => {
+      pts.delete(e.pointerId);
+      if (pts.size === 0) gesture = 'none';
     };
     const leave = () => {
       hoverX.current = null;
@@ -447,6 +584,7 @@ export function SpectrumWaterfall() {
     wrap.addEventListener('pointerdown', down);
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', cancel);
     wrap.addEventListener('pointerleave', leave);
     wrap.addEventListener('wheel', wheel, { passive: false });
     wrap.addEventListener('dblclick', dbl);
@@ -457,6 +595,7 @@ export function SpectrumWaterfall() {
       wrap.removeEventListener('pointerdown', down);
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', cancel);
       wrap.removeEventListener('pointerleave', leave);
       wrap.removeEventListener('wheel', wheel);
       wrap.removeEventListener('dblclick', dbl);
@@ -469,13 +608,26 @@ export function SpectrumWaterfall() {
     if (!col.length) return;
     const sorted = Float32Array.from(col).sort();
     const p = (q: number) => sorted[Math.floor(q * (sorted.length - 1))];
-    setDbRange(Math.round(p(0.05) - 4), Math.round(p(0.99) + 6));
+    const floor = Math.round(p(0.05) - 4);
+    // Keep at least 45 dB of range: a band caught between transmissions
+    // would otherwise level to the noise and saturate the first key-up.
+    const ceil = Math.max(Math.round(p(0.99) + 6), floor + 45);
+    setDbRange(floor, ceil);
   };
+  autoLevelRef.current = autoLevel;
 
   return (
     <div ref={wrapRef} className="absolute inset-0 flex cursor-crosshair flex-col touch-none">
       <WaterfallControls onAuto={autoLevel} zoomLabelRef={zoomLabelRef} />
       <div ref={vfoBandRef} className="vfo-band" />
+      <div
+        ref={lockRef}
+        aria-hidden
+        className="pointer-events-none absolute top-0 z-[6] transition-opacity duration-300"
+        style={{ height: SPEC_H - RULER_H, display: 'none' }}
+      >
+        {lockFx && <LockReticle key={lockFx.at} mode={lockFx.mode} label={lockFx.label} />}
+      </div>
       <div ref={hoverRef} className="hover-line" />
       <div ref={hoverLabelRef} className="hover-label" />
       <canvas ref={specRef} style={{ height: SPEC_H }} />
@@ -489,4 +641,40 @@ function range10(total: number): number {
   if (total <= 40) return 10;
   if (total <= 80) return 20;
   return 30;
+}
+
+
+/**
+ * Target lock: four brackets close in on the signal and settle, with a tag
+ * naming what the receiver thinks it is and the mode it switched to.
+ */
+function LockReticle({ mode, label }: { mode: string; label: string }) {
+  const corner = 'absolute size-2.5 border-emerald-500 dark:border-emerald-400';
+  return (
+    <motion.div
+      className="absolute inset-0"
+      initial={{ scale: 1.7, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+    >
+      <span className={`${corner} left-0 top-1 border-l-2 border-t-2`} />
+      <span className={`${corner} right-0 top-1 border-r-2 border-t-2`} />
+      <span className={`${corner} bottom-0 left-0 border-b-2 border-l-2`} />
+      <span className={`${corner} bottom-0 right-0 border-b-2 border-r-2`} />
+      <motion.span
+        className="absolute inset-0 rounded-sm bg-emerald-500/15"
+        initial={{ opacity: 0.9 }}
+        animate={{ opacity: 0 }}
+        transition={{ duration: 0.7, ease: 'easeOut' }}
+      />
+      <motion.span
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.12 }}
+        className="mono-feats absolute bottom-[7px] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-sm bg-emerald-500 px-1.5 py-[1px] font-mono text-[8.5px] font-semibold uppercase tracking-[0.12em] text-white shadow-sm dark:bg-emerald-400 dark:text-emerald-950"
+      >
+        Lock · {mode} · {label}
+      </motion.span>
+    </motion.div>
+  );
 }
