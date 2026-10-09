@@ -1,3 +1,5 @@
+import type { ChirpInfo } from './chirp';
+
 /** A raw emission found in a single spectrum frame. */
 export interface Detection {
   offsetHz: number;
@@ -104,6 +106,8 @@ export interface Track extends Detection {
   duty: number;
   /** Set when this track stands for a comb of hopping channels, not one carrier. */
   hopping?: { members: number; spanHz: number };
+  /** Set by the chirp analyzer when the peak sweeps the band as a sawtooth (LoRa-style). */
+  chirp?: ChirpInfo;
 }
 
 // Hopper aggregation. An FHSS emitter has no frequency for a tracker keyed on

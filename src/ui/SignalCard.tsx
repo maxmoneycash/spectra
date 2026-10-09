@@ -102,6 +102,12 @@ function Card({
   const modeMatches = !wants || wants === mode;
   const pct = Math.round(track.guessConfidence * 100);
   const bursty = track.duty < 0.6;
+  // A chirp's measured parameters, when the analyzer has seen its sawtooth.
+  const chirpTag = track.chirp
+    ? track.chirp.sf !== null
+      ? `SF${track.chirp.sf} · ${Math.round(track.chirp.bwHz / 1000)} kHz`
+      : `${Math.round(track.chirp.bwHz / 1000)} kHz sweep`
+    : null;
 
   // What's being said on this signal right now, if it carries speech.
   const now = Date.now();
@@ -139,6 +145,7 @@ function Card({
             <span className="block truncate text-[13.5px] font-semibold text-foreground">{track.guessLabel}</span>
             <span className="mono-feats block font-mono text-[11px] text-muted-foreground">
               {fmtMHz(track.centerFreqHz)} MHz · {pct}%
+              {chirpTag && ` · ${chirpTag}`}
             </span>
           </span>
           <ChevronUp className="ml-auto size-4 shrink-0 text-muted-foreground" />
@@ -191,6 +198,7 @@ function Card({
           <h3 className="truncate text-[15px] font-semibold tracking-tight text-foreground">{track.guessLabel}</h3>
           <p className="mono-feats mt-0.5 font-mono text-[11.5px] text-muted-foreground">
             {fmtMHz(track.centerFreqHz)} MHz · {pct}% likely
+            {chirpTag && <span className="ml-1.5 text-foreground/80">· {chirpTag}</span>}
             {lost && <span className="ml-1.5 text-foreground/60">· between bursts</span>}
           </p>
         </div>

@@ -21,8 +21,10 @@ import { detectScene, syntheticBank, nearestTrack, distinctEmitters, type Detect
  * track (dsp/detector.ts). It now lists once, FHSS first, and the wide PSK
  * sitting inside its span is still its own emitter; pinned below.
  *
- * Known, and left honest: the chirp-width panel over-reads a 125 kHz chirp by
- * ~20%, and the challenge's "standard channel widths" hint is what resolves it.
+ * The spectral width still over-reads a 125 kHz chirp by ~20% (its remembered
+ * width spans the sweep); the chirp analyzer (dsp/chirp.ts) now reads the
+ * sweep itself from the sub-frame sawtooth — 125 kHz, SF8 — and the signal
+ * card shows it. Pinned below for both LoRa challenges.
  */
 const MHZ = 1e6;
 const bank = syntheticBank();
@@ -61,19 +63,23 @@ describe('analysis: reading a frequency or a width off the panel', () => {
   it('chirp-width: the chirper reads near 125 kHz, and the standard width is the flag', async () => {
     const t = nearestTrack(run('chirp-width', 30).everSeen, 915.1 * MHZ);
     expect(t).not.toBeNull();
-    // The panel over-reads a chirp (its remembered width spans the sweep);
-    // the nearest standard LoRa width to anything in this range is 125 kHz.
+    // The spectral width over-reads a chirp (its remembered width spans the
+    // sweep, ~148 kHz here); the chirp analyzer measures the sweep itself from
+    // the sawtooth's fly-back — exactly 125 kHz — and SF8 from its rate.
     expect(t!.bandwidthHz).toBeGreaterThan(90_000);
     expect(t!.bandwidthHz).toBeLessThan(180_000);
+    expect(t!.chirp?.bwHz).toBe(125_000);
+    expect(t!.chirp?.sf).toBe(8);
     expect(await checkFlag('chirp-width', '125')).toBe(true);
   });
 });
 
 describe('identify: the panel offers the answer', () => {
-  it('mode-id: LoRa is among the chirper\'s candidates', async () => {
+  it("mode-id: LoRa is the chirper's first candidate", async () => {
     const t = nearestTrack(run('mode-id', 30).everSeen, 915.15 * MHZ);
     expect(t).not.toBeNull();
-    expect(t!.candidates.some((c) => c.kind === 'lora')).toBe(true);
+    expect(t!.chirp).toBeDefined();
+    expect(t!.candidates[0]?.kind).toBe('lora');
     expect(await checkFlag('mode-id', 'lora')).toBe(true);
   });
 

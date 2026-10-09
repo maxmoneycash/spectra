@@ -35,6 +35,8 @@ export interface TrackMsg {
   guessLabel: string;
   guessConfidence: number;
   candidates: { kind: SignalKind; label: string; confidence: number; reason: string }[];
+  /** Present when the peak sweeps the band as a sawtooth: the chirp's measured parameters. */
+  chirp?: { rateHzPerS: number; bwHz: number; sf: number | null; consistency: number };
 }
 
 /** One decoded transmission for the worker's voice bank (24 kHz PCM). */

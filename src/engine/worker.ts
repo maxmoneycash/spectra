@@ -3,6 +3,7 @@ import { Scene } from '../sim/scene';
 import { SpectrumAnalyzer, smoothSpectrum } from '../dsp/spectrum';
 import { Receiver } from '../dsp/receiver';
 import { detectEmissions, EmissionTracker } from '../dsp/detector';
+import { ChirpAnalyzer } from '../dsp/chirp';
 import { classify } from '../id/classifier';
 import { MorseDecoder } from '../sim/morse';
 import { CwKeyer } from '../dsp/cwKeyer';
@@ -25,6 +26,7 @@ let centerFreqHz = 100_000_000;
 const analyzer = new SpectrumAnalyzer(FFT_SIZE, 'blackman-harris');
 const receiver = new Receiver(SAMPLE_RATE, BLOCK_SIZE);
 const tracker = new EmissionTracker();
+const chirper = new ChirpAnalyzer(SAMPLE_RATE);
 const morseDecoder = new MorseDecoder();
 
 const bandRe = new Float32Array(BLOCK_SIZE);
@@ -128,13 +130,15 @@ function updateDetection() {
     thresholdDb: 13,
   });
   const tracks = tracker.update(dets, { minHits: 2, maxMiss: 160 });
+  // Sub-frame peaks of this block: a chirp's sawtooth, which no spectrum frame can show.
+  chirper.update(bandRe, bandIm, BLOCK_SIZE, tracks);
   const live = new Set(tracks.map((t) => t.id));
   for (const id of guessCache.keys()) if (!live.has(id)) guessCache.delete(id);
   lastTrackMsgs = tracks.map((t) => {
     const cached = guessCache.get(t.id);
     const results =
       t.missed === 0 || !cached
-        ? classify({ bandwidthHz: t.bandwidthHz, snrDb: t.snrDb, duty: t.duty, crestDb: t.crestDb, hopping: t.hopping })
+        ? classify({ bandwidthHz: t.bandwidthHz, snrDb: t.snrDb, duty: t.duty, crestDb: t.crestDb, hopping: t.hopping, chirp: t.chirp })
         : cached;
     guessCache.set(t.id, results);
     const best = results[0];
@@ -146,6 +150,7 @@ function updateDetection() {
       snrDb: t.snrDb,
       crestDb: t.crestDb,
       duty: t.duty,
+      chirp: t.chirp,
       guessKind: best.kind,
       guessLabel: labelOf(best.kind),
       guessConfidence: best.confidence,
@@ -218,6 +223,7 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
       centerFreqHz = msg.scene.centerFreqHz;
       for (const cfg of msg.scene.emitters) scene.add(cfg);
       tracker.reset();
+      chirper.reset();
       morseDecoder.reset();
       cwKeyer.reset();
       lastMorse = '';
@@ -229,6 +235,7 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
       centerFreqHz = msg.hz;
       scene.setCenterFreq(msg.hz);
       tracker.reset();
+      chirper.reset();
       sendGroundTruth();
       break;
     case 'setTuning':
@@ -262,6 +269,7 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
     case 'clearEmitters':
       scene.clear();
       tracker.reset();
+      chirper.reset();
       sendGroundTruth();
       break;
     case 'setRunning':
@@ -296,6 +304,7 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
       playPos = 0;
       centerFreqHz = msg.centerFreqHz;
       tracker.reset();
+      chirper.reset();
       specAvg.fill(-140);
       break;
     case 'stopPlayback':

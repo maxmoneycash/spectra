@@ -9,6 +9,8 @@ export interface ClassFeatures {
   crestDb: number;
   /** Set by the tracker when the track stands for a comb of hopping channels. */
   hopping?: { members: number; spanHz: number };
+  /** Set by the chirp analyzer when the peak sweeps the band as a sawtooth. */
+  chirp?: { bwHz: number; sf: number | null };
 }
 
 export interface ClassResult {
@@ -70,6 +72,19 @@ function reasonFor(p: Prior, f: ClassFeatures): string {
 
 /** Rank signal types by how well they match the observed features. */
 export function classify(f: ClassFeatures): ClassResult[] {
+  // A sweeping peak is a chirp-spread signal outright. Its width is the same
+  // as a PSK burst's or a broadcast FM station's — which is why a shape-only
+  // ranking confused them — but neither of those sweeps. Rank the rest by
+  // shape for the runner-up slots.
+  if (f.chirp) {
+    const rest = classify({ ...f, chirp: undefined })
+      .filter((r) => r.kind !== 'lora')
+      .slice(0, 2)
+      .map((r) => ({ ...r, confidence: r.confidence * 0.1 }));
+    const bw = Math.round(f.chirp.bwHz / 1000);
+    const sf = f.chirp.sf !== null ? `, SF${f.chirp.sf}` : '';
+    return [{ kind: 'lora', confidence: 0.92, reason: `sweeps ${bw} kHz every symbol${sf}` }, ...rest];
+  }
   // A comb of hopping channels is a frequency hopper outright; its span
   // (hundreds of kHz) would otherwise match nothing in the priors, and its
   // members' width (a carrier) would read as CW. Rank the rest by shape for

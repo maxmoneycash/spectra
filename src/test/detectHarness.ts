@@ -1,6 +1,7 @@
 import { Scene } from '../sim/scene';
 import { SpectrumAnalyzer, smoothSpectrum } from '../dsp/spectrum';
 import { detectEmissions, EmissionTracker, HOP_LINK_HZ, type Track } from '../dsp/detector';
+import { ChirpAnalyzer } from '../dsp/chirp';
 import { classify, type ClassResult } from '../id/classifier';
 import { VoiceMessage, MSG_RATE } from '../sim/messages';
 import { Rng } from '../sim/prng';
@@ -85,6 +86,7 @@ export function detectScene(o: DetectOpts): DetectResult {
   for (const e of o.spec.emitters) scene.add(e);
   const analyzer = new SpectrumAnalyzer(FFT_SIZE, 'blackman-harris');
   const tracker = new EmissionTracker();
+  const chirper = new ChirpAnalyzer(SAMPLE_RATE);
   const re = new Float32Array(BLOCK_SIZE);
   const im = new Float32Array(BLOCK_SIZE);
   const specDb = new Float32Array(FFT_SIZE);
@@ -99,11 +101,15 @@ export function detectScene(o: DetectOpts): DetectResult {
     smoothSpectrum(specAvg, specDb, 0.4);
     const dets = detectEmissions(specAvg, { binHz: SAMPLE_RATE / FFT_SIZE, centerFreqHz: o.spec.centerFreqHz, thresholdDb: 13 });
     tracks = tracker.update(dets, { minHits: 2, maxMiss: 160 });
+    chirper.update(re, im, BLOCK_SIZE, tracks);
     const live = new Set(tracks.map((t) => t.id));
     for (const id of guesses.keys()) if (!live.has(id)) guesses.delete(id);
     for (const t of tracks) {
       if (t.missed === 0 || !guesses.has(t.id)) {
-        guesses.set(t.id, classify({ bandwidthHz: t.bandwidthHz, snrDb: t.snrDb, duty: t.duty, crestDb: t.crestDb, hopping: t.hopping }));
+        guesses.set(
+          t.id,
+          classify({ bandwidthHz: t.bandwidthHz, snrDb: t.snrDb, duty: t.duty, crestDb: t.crestDb, hopping: t.hopping, chirp: t.chirp }),
+        );
       }
       // The worker posts the list every 4th frame, and a person needs it on
       // screen for a few postings (~170 ms) before it can be counted. A track

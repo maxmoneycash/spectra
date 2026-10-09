@@ -63,8 +63,10 @@ describe('identify lesson: the detector finds the stations and the classifier of
     }
   });
 
-  it('keeps LoRa among the candidates (spectrum alone cannot see the chirp, a known limit)', () => {
+  it('names LoRa first: the chirp analyzer sees the sweep the spectrum cannot', () => {
     const l = seen.find((x) => x.kind === 'lora')!;
-    expect(l.track?.candidates.some((c) => c.kind === 'lora')).toBe(true);
+    expect(l.track?.chirp).toBeDefined();
+    expect(l.track?.chirp?.bwHz).toBe(125_000);
+    expect(l.track?.candidates[0]?.kind).toBe('lora');
   });
 });
