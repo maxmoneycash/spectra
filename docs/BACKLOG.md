@@ -107,6 +107,34 @@ and answer keys that accepted a spelling the UI never shows.
 persistence, the exam spaced-repetition weighting, the narration manifest
 logic, `controls.tsx`.
 
+## CW keyer: power-on chatter — open, measured, deliberately unchanged
+
+- **Symptom.** On the Beacon Carousel, the first callsign after power-on copies
+  exactly only ~2 of 8 times (`=U1UN`, `XK6RBP`, `O6WD`: the first dot reads as
+  a dash). On an empty channel in CW mode, the decoder prints a phantom letter
+  roughly every 8 s. Later beacons copy perfectly.
+- **Cause (traced sample by sample).** With nothing heard, the keyer's peak
+  decays until its threshold (35% of peak) sits at the noise median, so noise
+  keys on for 18–115 ms stretches. The 10 ms minimum-interval rule then drops
+  the 2–5 ms gaps separating that noise from the first real dot, and they fuse
+  into one long mark (30 + 34 + 52 ms → a dash).
+- **The constraint.** After the AGC, the weak lesson/CTF beacons (−26 dB) sit
+  only ~5× (14 dB) above their gap noise, while noise envelope spikes reach
+  ~2.5–3× its median — under a 2× window for any level-based floor. And at
+  power-on a level detector cannot tell "a tone is already playing" from noise.
+- **Tried, all on identical audio (`CwKeyer` variants, 4 tests: empty channel,
+  both −26 dB beacons, 8 power-on carousel starts, squelch opened mid-stream).**
+  A threshold floor at 2–10× a noise estimate. Seeded estimators fix power-on
+  (8/8) and the empty channel but can seed from a tone's onset and lose a weak
+  beacon's first letter. Unseeded ones never learn — the chatter means the
+  keyer is never off for 15 ms. A 0.3 s warm-up keeps the weak beacons but
+  brings the chatter back. None beat today's keyer on every case, so it stays.
+- **Likely real fix: raise detection SNR instead of tuning thresholds.** A
+  narrowband (~80 Hz) detector tracking the CW note gains ~8 dB over the
+  500 Hz envelope; or a short lookahead so the noise floor is known before the
+  first element is keyed. Watch the gameplay: a narrow detector would also
+  separate Split the Pair's two beacons on its own.
+
 ## Second CTF set — needs redoing
 
 An agent produced 10 challenges then stalled mid-fix. The file carried ten
