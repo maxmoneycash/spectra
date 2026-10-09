@@ -9,7 +9,7 @@ import { Scanner, type ScanSnapshot } from '../engine/scanner';
 import { SAMPLE_RATE } from '../engine/protocol';
 
 export { MODE_BW, BW_RANGE, DEMOD_MODES } from './modes';
-import { MODE_BW } from './modes';
+import { MODE_BW, DEFAULT_SQUELCH_DB } from './modes';
 
 export type PanelTab = 'signals' | 'scan' | 'log' | 'library' | 'scenario';
 
@@ -260,7 +260,7 @@ export const useStore = create<AppState>((set, get) => {
     tuningOffsetHz: 0,
     mode: 'wfm',
     bandwidthHz: MODE_BW.wfm,
-    squelchDb: -80,
+    squelchDb: DEFAULT_SQUELCH_DB,
     volume: 0.7,
     noiseSigma: SCENARIOS[0].noiseSigma,
     detections: [],

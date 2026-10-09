@@ -1,5 +1,6 @@
 import type { EmitterConfig } from '../sim/emitters';
 import type { SceneSpec } from '../engine/protocol';
+import { CLOSED_SQUELCH_DB } from '../store/modes';
 
 export type CtfCategory = 'recon' | 'decode' | 'identify' | 'analysis' | 'intercept';
 
@@ -21,6 +22,12 @@ export interface Challenge {
   emitters: EmitterConfig[];
   /** Suggested starting demod mode, shown as a nudge. */
   suggest?: string;
+  /**
+   * Squelch the receiver is set to when the challenge opens, dB. Defaults to
+   * wide open (`DEFAULT_SQUELCH_DB`). Only Below the Gate raises it: its whole
+   * premise is a gate sitting above the beacon.
+   */
+  startSquelchDb?: number;
 }
 
 const MHZ = 1_000_000;
@@ -327,6 +334,9 @@ export const CHALLENGES: Challenge[] = [
     emitters: [
       { id: 'weak', kind: 'cw', freqHz: 10.125 * MHZ, powerDb: -26, wpm: 14, text: 'DE SPECTRA OPEN THE GATE  ', seed: 505 },
     ],
+    // The gate really is above the beacon: it peaks at -26 dB of channel
+    // level, and at the stock -80 this copied the moment you tuned it.
+    startSquelchDb: CLOSED_SQUELCH_DB,
     suggest: 'cw',
   },
 ];

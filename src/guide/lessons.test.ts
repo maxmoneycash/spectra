@@ -3,7 +3,7 @@ import { LESSONS, type GuideCtx, type Lesson } from './lessons';
 import { CHALLENGES } from '../ctf/challenges';
 import { SAMPLE_RATE } from '../engine/protocol';
 import { encodeMorse, MorseDecoder, MORSE } from '../sim/morse';
-import { MODE_BW } from '../store/modes';
+import { MODE_BW, DEFAULT_SQUELCH_DB } from '../store/modes';
 
 const MHZ = 1_000_000;
 
@@ -16,7 +16,7 @@ function entryCtx(lesson: Lesson, i: number): GuideCtx {
     tunedHz: lesson.scene.centerFreqHz,
     mode,
     bandwidthHz: MODE_BW[mode],
-    squelchDb: -80,
+    squelchDb: lesson.startSquelchDb ?? DEFAULT_SQUELCH_DB,
     morseText: '',
     deckPage: step.deckPage ?? 'mode',
     panel: step.panel ?? 'signals',

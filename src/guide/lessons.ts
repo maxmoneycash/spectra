@@ -2,6 +2,7 @@ import type { SceneSpec } from '../engine/protocol';
 import type { ScanStatus } from '../engine/scanner';
 import type { DemodMode, SignalKind } from '../sim/signal-kinds';
 import type { DeckPage, PanelTab } from '../store/store';
+import { CLOSED_SQUELCH_DB } from '../store/modes';
 
 const MHZ = 1_000_000;
 
@@ -50,6 +51,12 @@ export interface Lesson {
   scene: SceneSpec;
   /** Mode to start in, if the lesson doesn't teach choosing one. */
   startMode?: DemodMode;
+  /**
+   * Squelch to start at, dB. Defaults to wide open. The squelch lesson starts
+   * with the gate raised above its beacon — otherwise "the decoder prints
+   * nothing" is false and the lesson completes itself.
+   */
+  startSquelchDb?: number;
   steps: GuideStep[];
   /** CTF challenge that tests this skill for points. */
   challengeId: string;
@@ -198,6 +205,7 @@ export const LESSONS: Lesson[] = [
     minutes: 2,
     challengeId: 'squelch-down',
     startMode: 'cw',
+    startSquelchDb: CLOSED_SQUELCH_DB,
     scene: {
       centerFreqHz: 3.56 * MHZ,
       noiseSigma: 0.02,

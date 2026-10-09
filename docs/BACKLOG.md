@@ -187,9 +187,27 @@ Each is enforced by the DSP, not by a rule:
   rejects the neighbour.
 - **Working the Input** — the flag is on a repeater's input, 600 kHz below
   the output you find first. Requires knowing the offset convention.
-- **Below the Gate** — the beacon sits under the default squelch.
-  `applySquelchAgc` runs before the worker's `decodeCW`, so a closed gate
-  really does starve the decoder while the waterfall still shows the carrier.
+- **Below the Gate** — the beacon sits under a squelch a previous operator
+  left up. `applySquelchAgc` runs before the worker's `decodeCW`, so a closed
+  gate really does starve the decoder while the waterfall still shows the
+  carrier. The challenge (and the squelch lesson) declare `startSquelchDb:
+  CLOSED_SQUELCH_DB` (−24 dB); the view and the guide store apply it on open.
+
+**Measured 2026-10-09 (`scripts/ctf-solvability.ts`, every CW challenge through
+the real receiver):** Below the Gate had shipped *trivially* solvable — the
+mirror image of the Split the Pair bug. Its −26 dB beacon peaks at exactly
+−26.0 dB of gated channel level (median −52, noise floor −65), 54 dB above the
+−80 dB gate every challenge opened at, so the flag copied the moment you tuned
+it and the brief's premise was false. The squelch lesson had the same defect:
+"the decoder prints nothing" was untrue and its "Lower the squelch" step
+completed itself. The earlier keyer-bench cases for these beacons ran with the
+gate open or at −60, so they never exercised the premise. Gate sweep: −35 →
+57 garbage chars, −30 → fragments leak on key-down, −25 → silent; a clean copy
+needs ≲ −40. `src/ctf/gate.test.ts` now pins both premises in the DSP and
+checks every other CW challenge opens ≥ 10 dB below its beacon. Also found:
+Deep Cut's "loud neighbour" (WFM tone at −60 kHz) does not reach the beacon at
++18 kHz — it copies at the stock 500 Hz filter, so the narrow-filter hint is
+advisory and the challenge is a recon/decode exercise, not a filtering one.
 
 The challenge sheet carries a live receiver strip (frequency, mode,
 bandwidth, and what the decoder is copying right now) so wrong operating

@@ -28,3 +28,16 @@ export const BW_RANGE: Record<DemodMode, [number, number, number]> = {
   cw: [200, 2_000, 50],
   raw: [5_000, 300_000, 5_000],
 };
+
+/** Squelch the receiver opens at: well below any signal, i.e. the gate is open. */
+export const DEFAULT_SQUELCH_DB = -80;
+
+/**
+ * A squelch "a previous operator left up" — the premise of Below the Gate and
+ * the squelch lesson. Their -26 dB beacons peak at exactly -26.0 dB of gated
+ * channel level (keyer bench, 2026-10-09), so the gate must sit above that:
+ * at -30 fragments still leak through on key-down, at -25 the decoder is
+ * silent. The squelch control runs -120..-20, so this is visible on the dial
+ * and leaves the whole lower range for the student to open the gate.
+ */
+export const CLOSED_SQUELCH_DB = -24;

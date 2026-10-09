@@ -4,6 +4,7 @@ import { ArrowRight, Check, GraduationCap, Lightbulb, Flag, RotateCcw, Radio, Tr
 import { useCtf, score, rankFor, shareText } from './store';
 import { CHALLENGES, CATEGORY_LABEL, challengeById, toSceneSpec, type Challenge } from './challenges';
 import { useStore } from '../store/store';
+import { DEFAULT_SQUELCH_DB } from '../store/modes';
 import { BottomSheet } from '@/ui/BottomSheet';
 import { IconButton } from '@/ui/controls';
 import { cn } from '@/lib/utils';
@@ -251,9 +252,9 @@ export function CtfView() {
     if (!c) return;
     const s = useStore.getState();
     s.loadSpec(toSceneSpec(c), { name: c.name, tag: 'tasking', from: 'ctf' });
-    // Fresh receiver per challenge: a squelch someone lowered earlier would
-    // otherwise solve "Below the Gate" before it starts.
-    s.setSquelch(-80);
+    // Fresh receiver per challenge, at the squelch the challenge is designed
+    // around: open for most, raised above the beacon for Below the Gate.
+    s.setSquelch(c.startSquelchDb ?? DEFAULT_SQUELCH_DB);
     setActive(id);
   };
 

@@ -3,9 +3,9 @@ import { useStore } from '../store/store';
 import { useCtf } from '../ctf/store';
 import { challengeById, toSceneSpec } from '../ctf/challenges';
 import { LESSONS, lessonById, type GuideCtx } from './lessons';
+import { DEFAULT_SQUELCH_DB } from '../store/modes';
 
 const KEY = 'spectra.guide.v1';
-const DEFAULT_SQUELCH_DB = -80;
 
 interface Saved {
   completed: string[];
@@ -94,7 +94,7 @@ export const useGuide = create<GuideState>((set, get) => ({
     s.loadSpec(lesson.scene, { name: lesson.title, tag: 'training', from: 'academy' });
     // A clean receiver, so earlier fiddling can't skip or block a lesson.
     s.setMode(lesson.startMode ?? 'nfm');
-    s.setSquelch(DEFAULT_SQUELCH_DB);
+    s.setSquelch(lesson.startSquelchDb ?? DEFAULT_SQUELCH_DB);
     s.setView('console');
     useCtf.getState().setActive(null);
     // The first lesson teaches the power button; the rest assume it.
@@ -126,7 +126,7 @@ export const useGuide = create<GuideState>((set, get) => ({
     if (!c) return;
     const s = useStore.getState();
     s.loadSpec(toSceneSpec(c), { name: c.name, tag: 'tasking', from: 'ctf' });
-    s.setSquelch(DEFAULT_SQUELCH_DB);
+    s.setSquelch(c.startSquelchDb ?? DEFAULT_SQUELCH_DB);
     useCtf.getState().setActive(c.id);
     s.setView('ctf');
     set({ finishedId: null });
