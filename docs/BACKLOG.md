@@ -187,6 +187,30 @@ within one step of a station, resumes after the hang time, and a transmission
 is heard through during a hold. Mutation-checked: disabling the guard fails
 the same three assertions.
 
+## Classifier: LoRa vs PSK — RESOLVED by the chirp analyzer (2026-10-09)
+
+The project's oldest open limitation: the classifier was spectrum-only, and a
+125 kHz LoRa chirp has the width of a PSK burst or a broadcast FM station, so
+LoRa ranked second behind WFM on the identify lesson and the chirp-width panel
+read the occupied width (~148 kHz) rather than the sweep. A 7 ms spectrum
+frame is filled edge to edge by a 2 ms chirp — the signature is temporal.
+`src/dsp/chirp.ts` takes 16 sub-frame FFTs (0.9 ms, 1024-pt) per block and
+tests each wide track's peak sequence for a sawtooth: consistent sweep steps
+of one sign, consistent fly-backs of the other. The sawtooth's geometry is the
+signal: fly-back + step = the sweep width, width² / rate = 2^SF. Measured on
+the chirp-width scene: +54 kHz steps per 0.889 ms, −70 kHz fly-backs ⇒ 125 kHz
+exactly, SF 8.006. LoRa is now named first on both LoRa challenges and the
+identify lesson; the signal card shows "SF8 · 125 kHz".
+
+Recorded caveats: a sweep covering more than half the band per sub-frame
+aliases into a slower one the other way (SF7 at 125 kHz steps +108 kHz but
+reads −17), so an up-chirp prior takes the alias when it yields an integer SF
+and a real down-chirp keeps its reading. SF11–12 at 125 kHz move ≤ 7 kHz per
+sub-frame and fly back only every 18–36 sub-frames; the 64-step ring sees too
+few fly-backs to be reliable there (the simulator uses SF7–9). Negative
+controls through the real chain (`chirp-scene.test.ts`): a tone-modulated FM
+station, a same-width PSK burst and a voice band do not chirp.
+
 ## Modes lesson: audio premise measured — PINNED (2026-10-09)
 
 The last lesson whose premise nothing ran through the receiver: the AM tower
