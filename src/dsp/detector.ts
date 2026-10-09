@@ -138,7 +138,11 @@ export class EmissionTracker {
         const a = 0.35;
         t.offsetHz += a * (d.offsetHz - t.offsetHz);
         t.centerFreqHz += a * (d.centerFreqHz - t.centerFreqHz);
-        t.bandwidthHz += a * (d.bandwidthHz - t.bandwidthHz);
+        // Occupied bandwidth is remembered: widen quickly, narrow slowly. A
+        // repeater's carrier-only hang (~0.3 s) used to collapse a 9 kHz voice
+        // track to the carrier's width, and the classifier then called it CW.
+        t.bandwidthHz +=
+          (d.bandwidthHz > t.bandwidthHz ? a : 0.005) * (d.bandwidthHz - t.bandwidthHz);
         t.peakDb += a * (d.peakDb - t.peakDb);
         t.snrDb += a * (d.snrDb - t.snrDb);
         t.crestDb += a * (d.crestDb - t.crestDb);

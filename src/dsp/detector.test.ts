@@ -82,4 +82,27 @@ describe('EmissionTracker', () => {
     const out = tr.update([det(0), det(80_000)]);
     expect(out.length).toBe(2);
   });
+
+  it('remembers occupied bandwidth: widens quickly, narrows slowly', () => {
+    // A repeater's carrier-only hang (~0.3 s of narrow detections) used to
+    // collapse a 12 kHz voice track to the carrier's width, and the
+    // classifier then called the station CW.
+    const wide = { ...det(0), bandwidthHz: 12_000 };
+    const narrow = { ...det(0), bandwidthHz: 800 };
+    const tr = new EmissionTracker();
+    tr.update([wide]);
+    tr.update([wide]);
+    let t = tr.update([wide])[0];
+    expect(t.bandwidthHz).toBeCloseTo(12_000, -2);
+    for (let i = 0; i < 50; i++) t = tr.update([narrow])[0]; // ~0.7 s at 70 frames/s
+    expect(t.bandwidthHz).toBeGreaterThan(8_000);
+
+    const tr2 = new EmissionTracker();
+    tr2.update([narrow]);
+    tr2.update([narrow]);
+    let u = tr2.update([narrow])[0];
+    expect(u.bandwidthHz).toBeCloseTo(800, -1);
+    for (let i = 0; i < 5; i++) u = tr2.update([wide])[0];
+    expect(u.bandwidthHz).toBeGreaterThan(10_000);
+  });
 });

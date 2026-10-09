@@ -32,9 +32,26 @@ describe('classifier', () => {
     expect(['usb', 'lsb']).toContain(g.kind);
   });
 
-  it('identifies ~8 kHz continuous strong-carrier as AM', () => {
-    const g = bestGuess({ bandwidthHz: 8000, snrDb: 30, duty: 0.95, crestDb: 16 });
+  // The next three cases are feature vectors measured on the identify lesson's
+  // scene through the real detector (2026-10-09), not guessed. The AM case
+  // used to assume a 16 dB crest; a simulated AM station measures ~34 dB,
+  // and an FM voice station's residual carrier in its pauses ~20 dB — which
+  // is why NFM used to read as AM whenever it talked.
+  it('identifies ~8 kHz continuous with an AM-strength carrier as AM', () => {
+    const g = bestGuess({ bandwidthHz: 5000, snrDb: 30, duty: 1, crestDb: 34 });
     expect(g.kind).toBe('am');
+  });
+
+  it('identifies a talking NFM station (~8.5 kHz, residual carrier) as NFM, with AM second', () => {
+    const r = classify({ bandwidthHz: 8500, snrDb: 30, duty: 1, crestDb: 20 });
+    expect(r[0].kind).toBe('nfm');
+    expect(r[1].kind).toBe('am');
+  });
+
+  it('identifies a keyed carrier the detector sees ~1 kHz wide as CW, not SSB', () => {
+    // Crest is meaningless for an emission a few bins wide (peak ≈ mean).
+    const g = bestGuess({ bandwidthHz: 975, snrDb: 25, duty: 0.93, crestDb: 5.3 });
+    expect(g.kind).toBe('cw');
   });
 
   it('identifies ~12 kHz continuous no-carrier as NFM', () => {

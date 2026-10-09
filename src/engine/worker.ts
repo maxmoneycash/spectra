@@ -112,6 +112,14 @@ function generateBlock() {
 }
 
 let lastTrackMsgs: TrackMsg[] = [];
+/**
+ * A track's guess is refreshed only on frames the signal is actually present.
+ * While a station rests, its duty decays and a stale narrow bandwidth can
+ * linger, and re-classifying that silence turned a resting NFM repeater into
+ * "CW" in the Stations list. What the operator should see is what the signal
+ * looked like on the air.
+ */
+const guessCache = new Map<string, ReturnType<typeof classify>>();
 
 function updateDetection() {
   const dets = detectEmissions(specAvg, {
@@ -120,13 +128,15 @@ function updateDetection() {
     thresholdDb: 13,
   });
   const tracks = tracker.update(dets, { minHits: 2, maxMiss: 160 });
+  const live = new Set(tracks.map((t) => t.id));
+  for (const id of guessCache.keys()) if (!live.has(id)) guessCache.delete(id);
   lastTrackMsgs = tracks.map((t) => {
-    const results = classify({
-      bandwidthHz: t.bandwidthHz,
-      snrDb: t.snrDb,
-      duty: t.duty,
-      crestDb: t.crestDb,
-    });
+    const cached = guessCache.get(t.id);
+    const results =
+      t.missed === 0 || !cached
+        ? classify({ bandwidthHz: t.bandwidthHz, snrDb: t.snrDb, duty: t.duty, crestDb: t.crestDb })
+        : cached;
+    guessCache.set(t.id, results);
     const best = results[0];
     return {
       id: t.id,

@@ -20,16 +20,30 @@ interface Prior {
   logBw: number;
   sigma: number;
   continuous: boolean;
-  carrier: 'yes' | 'no' | 'any';
+  /**
+   * What the emission's crest (peak-to-mean level) should look like.
+   * 'yes': a dominant carrier, AM-strength (measured sim AM: ~34 dB).
+   * 'weak': a residual carrier that comes and goes — voice FM shows one in
+   *   every pause (measured sim NFM while talking: ~20 dB) but never AM's.
+   * 'no': no carrier. 'any': crest says nothing.
+   */
+  carrier: 'yes' | 'weak' | 'no' | 'any';
 }
 
 const PRIORS: Prior[] = [
-  { kind: 'cw', logBw: Math.log10(200), sigma: 0.35, continuous: false, carrier: 'yes' },
+  // A keyed carrier is a bandwidth call: the detector merges its keying
+  // sidebands into ~0.7–1 kHz, and crest (peak-to-mean) says nothing about an
+  // emission only a few bins wide. Requiring a 'yes' carrier let SSB outscore
+  // the identify lesson's CW station.
+  { kind: 'cw', logBw: Math.log10(500), sigma: 0.35, continuous: false, carrier: 'any' },
   { kind: 'usb', logBw: Math.log10(2700), sigma: 0.18, continuous: true, carrier: 'no' },
   { kind: 'lsb', logBw: Math.log10(2700), sigma: 0.18, continuous: true, carrier: 'no' },
   { kind: 'am', logBw: Math.log10(8000), sigma: 0.2, continuous: true, carrier: 'yes' },
   { kind: 'ook', logBw: Math.log10(6000), sigma: 0.3, continuous: false, carrier: 'any' },
-  { kind: 'nfm', logBw: Math.log10(12000), sigma: 0.2, continuous: true, carrier: 'no' },
+  // Voice-modulated NFM in this simulator occupies ~8–9 kHz (measured on the
+  // identify lesson's repeater); it was centred at 12 kHz with 'no' carrier
+  // and lost every time to AM, which the residual carrier looked like.
+  { kind: 'nfm', logBw: Math.log10(10000), sigma: 0.2, continuous: true, carrier: 'weak' },
   { kind: 'fsk2', logBw: Math.log10(12000), sigma: 0.25, continuous: false, carrier: 'any' },
   { kind: 'fhss', logBw: Math.log10(20000), sigma: 0.4, continuous: false, carrier: 'any' },
   { kind: 'psk', logBw: Math.log10(100000), sigma: 0.25, continuous: false, carrier: 'no' },
@@ -48,6 +62,7 @@ function reasonFor(p: Prior, f: ClassFeatures): string {
   parts.push(f.duty > 0.7 ? 'continuous' : 'bursty');
   if (p.carrier === 'yes' && f.crestDb > 10) parts.push('strong carrier');
   if (p.carrier === 'no' && f.crestDb < 8) parts.push('no carrier');
+  if (p.carrier === 'weak' && f.crestDb >= 10 && f.crestDb < 28) parts.push('carrier in the pauses');
   return parts.join(', ');
 }
 
@@ -58,7 +73,11 @@ export function classify(f: ClassFeatures): ClassResult[] {
     const bwScore = Math.exp(-0.5 * Math.pow((logBw - p.logBw) / p.sigma, 2));
     const dutyScore = p.continuous ? 0.35 + 0.65 * f.duty : 0.35 + 0.65 * (1 - f.duty);
     let carrierScore = 0.7;
-    if (p.carrier === 'yes') carrierScore = clamp(f.crestDb / 18, 0.12, 1);
+    // Full carrier credit used to saturate at 18 dB, so an FM voice station's
+    // residual carrier in the pauses (~20 dB) scored exactly like AM's real
+    // one (~34 dB) and the repeater read as AM whenever it talked.
+    if (p.carrier === 'yes') carrierScore = clamp(f.crestDb / 30, 0.12, 1);
+    else if (p.carrier === 'weak') carrierScore = clamp((34 - f.crestDb) / 12, 0.12, 1);
     else if (p.carrier === 'no') carrierScore = clamp(1 - f.crestDb / 28, 0.12, 1);
     const score = bwScore * dutyScore * carrierScore + 1e-6;
     return { kind: p.kind, score, reason: reasonFor(p, f), prior: p };

@@ -107,6 +107,36 @@ and answer keys that accepted a spelling the UI never shows.
 persistence, the exam spaced-repetition weighting, the narration manifest
 logic, `controls.tsx`.
 
+## Classifier: NFM voice read as AM, resting stations as CW — FIXED (2026-10-09)
+
+Found by `src/guide/identify-lesson.test.ts`, the first test to run the
+identify lesson's scene through scene → spectrum → detector → tracker →
+classifier (with a synthetic voice set, since `speech:` emitters are silent in
+Node). Measured over 40 s: the NFM repeater was nameable (true kind among the
+candidates) **20%** of the time, and even while talking its top guess was AM,
+never NFM. Three causes, fixed at three layers:
+
+- **Classifier.** Full carrier credit saturated at an 18 dB crest, so an FM
+  voice station's residual carrier in the pauses (~20 dB measured) scored
+  exactly like AM's real carrier (~34 dB measured). NFM also sat at a 12 kHz
+  prior with "no carrier" while voice NFM here occupies ~8–9 kHz. Now: a
+  `weak` carrier mode (NFM), full credit only at AM strength, NFM centred at
+  10 kHz. And CW is a bandwidth call — crest is meaningless for an emission a
+  few bins wide — so its prior no longer demands a carrier (requiring one had
+  let SSB outscore the lesson's CW station once bandwidth memory widened it).
+- **Tracker.** Bandwidth followed every detection at the same rate, so the
+  repeater's carrier-only hang collapsed a 9 kHz track to ~750 Hz. Occupied
+  bandwidth is now remembered: widens at 0.35/frame, narrows at 0.005/frame.
+- **Worker.** A track's guess was recomputed every frame, so a resting
+  station's decayed duty and stale width turned it into "CW"/"OOK" in the
+  list. The guess is now refreshed only on frames the signal is present.
+
+After: NFM nameable 71% of frames in the raw chain and effectively always in
+the app (the cache covers the rests); the lesson's five stations now read
+wfm / nfm / am / cw outright with LoRa among its candidates. The measured
+feature vectors are regression cases in `classifier.test.ts`; the bandwidth
+memory in `detector.test.ts`. The old AM test case had assumed a 16 dB crest.
+
 ## Scanner: held on noise from its first channel — FIXED (2026-10-09)
 
 Found by `src/guide/scan-lesson.test.ts`, the first test to run the scan
