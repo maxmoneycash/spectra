@@ -44,6 +44,12 @@
 
   /* Data accent — only ever inside the stage canvas / data viz */
   --ember: oklch(66% 0.19 38);
+  /* "You are tuned here": the VFO needle, the lock reticle, the deck ruler.
+     Mirrors THEME.accent/onAccent in ui/theme.ts, so the canvas VFO pill and
+     these HTML markers are always the same color. Deeper in light mode so
+     white ink keeps its contrast. */
+  --tuned: #e2551f;
+  --tuned-ink: #ffffff;
 
   --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
@@ -76,6 +82,9 @@
   --stage-foreground: oklch(0.985 0 0);
   --stage-muted: oklch(0.705 0.015 286.067);
   --stage-border: oklch(1 0 0 / 0.12);
+
+  --tuned: #f5622f;
+  --tuned-ink: #2a1006;
 }
 
 @theme inline {
@@ -105,6 +114,8 @@
   --color-stage-muted: var(--stage-muted);
   --color-stage-border: var(--stage-border);
   --color-ember: var(--ember);
+  --color-tuned: var(--tuned);
+  --color-tuned-ink: var(--tuned-ink);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);

@@ -250,10 +250,10 @@ export function TuningRuler({ value, centerHz, stepHz, min, max, onChange, class
     >
       <canvas ref={canvasRef} className="absolute inset-0 size-full" />
       {/* needle */}
-      <span aria-hidden className="absolute bottom-0 left-1/2 top-1 w-[2px] -translate-x-1/2 rounded-full bg-emerald-500" />
+      <span aria-hidden className="absolute bottom-0 left-1/2 top-1 w-[2px] -translate-x-1/2 rounded-full bg-tuned" />
       <span
         aria-hidden
-        className="absolute left-1/2 top-0 size-0 -translate-x-1/2 border-x-[5px] border-t-[6px] border-x-transparent border-t-emerald-500"
+        className="absolute left-1/2 top-0 size-0 -translate-x-1/2 border-x-[5px] border-t-[6px] border-x-transparent border-t-tuned"
       />
     </div>
   );

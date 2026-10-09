@@ -151,7 +151,7 @@ export function TuneSheet({ open, onOpenChange }: { open: boolean; onOpenChange:
                     here ? 'bg-accent' : 'hover:bg-accent/60',
                   )}
                 >
-                  <Crosshair className={cn('size-4 shrink-0', here ? 'text-emerald-500' : 'text-muted-foreground')} />
+                  <Crosshair className={cn('size-4 shrink-0', here ? 'text-tuned' : 'text-muted-foreground')} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[13.5px] font-medium text-foreground">{t.guessLabel}</span>
                     <span className="mono-feats block font-mono text-[10.5px] text-muted-foreground">

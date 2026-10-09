@@ -667,7 +667,7 @@ function range10(total: number): number {
  * naming what the receiver thinks it is and the mode it switched to.
  */
 function LockReticle({ mode, label }: { mode: string; label: string }) {
-  const corner = 'absolute size-2.5 border-emerald-500 dark:border-emerald-400';
+  const corner = 'absolute size-2.5 border-tuned';
   return (
     <motion.div
       className="absolute inset-0"
@@ -680,7 +680,7 @@ function LockReticle({ mode, label }: { mode: string; label: string }) {
       <span className={`${corner} bottom-0 left-0 border-b-2 border-l-2`} />
       <span className={`${corner} bottom-0 right-0 border-b-2 border-r-2`} />
       <motion.span
-        className="absolute inset-0 rounded-sm bg-emerald-500/15"
+        className="absolute inset-0 rounded-sm bg-tuned/15"
         initial={{ opacity: 0.9 }}
         animate={{ opacity: 0 }}
         transition={{ duration: 0.7, ease: 'easeOut' }}
@@ -690,7 +690,7 @@ function LockReticle({ mode, label }: { mode: string; label: string }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.12 }}
         data-lock-tag
-        className="mono-feats absolute bottom-[7px] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-sm bg-emerald-500 px-1.5 py-[1px] font-mono text-[8.5px] font-semibold uppercase tracking-[0.12em] text-white shadow-sm dark:bg-emerald-400 dark:text-emerald-950"
+        className="mono-feats absolute bottom-[7px] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-sm bg-tuned px-1.5 py-[1px] font-mono text-[8.5px] font-semibold uppercase tracking-[0.12em] text-tuned-ink shadow-sm"
       >
         Lock · {mode} · {label}
       </motion.span>
