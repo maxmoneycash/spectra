@@ -107,6 +107,26 @@ and answer keys that accepted a spelling the UI never shows.
 persistence, the exam spaced-repetition weighting, the narration manifest
 logic, `controls.tsx`.
 
+## Scanner: held on noise from its first channel — FIXED (2026-10-09)
+
+Found by `src/guide/scan-lesson.test.ts`, the first test to run the scan
+lesson's own scene through scene → receiver → scanner with a fake clock. On
+"Scan the band" the scanner stepped to its first channel (146.5375 MHz, no
+station within 137 kHz), declared a hit, held, and never resumed. Cause: until
+six idle readings are learned the only threshold is the operator's squelch,
+and at the stock −80 dB every empty 12 kHz NFM channel (~−50 dB of noise)
+clears it — so the first channel hit, the floor was never learned, and the
+hold condition (`level > threshold − 3`) could never fail. This broke the Scan
+feature on every band, not just the lesson: step 2 ("stops on a transmission")
+passed instantly on nothing and step 3 could never pass.
+
+Fix: the first six channels calibrate the floor and cannot hit (a median
+shrugs off a real transmission landing in that window). Now measured on the
+lesson's scene with a synthetic voice set installed: holds only on channels
+within one step of a station, resumes after the hang time, and a transmission
+is heard through during a hold. Mutation-checked: disabling the guard fails
+the same three assertions.
+
 ## CW keyer: power-on chatter — RESOLVED (2026-10-09)
 
 Two defects, one of which hid the other.

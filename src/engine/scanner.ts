@@ -169,10 +169,20 @@ export class Scanner {
       this.settle--;
       return;
     }
-    const thr = this.threshold();
     const now = Date.now();
 
     if (this.status === 'scanning') {
+      // Bootstrap: until the floor is learned the only threshold is the
+      // operator's squelch, and at the stock -80 dB every idle channel clears
+      // it — the scanner held on noise on its very first channel and, with no
+      // floor ever learned, never resumed. The first channels calibrate; a
+      // median shrugs off a real transmission landing in that window.
+      if (this.noise.length < 6) {
+        this.noise.push(db);
+        this.advance(1);
+        return;
+      }
+      const thr = this.threshold();
       if (db > thr) {
         // Two consecutive readings, so one noise spike can't stop the sweep.
         if (++this.confirm >= 2) {
@@ -195,6 +205,7 @@ export class Scanner {
     }
 
     // hold
+    const thr = this.threshold();
     if (db > thr - 3) {
       this.lastAbove = now;
       if (db > this.holdPeak) this.holdPeak = db;
