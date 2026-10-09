@@ -314,24 +314,15 @@ function FilterSheet({ open, onClose }: { open: boolean; onClose: () => void }) 
         </button>
       }
     >
-      {/* licence class */}
+      {/* licence class: the same segmented control as narration speed below,
+          so it gets the spring thumb, haptic tick and arrow keys too */}
       <div className="px-4">
-        <div className="grid grid-cols-3 gap-1 rounded-lg border border-line p-1" role="radiogroup" aria-label="Licence class">
-          {POOLS.map((p) => (
-            <button
-              key={p.id}
-              role="radio"
-              aria-checked={pool === p.id}
-              onClick={() => void loadPool(p.id)}
-              className={cn(
-                'min-h-10 rounded-md text-[12.5px] font-medium transition-colors',
-                pool === p.id ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {p.name}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          label="Licence class"
+          value={pool}
+          onChange={(id) => void loadPool(id)}
+          options={POOLS.map((p) => ({ value: p.id, label: p.name }))}
+        />
       </div>
 
       {/* narration */}
