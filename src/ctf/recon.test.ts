@@ -16,10 +16,13 @@ import { detectScene, syntheticBank, nearestTrack, distinctEmitters, type Detect
  * width, so flickers at a wide station's skirt and fragments of a LoRa chirp
  * were listed as emitters of their own. Fixed in the tracker; pinned here.
  *
- * Known, and left honest: the hopper's dwells still list as a score of
- * narrow "CW" entries (the waterfall shows the scatter, and FHSS is offered);
- * the chirp-width panel over-reads a 125 kHz chirp by ~20%, and the
- * challenge's "standard channel widths" hint is what resolves it.
+ * The hopper used to list as a score of narrow "CW" entries — one per dwell —
+ * until the tracker learned to fold a comb of narrow tracks into one hopping
+ * track (dsp/detector.ts). It now lists once, FHSS first, and the wide PSK
+ * sitting inside its span is still its own emitter; pinned below.
+ *
+ * Known, and left honest: the chirp-width panel over-reads a 125 kHz chirp by
+ * ~20%, and the challenge's "standard channel widths" hint is what resolves it.
  */
 const MHZ = 1e6;
 const bank = syntheticBank();
@@ -74,11 +77,27 @@ describe('identify: the panel offers the answer', () => {
     expect(await checkFlag('mode-id', 'lora')).toBe(true);
   });
 
-  it('hopper: FHSS is offered for the hopper', async () => {
+  it('hopper: the hopper lists once with FHSS first, and the PSK inside its span is not absorbed', async () => {
     const r = run('hopper', 30);
-    const hopperish = r.everSeen.filter((t) => Math.abs(t.centerFreqHz - 2440.3 * MHZ) > 60_000);
-    expect(hopperish.length).toBeGreaterThan(0);
-    expect(hopperish.some((t) => t.candidates.some((c) => c.kind === 'fhss'))).toBe(true);
+    const kept = distinctEmitters(r.everSeen);
+    // Exactly one hopper, however the holes fell, with one identity for the
+    // whole run — nine short-lived ones used to be listed.
+    const hoppers = kept.filter((t) => t.hopping);
+    expect(hoppers.length).toBe(1);
+    const hopper = hoppers[0];
+    // Most of the 800 kHz hop range folded into it, many dwells wide, and the
+    // classifier reads the flag and names FHSS first.
+    expect(hopper.hopping!.spanHz).toBeGreaterThan(400_000);
+    expect(hopper.hopping!.members).toBeGreaterThanOrEqual(6);
+    expect(hopper.candidates[0]?.kind).toBe('fhss');
+    // The 100 kHz PSK parked inside the span is its own emitter, not a dwell.
+    const psk = nearestTrack(kept, 2440.3 * MHZ);
+    expect(psk).not.toBeNull();
+    expect(psk!.hopping).toBeUndefined();
+    // Honest residue: dwells landing on the PSK's upper skirt merge with it
+    // into 30–90 kHz blobs, so the ledger can hold the PSK twice plus one
+    // such blob. Nothing in this scene is graded on a count.
+    expect(kept.length).toBeLessThanOrEqual(4);
     expect(await checkFlag('hopper', 'fhss')).toBe(true);
   });
 

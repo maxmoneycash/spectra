@@ -54,6 +54,15 @@ describe('classifier', () => {
     expect(g.kind).toBe('cw');
   });
 
+  it('calls a comb of hopping channels FHSS outright', () => {
+    // The tracker collapses a hopper's dwells into one track spanning them; by
+    // shape alone that span matches nothing and each dwell reads as CW.
+    const r = classify({ bandwidthHz: 700_000, snrDb: 28, duty: 0.8, crestDb: 5, hopping: { members: 20, spanHz: 700_000 } });
+    expect(r[0].kind).toBe('fhss');
+    expect(r[0].confidence).toBeGreaterThan(0.8);
+    expect(r.reduce((s, x) => s + x.confidence, 0)).toBeLessThanOrEqual(1.0001);
+  });
+
   it('identifies ~12 kHz continuous no-carrier as NFM', () => {
     const g = bestGuess({ bandwidthHz: 12_000, snrDb: 25, duty: 0.9, crestDb: 4 });
     expect(g.kind).toBe('nfm');

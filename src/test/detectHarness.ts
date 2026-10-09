@@ -1,6 +1,6 @@
 import { Scene } from '../sim/scene';
 import { SpectrumAnalyzer, smoothSpectrum } from '../dsp/spectrum';
-import { detectEmissions, EmissionTracker, type Track } from '../dsp/detector';
+import { detectEmissions, EmissionTracker, HOP_LINK_HZ, type Track } from '../dsp/detector';
 import { classify, type ClassResult } from '../id/classifier';
 import { VoiceMessage, MSG_RATE } from '../sim/messages';
 import { Rng } from '../sim/prng';
@@ -103,7 +103,7 @@ export function detectScene(o: DetectOpts): DetectResult {
     for (const id of guesses.keys()) if (!live.has(id)) guesses.delete(id);
     for (const t of tracks) {
       if (t.missed === 0 || !guesses.has(t.id)) {
-        guesses.set(t.id, classify({ bandwidthHz: t.bandwidthHz, snrDb: t.snrDb, duty: t.duty, crestDb: t.crestDb }));
+        guesses.set(t.id, classify({ bandwidthHz: t.bandwidthHz, snrDb: t.snrDb, duty: t.duty, crestDb: t.crestDb, hopping: t.hopping }));
       }
       // The worker posts the list every 4th frame, and a person needs it on
       // screen for a few postings (~170 ms) before it can be counted. A track
@@ -136,10 +136,22 @@ export function nearestTrack(tracks: Guessed[], freqHz: number): Guessed | null 
   return best;
 }
 
-/** Distinct emitters among tracks: anything within 25 kHz of a stronger one is the same emitter. */
+/**
+ * Distinct emitters among tracks: anything within 25 kHz of a stronger one is
+ * the same emitter, and any narrow track within a link of a hopper's span is
+ * one of its dwells — the same rule the tracker applies live. The ledger keeps
+ * the dwells it saw before each one was folded in, so it needs the rule too.
+ */
 export function distinctEmitters(tracks: Guessed[]): Guessed[] {
-  const kept: Guessed[] = [];
-  for (const t of [...tracks].sort((a, b) => b.snrDb - a.snrDb)) {
+  const hoppers = tracks.filter((t) => t.hopping);
+  const kept: Guessed[] = [...hoppers];
+  // Only a narrow track is a dwell; a wide signal that happens to sit inside a
+  // hopper's span is its own emitter.
+  const inHopper = (t: Guessed) =>
+    t.bandwidthHz < 4_000 &&
+    hoppers.some((h) => Math.abs(t.centerFreqHz - h.centerFreqHz) <= h.bandwidthHz / 2 + HOP_LINK_HZ);
+  for (const t of [...tracks].filter((t) => !t.hopping).sort((a, b) => b.snrDb - a.snrDb)) {
+    if (inHopper(t)) continue;
     if (!kept.some((k) => Math.abs(k.centerFreqHz - t.centerFreqHz) < 25_000)) kept.push(t);
   }
   return kept;

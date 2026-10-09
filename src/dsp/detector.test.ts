@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { detectEmissions, EmissionTracker, estimateNoiseFloor, type Detection } from './detector';
+import { detectEmissions, EmissionTracker, estimateNoiseFloor, type Detection, type Track } from './detector';
 
 /** Build a synthetic dB spectrum: flat noise floor with raised signal regions. */
 function makeSpectrum(
@@ -94,6 +94,39 @@ describe('EmissionTracker', () => {
     const out = tr.update([station, ghost]);
     expect(out.length).toBe(1);
     expect(out[0].bandwidthHz).toBeCloseTo(138_000, -3);
+  });
+
+  it('collapses a comb of narrow, briefly-present channels into one hopper', () => {
+    // 24 carrier-only channels 35 kHz apart, one dwelt on at a time for ~3
+    // frames: the 2.4 GHz hopper that used to list as ~20 "CW" entries.
+    const chan = (i: number): Detection => ({ ...det(-400_000 + i * 35_000, 28), bandwidthHz: 900 });
+    // The hop sequence is random, so at any moment some channels have gone
+    // unvisited long enough to be culled: holes in the comb. Channels 7–10
+    // and 15 are never revisited here, so by frame ~162 the comb has a
+    // four-channel hole (wider than the link) and a one-channel hole, and
+    // must still read as a single hopper.
+    const visited = [...Array(24).keys()].filter((i) => i < 7 || (i > 10 && i !== 15));
+    const tr = new EmissionTracker();
+    let out: Track[] = [];
+    for (let frame = 0; frame < 260; frame++) {
+      const dets =
+        frame < 2 ? Array.from({ length: 24 }, (_, i) => chan(i)) : [chan(visited[Math.floor(frame / 3) % visited.length])];
+      out = tr.update(dets, { minHits: 2, maxMiss: 160 });
+    }
+    expect(out.length).toBe(1);
+    expect(out[0].hopping?.members).toBe(19);
+    expect(out[0].bandwidthHz).toBeGreaterThan(500_000);
+    expect(out[0].id).toMatch(/^hop-/);
+  });
+
+  it('leaves a pile-up of steady narrow stations alone', () => {
+    // Six CW stations 35 kHz apart, all keying most of the time: not a hopper.
+    const chan = (i: number): Detection => ({ ...det(-100_000 + i * 35_000, 28), bandwidthHz: 900 });
+    const tr = new EmissionTracker();
+    let out: Track[] = [];
+    for (let frame = 0; frame < 20; frame++) out = tr.update(Array.from({ length: 6 }, (_, i) => chan(i)));
+    expect(out.length).toBe(6);
+    expect(out.every((t) => !t.hopping)).toBe(true);
   });
 
   it('remembers occupied bandwidth: widens quickly, narrows slowly', () => {

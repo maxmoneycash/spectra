@@ -7,6 +7,8 @@ export interface ClassFeatures {
   duty: number;
   /** Peak-to-mean level within the emission (dB). */
   crestDb: number;
+  /** Set by the tracker when the track stands for a comb of hopping channels. */
+  hopping?: { members: number; spanHz: number };
 }
 
 export interface ClassResult {
@@ -68,6 +70,21 @@ function reasonFor(p: Prior, f: ClassFeatures): string {
 
 /** Rank signal types by how well they match the observed features. */
 export function classify(f: ClassFeatures): ClassResult[] {
+  // A comb of hopping channels is a frequency hopper outright; its span
+  // (hundreds of kHz) would otherwise match nothing in the priors, and its
+  // members' width (a carrier) would read as CW. Rank the rest by shape for
+  // the runner-up slots, scaled so the three still sum to at most 1.
+  if (f.hopping && f.hopping.members >= 5) {
+    const rest = classify({ ...f, hopping: undefined })
+      .filter((r) => r.kind !== 'fhss')
+      .slice(0, 2)
+      .map((r) => ({ ...r, confidence: r.confidence * 0.1 }));
+    const span = Math.round(f.hopping.spanHz / 1000);
+    return [
+      { kind: 'fhss', confidence: 0.9, reason: `${f.hopping.members} channels across ~${span} kHz, short dwells` },
+      ...rest,
+    ];
+  }
   const logBw = Math.log10(Math.max(1, f.bandwidthHz));
   const scored = PRIORS.map((p) => {
     const bwScore = Math.exp(-0.5 * Math.pow((logBw - p.logBw) / p.sigma, 2));

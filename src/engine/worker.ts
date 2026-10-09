@@ -134,7 +134,7 @@ function updateDetection() {
     const cached = guessCache.get(t.id);
     const results =
       t.missed === 0 || !cached
-        ? classify({ bandwidthHz: t.bandwidthHz, snrDb: t.snrDb, duty: t.duty, crestDb: t.crestDb })
+        ? classify({ bandwidthHz: t.bandwidthHz, snrDb: t.snrDb, duty: t.duty, crestDb: t.crestDb, hopping: t.hopping })
         : cached;
     guessCache.set(t.id, results);
     const best = results[0];

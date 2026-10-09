@@ -124,12 +124,18 @@ tracks' widths. After: 4/4 and 5/5; the chirper lists once instead of five
 times. Fox Hunt reads 144.330, Carrier in the Clear reads 124.200, Diagonal
 Rain offers LoRa, Which Sideband offers both sidebands.
 
-Left honest, not fixed: the hopper's dwells still list as ~20 narrow "CW"
-entries (an FHSS emitter has no fixed frequency for a tracker keyed on one;
-the waterfall shows the scatter and FHSS is offered for the aggregate); and
-the chirp-width panel over-reads a 125 kHz chirp as ~148 kHz because the
-remembered width spans the sweep — the challenge's "standard channel widths"
-hint is what resolves it, and the test says so.
+Fixed (2026-10-09): the hopper listed as ~20 narrow "CW" entries, then — after
+the first aggregator — as nine short-lived "FHSS" hoppers, because a comb's
+span was whatever fragment matched it that frame and every re-formation minted
+a new id. The tracker now folds every fragment touching a hopper's remembered
+span into one track with one id, absorbed dwells extend the span, and the
+classifier names FHSS first; recon.test.ts pins it on the hopper challenge.
+Residue, documented in that test: dwells landing on the PSK's upper skirt
+merge with it into 30–90 kHz blobs, so the ledger can hold the PSK twice.
+
+Left honest, not fixed: the chirp-width panel over-reads a 125 kHz chirp as
+~148 kHz because the remembered width spans the sweep — the challenge's
+"standard channel widths" hint is what resolves it, and the test says so.
 
 ## Classifier: NFM voice read as AM, resting stations as CW — FIXED (2026-10-09)
 
