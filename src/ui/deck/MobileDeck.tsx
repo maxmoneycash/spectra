@@ -123,7 +123,8 @@ export function MobileDeck() {
             />
             <span className={cn('truncate', station && 'text-foreground')}>{station ?? 'No signal'}</span>
             <span>· {mode}</span>
-            <span>· {fmtBw(bandwidthHz)}</span>
+            {/* Units keep their case: kHz, not KHZ. */}
+            <span className="normal-case">· {fmtBw(bandwidthHz)}</span>
           </span>
         </button>
         <SeekButton dir={1} disabled={!canSeek} onSeek={() => tuneStep(1)} />

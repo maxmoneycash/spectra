@@ -141,7 +141,7 @@ export function AntennaCalc() {
               {v.toFixed(2)} m
             </div>
             <div className="mono-feats mt-0.5 font-mono text-[8.5px] uppercase tracking-[0.12em] text-muted-foreground">
-              {label} · {(v / 0.3048).toFixed(1)} ft
+              {label} · <span className="normal-case">{(v / 0.3048).toFixed(1)} ft</span>
             </div>
           </div>
         ))}

@@ -117,7 +117,7 @@ export function TuneSheet({ open, onOpenChange }: { open: boolean; onOpenChange:
             ))}
           </WheelPickerWrapper>
           <div className="mono-feats mt-1.5 flex justify-between px-2 font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">
-            <span>MHz</span>
+            <span className="normal-case">MHz</span>
             <span className="pr-1">100k · 10k · 1k · 100</span>
           </div>
           {!inBand && (

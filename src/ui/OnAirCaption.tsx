@@ -63,7 +63,7 @@ export function OnAirCaption() {
               </span>
               <span className={keyed ? 'text-rose-300' : 'text-white/50'}>{keyed ? 'On air' : 'Clear'}</span>
               <span className="font-semibold text-white">{current.who}</span>
-              <span className="ml-auto tabular-nums text-white/55">{(current.freqHz / 1e6).toFixed(4)} MHz</span>
+              <span className="ml-auto normal-case tabular-nums text-white/55">{(current.freqHz / 1e6).toFixed(4)} MHz</span>
             </div>
             <p className="mt-1 text-[13.5px] leading-snug">
               {words.map((w, i) => (

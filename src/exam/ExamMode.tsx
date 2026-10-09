@@ -209,8 +209,8 @@ function Results() {
                   {right ? <Check className="size-3" strokeWidth={3} /> : <X className="size-3" strokeWidth={3} />}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="mono-feats font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                    {q.id}
+                  <p className="mono-feats font-mono text-[10px] tracking-[0.14em] text-muted-foreground">
+                    <span className="uppercase">{q.id}</span>
                     {q.refs ? ` · FCC ${q.refs}` : ''}
                   </p>
                   <p className="mt-1 text-[13.5px] leading-snug text-foreground">{q.q}</p>

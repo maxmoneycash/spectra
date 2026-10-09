@@ -53,7 +53,7 @@ export function SnrHistory({ trackId }: { trackId: string }) {
   return (
     <div className="mt-2">
       <div className="mono-feats mb-1 font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
-        SNR history (dB)
+        SNR history <span className="normal-case">(dB)</span>
       </div>
       <div ref={ref} className="uplot-host" />
     </div>

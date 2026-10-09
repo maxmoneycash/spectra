@@ -232,8 +232,10 @@ function ReelCard({
           </span>
           <div className="min-w-0 flex-1">
             <p className="truncate text-[13px] font-semibold text-foreground">{subelementTitle(sub)}</p>
-            <p className="mono-feats truncate font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-              {q.id}
+            {/* Only the ID is uppercased: Part 97 paragraph letters are lowercase,
+                so §97.301(d) must not render as 97.301(D). */}
+            <p className="mono-feats truncate font-mono text-[10px] tracking-wider text-muted-foreground">
+              <span className="uppercase">{q.id}</span>
               {q.refs ? ` · FCC ${q.refs}` : ''}
             </p>
           </div>

@@ -63,9 +63,11 @@ function InterceptStrip() {
         <span className={cn('size-1.5 rounded-full', running ? 'bg-emerald-500' : 'bg-border')} />
         Receiver
         <span className="flex-1" />
-        <span>{((centerFreqHz + tuningOffsetHz) / 1e6).toFixed(4)} MHz</span>
+        <span className="normal-case">{((centerFreqHz + tuningOffsetHz) / 1e6).toFixed(4)} MHz</span>
         <span>{mode.toUpperCase()}</span>
-        <span>{bandwidthHz >= 1000 ? `${(bandwidthHz / 1000).toFixed(1)}k` : `${bandwidthHz}`}</span>
+        <span className="normal-case">
+          {bandwidthHz >= 1000 ? `${(bandwidthHz / 1000).toFixed(1)} kHz` : `${bandwidthHz} Hz`}
+        </span>
       </div>
       <p
         className="mono-feats mt-2 min-h-[2.2em] break-all font-mono text-[12px] leading-snug text-foreground"
