@@ -179,7 +179,7 @@ export const KIND_INFO: Record<SignalKind, KindInfo> = {
       'Chirp spread spectrum: each symbol is a frequency sweep. Trades data rate for astonishing range and noise immunity.',
     realWorld: 'LoRaWAN IoT sensors, Meshtastic, long-range telemetry.',
     waterfall:
-      'Unmistakable diagonal sawtooth ramps sweeping across the channel.',
+      "Unmistakable diagonal sawtooth ramps sweeping across the channel. The ramp's width is the channel bandwidth and its rate gives the spreading factor; tap one and the receiver reads both.",
   },
   psk: {
     kind: 'psk',

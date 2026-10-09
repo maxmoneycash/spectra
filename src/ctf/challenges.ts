@@ -158,10 +158,11 @@ export const CHALLENGES: Challenge[] = [
     category: 'analysis',
     points: 200,
     brief:
-      'Measure the occupied bandwidth of that chirping emitter. Report it in kHz, to the nearest whole kHz.',
-    answerHint: 'kHz, e.g. 125',
+      'Measure the sweep width of that chirping emitter — the band each symbol sweeps across. Report it in kHz, to the nearest whole kHz.',
+    answerHint: 'kHz, e.g. 250',
     hints: [
-      'The Stations panel reports a bandwidth per signal.',
+      "The Stations panel's bandwidth is what the detector sees above its threshold. A chirp's skirts make that read wide.",
+      'Tap the signal. Once the receiver has watched a few symbols sweep, the card reads the sweep itself.',
       'Chirp spread spectrum uses a small set of standard channel widths.',
     ],
     flagHash: 'c9ac6edd606391462d00592170131641',
