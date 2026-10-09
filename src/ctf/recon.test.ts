@@ -4,7 +4,7 @@ import { checkFlag } from './store';
 import { detectScene, syntheticBank, nearestTrack, distinctEmitters, type DetectResult } from '../test/detectHarness';
 
 /**
- * The eight non-CW challenges are graded on what the Stations list reports —
+ * The nine non-CW challenges are graded on what the Stations list reports —
  * a count, a frequency, a bandwidth, a guess. ctf.test.ts checks the hashes;
  * it cannot see whether the DETECTOR reports something a player could read
  * the flag from. This runs each challenge's scene through the worker's
@@ -71,6 +71,15 @@ describe('analysis: reading a frequency or a width off the panel', () => {
     expect(t!.chirp?.bwHz).toBe(125_000);
     expect(t!.chirp?.sf).toBe(8);
     expect(await checkFlag('chirp-width', '125')).toBe(true);
+  });
+
+  it('spread-factor: the receiver recovers SF9 from the sweep, and that is the flag', async () => {
+    const t = nearestTrack(run('spread-factor', 30).everSeen, 868.3 * MHZ);
+    expect(t).not.toBeNull();
+    expect(t!.chirp?.bwHz).toBe(125_000);
+    expect(t!.chirp?.sf).toBe(9);
+    // The flag is whatever the card would show, not a number typed here.
+    expect(await checkFlag('spread-factor', String(t!.chirp!.sf))).toBe(true);
   });
 });
 

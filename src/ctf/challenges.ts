@@ -174,6 +174,28 @@ export const CHALLENGES: Challenge[] = [
     suggest: 'raw',
   },
   {
+    id: 'spread-factor',
+    name: 'Spread Factor',
+    category: 'analysis',
+    points: 200,
+    brief:
+      'The LoRa node on 868.3 MHz is running a non-default spreading factor. Recover it from the chirp itself.',
+    answerHint: 'The spreading factor, e.g. 7',
+    hints: [
+      'A chirp sweeps its whole bandwidth once per symbol, and a symbol lasts 2^SF samples of that bandwidth — the slope of the ramp is the spreading factor.',
+      'Tap the signal and let the receiver watch a few symbols; the card reads SF and width from the sweep.',
+    ],
+    flagHash: '8274d59b3fb89ba2747026461747ea70',
+    centerFreqHz: 868.0 * MHZ,
+    noiseSigma: 0.026,
+    emitters: [
+      { id: 'l', kind: 'lora', freqHz: 868.3 * MHZ, powerDb: -5, sf: 9, bwHz: 125_000, seed: 515 },
+      { id: 'f', kind: 'fsk2', freqHz: 867.7 * MHZ, powerDb: -8, baud: 2400, seed: 516 },
+      { id: 'o', kind: 'ook', freqHz: 868.45 * MHZ, powerDb: -9, baud: 2000, seed: 517 },
+    ],
+    suggest: 'raw',
+  },
+  {
     id: 'ism-census',
     name: 'ISM Census',
     category: 'recon',

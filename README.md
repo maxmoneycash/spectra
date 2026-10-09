@@ -59,7 +59,7 @@ challenge, and grade an exam question, which no live receiver can do.
 
 ### Tasking — intercept missions
 
-- **Fourteen challenges worth 3,200 points**, in five categories: recon,
+- **Fifteen challenges worth 3,400 points**, in five categories: recon,
   decode, identify, analysis, and intercept.
 - The intercept challenges can only be solved by operating the radio: two
   beacons inside one filter, a flag keyed on a repeater's input, a beacon
