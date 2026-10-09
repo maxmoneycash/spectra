@@ -130,7 +130,7 @@ note (~8 dB more margin for weak beacons) plus a 250 ms lookahead
 threshold: each 10 ms hop is decided from a 500 ms window's low-percentile
 hop mean (floor) and max (ceiling), with a gate that keys nothing when the
 ceiling is not clearly above the floor. Measured on identical audio
-(`scratchpad/keyer-bench.ts`, 9 cases):
+(`scripts/keyer-bench.ts`, 9 cases):
 
 | case | old keyer | new keyer |
 |---|---|---|
