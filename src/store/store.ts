@@ -10,6 +10,7 @@ import { SAMPLE_RATE } from '../engine/protocol';
 
 export { MODE_BW, BW_RANGE, DEMOD_MODES } from './modes';
 import { MODE_BW, DEFAULT_SQUELCH_DB } from './modes';
+import { inPassband } from './intercept';
 
 export type PanelTab = 'signals' | 'scan' | 'log' | 'library' | 'scenario';
 
