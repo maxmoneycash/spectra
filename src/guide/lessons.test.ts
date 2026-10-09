@@ -40,9 +40,9 @@ function decodedCw(lesson: Lesson): string {
  * The state that should satisfy each step, by lesson. `null` = reading step.
  * CW steps use the decoder's actual output from a single pass, so a lesson
  * whose message the decoder can't produce fails here — the bug that once
- * made two CTF flags unsolvable. One pass is the strict case: the decoder
- * misreads the first character until its timing settles, so a check keyed
- * on a message's first word would only pass on the beacon's second loop.
+ * made two CTF flags unsolvable. One pass is the strict case: a check must
+ * be satisfiable the first time the beacon is heard, not only on its second
+ * loop.
  */
 function solutions(lesson: Lesson): (Partial<GuideCtx> | null)[] {
   const heard = decodedCw(lesson);
