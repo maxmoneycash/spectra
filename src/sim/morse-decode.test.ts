@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { Scene } from '../sim/scene';
 import { Receiver } from '../dsp/receiver';
 import { MorseDecoder } from '../sim/morse';
-import { AUDIO_RATE } from '../dsp/receiver';
+import { CwKeyer } from '../dsp/cwKeyer';
 
 /**
  * End-to-end CW decode: scene (CW emitter) -> receiver (CW mode) -> the
@@ -21,28 +21,10 @@ describe('morse decode chain', () => {
     const bandIm = new Float32Array(16384);
     const audio = new Float32Array(4096);
     const dec = new MorseDecoder();
-    let env = 0;
-    let peak = 0.01;
-    let state = false;
-    let samples = 0;
-    const cwAlpha = 1 - Math.exp(-1 / (0.003 * AUDIO_RATE));
+    const keyer = new CwKeyer((on, dur) => dec.push(on, dur));
     for (let b = 0; b < 900; b++) {
       scene.generate(bandRe, bandIm, 16384);
-      const n = rx.process(bandRe, bandIm, 16384, audio);
-      for (let i = 0; i < n; i++) {
-        const a = Math.abs(audio[i]);
-        env += cwAlpha * (a - env);
-        peak = Math.max(peak * 0.99995, env);
-        const on = env > peak * 0.35;
-        if (on !== state) {
-          const dur = samples / AUDIO_RATE;
-          if (dur > 0.01) dec.push(state, dur);
-          state = on;
-          samples = 0;
-        } else {
-          samples++;
-        }
-      }
+      keyer.process(audio, rx.process(bandRe, bandIm, 16384, audio));
     }
     console.log('decoded:', JSON.stringify(dec.output));
     expect(dec.output).toContain('SPECTRA');

@@ -1,10 +1,11 @@
 /// <reference lib="webworker" />
 import { Scene } from '../sim/scene';
 import { SpectrumAnalyzer, smoothSpectrum } from '../dsp/spectrum';
-import { Receiver, AUDIO_RATE } from '../dsp/receiver';
+import { Receiver } from '../dsp/receiver';
 import { detectEmissions, EmissionTracker } from '../dsp/detector';
 import { classify } from '../id/classifier';
 import { MorseDecoder } from '../sim/morse';
+import { CwKeyer } from '../dsp/cwKeyer';
 import { interleave } from '../recording/sigmf';
 import { setVoiceBank, onTx } from '../sim/voicebank';
 import {
@@ -39,11 +40,7 @@ let frame = 0;
 let lastMorse = '';
 
 // CW keying decode state (runs on demod audio).
-let cwState = false;
-let cwSamples = 0;
-let cwEnv = 0;
-let cwPeak = 0.01;
-const cwAlpha = 1 - Math.exp(-1 / (0.003 * AUDIO_RATE));
+const cwKeyer = new CwKeyer((on, dur) => morseDecoder.push(on, dur));
 
 // Recording
 let recording = false;
@@ -165,21 +162,7 @@ const LABELS: Record<string, string> = {
 
 function decodeCW(audio: Float32Array, n: number) {
   if (receiver.demodMode !== 'cw') return;
-  for (let i = 0; i < n; i++) {
-    const a = Math.abs(audio[i]);
-    cwEnv += cwAlpha * (a - cwEnv);
-    cwPeak = Math.max(cwPeak * 0.99995, cwEnv);
-    const thr = cwPeak * 0.35;
-    const on = cwEnv > thr;
-    if (on !== cwState) {
-      const dur = cwSamples / AUDIO_RATE;
-      if (dur > 0.01) morseDecoder.push(cwState, dur);
-      cwState = on;
-      cwSamples = 0;
-    } else {
-      cwSamples++;
-    }
-  }
+  cwKeyer.process(audio, n);
   const text = morseDecoder.output.slice(-40);
   if (text !== lastMorse) {
     lastMorse = text;
