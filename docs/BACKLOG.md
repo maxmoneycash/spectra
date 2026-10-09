@@ -341,6 +341,14 @@ the flag is the beacon after W6WX, which means copying a callsign across a
 slot handoff. `src/ctf/rotation.test.ts` pins that through the receiver and
 derives the expected answer from the roster, so a stale hash fails loudly.
 
+Done 2026-10-09: **Spread Factor** (`spread-factor`, analysis, 200 pts) — the
+first challenge that asks for a parameter the spectrum cannot show. A LoRa
+node on 868.3 MHz runs SF9 among FSK and OOK clutter; only the chirp analyzer
+can read it (tap, let the receiver watch a few symbols, the card shows
+"SF9 · 125 kHz"). `recon.test.ts` runs the scene through the real chain,
+asserts 125 kHz and SF 9, and checks the flag with the measured value rather
+than a typed one. Set is now 15 challenges / 3,400 points.
+
 **Zero-beat tuning precision — dropped (measured 2026-10-09).** The receiver
 does not enforce it: a CW flag copies with the VFO up to ±300 Hz off at the
 stock 500 Hz filter (breaks at 400) and ±200 Hz off at 200 Hz (breaks at 250),
