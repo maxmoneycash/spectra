@@ -1,13 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { Scene } from '../sim/scene';
-import { Receiver } from '../dsp/receiver';
-import { MorseDecoder } from '../sim/morse';
-import { CwKeyer } from '../dsp/cwKeyer';
 import { lessonById, type GuideCtx } from './lessons';
 import { MODE_BW, DEFAULT_SQUELCH_DB } from '../store/modes';
-
-const SR = 1_152_000;
-const BLOCK = 16384;
+import { copyCw } from '../test/cwHarness';
 
 /**
  * The filter lesson claims: at the stock 500 Hz filter the two stations
@@ -17,35 +11,13 @@ const BLOCK = 16384;
  * at the original 450 Hz spacing a student who dialled exactly 7.030 as step
  * 1 instructed got a clean copy at the stock filter (the keyer rejected the
  * neighbour by pitch) and step 2's explanation contradicted the screen.
- * This runs the lesson's scene through scene → receiver → keyer → decoder.
  */
 const lesson = lessonById('filter')!;
 const [p1, p2] = lesson.scene.emitters; // lower station (the one to copy), upper station
 const mid = (p1.freqHz + p2.freqHz) / 2;
 
-function copy(tuneHz: number, bw: number): string {
-  const scene = new Scene({
-    sampleRate: SR,
-    centerFreqHz: lesson.scene.centerFreqHz,
-    noiseSigma: lesson.scene.noiseSigma,
-  });
-  for (const e of lesson.scene.emitters) scene.add(e);
-  const rx = new Receiver(SR);
-  rx.setMode('cw');
-  rx.setBandwidth(bw);
-  rx.setTuning(tuneHz - lesson.scene.centerFreqHz);
-  rx.setSquelch(lesson.startSquelchDb ?? DEFAULT_SQUELCH_DB);
-  const re = new Float32Array(BLOCK);
-  const im = new Float32Array(BLOCK);
-  const audio = new Float32Array(4096);
-  const dec = new MorseDecoder();
-  const keyer = new CwKeyer((on, d) => dec.push(on, d));
-  for (let b = 0, n = Math.round((22 * SR) / BLOCK); b < n; b++) {
-    scene.generate(re, im, BLOCK);
-    keyer.process(audio, rx.process(re, im, BLOCK, audio));
-  }
-  return dec.output.replace(/[^A-Z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
-}
+const copy = (tuneHz: number, bw: number) =>
+  copyCw({ spec: lesson.scene, tuneHz, bw, squelchDb: lesson.startSquelchDb, sec: 22 }).text;
 
 const ctxAt = (tunedHz: number): GuideCtx => ({
   running: true,

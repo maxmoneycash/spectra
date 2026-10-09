@@ -1,29 +1,21 @@
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
-import { Scene } from '../sim/scene';
-import { Receiver } from '../dsp/receiver';
-import { MorseDecoder } from '../sim/morse';
-import { CwKeyer } from '../dsp/cwKeyer';
 import { NCDXF_BEACONS, SLOT_MS, activeBeacon } from '../sim/ncdxf';
 import { challengeById, toSceneSpec } from './challenges';
 import { checkFlag } from './store';
-
-const SR = 1_152_000;
-const BLOCK = 16384;
-const clean = (s: string) => s.replace(/[^A-Z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+import { copyCw } from '../test/cwHarness';
 
 /**
- * Catch the Rotation asks for the beacon that follows W6WX. The existing
- * NCDXF decode test proves the FIRST beacon copies from power-on; this flag
- * needs a callsign copied across a slot handoff — the 0.55 s gap and a fresh
- * station keying mid-stream — so that is what gets run through the receiver.
- * The expected answer is derived from the published roster, not typed in: if
- * the roster ever changes, the stored hash goes stale and this says so.
+ * Catch the Rotation asks for the beacon that follows W6WX. The NCDXF decode
+ * test proves the FIRST beacon copies from power-on; this flag needs a
+ * callsign copied across a slot handoff — the 0.55 s gap and a fresh station
+ * keying mid-stream — so that is what gets run through the receiver. The
+ * expected answer is derived from the published roster, not typed in: if the
+ * roster ever changes, the stored hash goes stale and this says so.
  */
 describe('Catch the Rotation', () => {
   const c = challengeById('catch-the-rotation')!;
   const spec = toSceneSpec(c);
   const beacon = spec.emitters.find((e) => e.ncdxfBand !== undefined)!;
-  const tune = beacon.freqHz - spec.centerFreqHz;
 
   // Band 0: beacon index == slot index. Pin the clock 1 s into W6WX's slot so
   // a 20 s run spans the rest of W6WX and all of the next beacon.
@@ -41,23 +33,9 @@ describe('Catch the Rotation', () => {
   });
 
   it('copies W6WX and then the next beacon across the handoff', () => {
-    const scene = new Scene({ sampleRate: SR, centerFreqHz: spec.centerFreqHz, noiseSigma: spec.noiseSigma });
-    for (const e of spec.emitters) scene.add(e);
-    const rx = new Receiver(SR);
-    rx.setMode('cw');
-    rx.setBandwidth(500);
-    rx.setTuning(tune);
-    rx.setSquelch(c.startSquelchDb ?? -80);
-    const re = new Float32Array(BLOCK);
-    const im = new Float32Array(BLOCK);
-    const audio = new Float32Array(4096);
-    const dec = new MorseDecoder();
-    const keyer = new CwKeyer((on, d) => dec.push(on, d));
-    for (let b = 0, n = Math.round((20 * SR) / BLOCK); b < n; b++) {
-      scene.generate(re, im, BLOCK);
-      keyer.process(audio, rx.process(re, im, BLOCK, audio));
-    }
-    const text = clean(dec.output);
+    // The emitter anchors its rotation to Date.now() when the scene is built,
+    // which happens inside copyCw while the fake clock is in effect.
+    const { text } = copyCw({ spec, tuneHz: beacon.freqHz, squelchDb: c.startSquelchDb, sec: 20 });
     const atW = text.indexOf('W6WX');
     const atNext = text.indexOf(next, atW + 4);
     expect(atW, `W6WX not copied: "${text}"`).toBeGreaterThanOrEqual(0);
