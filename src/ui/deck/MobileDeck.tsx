@@ -30,12 +30,14 @@ const TUNE_STEP: Record<DemodMode, number> = {
 };
 
 
+// Hints fit one line on a 390 px phone (about 15 characters), so none of
+// them gets cut off mid-word. USB/LSB keep the sideband rule of thumb.
 const MODE_TILES: { mode: DemodMode; hint: string }[] = [
-  { mode: 'nfm', hint: 'Two-way voice · repeaters' },
-  { mode: 'am', hint: 'Aircraft · AM broadcast' },
-  { mode: 'wfm', hint: 'FM broadcast stations' },
-  { mode: 'usb', hint: 'HF voice above 10 MHz' },
-  { mode: 'lsb', hint: 'HF voice below 10 MHz' },
+  { mode: 'nfm', hint: 'Two-way voice' },
+  { mode: 'am', hint: 'Aircraft voice' },
+  { mode: 'wfm', hint: 'FM broadcast' },
+  { mode: 'usb', hint: 'Voice >10 MHz' },
+  { mode: 'lsb', hint: 'Voice <10 MHz' },
   { mode: 'cw', hint: 'Morse code' },
 ];
 
