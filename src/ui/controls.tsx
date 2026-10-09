@@ -1,6 +1,7 @@
 import type { ReactNode, MouseEvent } from 'react';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 /**
  * The app's icon button, in the two shapes the UI actually needs.
@@ -9,7 +10,9 @@ import { cn } from '@/lib/utils';
  * - `outline` — floating over content (reel header, stage controls): a bordered
  *   pill with a translucent, blurred backing so it stays legible on any pixels.
  *
- * Both keep a 44px touch target on phones and tighten under a cursor.
+ * Both keep a 44px touch target on phones and tighten under a cursor. The
+ * label shows as a tooltip under a cursor (Radix doesn't open tooltips from
+ * touch, so phones just get the tap).
  */
 export function IconButton({
   label,
@@ -19,6 +22,7 @@ export function IconButton({
   active,
   disabled,
   className,
+  tooltipSide = 'bottom',
 }: {
   label: string;
   onClick?: (e: MouseEvent<HTMLButtonElement>) => void;
@@ -27,36 +31,43 @@ export function IconButton({
   active?: boolean;
   disabled?: boolean;
   className?: string;
+  tooltipSide?: 'top' | 'bottom' | 'left' | 'right';
 }) {
   return (
-    <motion.button
-      type="button"
-      aria-label={label}
-      title={label}
-      aria-pressed={active}
-      onClick={onClick}
-      disabled={disabled}
-      whileTap={{ scale: 0.94 }}
-      className={cn(
-        'relative grid shrink-0 place-items-center transition-colors',
-        'focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-40',
-        '[&_svg]:size-4',
-        variant === 'ghost' && [
-          'size-11 rounded-lg text-muted-foreground sm:size-8',
-          'hover:bg-accent hover:text-foreground',
-          active && 'bg-accent text-foreground',
-        ],
-        variant === 'outline' && [
-          'size-10 rounded-full border backdrop-blur',
-          active
-            ? 'border-foreground bg-foreground text-background'
-            : 'border-line bg-background/65 text-foreground/85 hover:text-foreground',
-        ],
-        className,
-      )}
-    >
-      {children}
-    </motion.button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <motion.button
+          type="button"
+          aria-label={label}
+          aria-pressed={active}
+          onClick={onClick}
+          disabled={disabled}
+          whileTap={{ scale: 0.94 }}
+          className={cn(
+            'relative grid shrink-0 place-items-center transition-colors',
+            'focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-40',
+            '[&_svg]:size-4',
+            variant === 'ghost' && [
+              'size-11 rounded-lg text-muted-foreground sm:size-8',
+              'hover:bg-accent hover:text-foreground',
+              active && 'bg-accent text-foreground',
+            ],
+            variant === 'outline' && [
+              'size-10 rounded-full border backdrop-blur',
+              active
+                ? 'border-foreground bg-foreground text-background'
+                : 'border-line bg-background/65 text-foreground/85 hover:text-foreground',
+            ],
+            className,
+          )}
+        >
+          {children}
+        </motion.button>
+      </TooltipTrigger>
+      <TooltipContent side={tooltipSide} sideOffset={6} className="px-2.5 py-1 text-[12px]">
+        {label}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
