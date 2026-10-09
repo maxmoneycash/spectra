@@ -83,11 +83,13 @@ and answer keys that accepted a spelling the UI never shows.
       Was: No try/catch around
       `crypto.subtle.digest`, which is undefined outside a secure context —
       `checking` never clears, Submit stays disabled. `ctf/store.ts:90-98`.
-- [ ] **Sibling cards cancel live narration.** The inactive branch calls the
+- [x] **Sibling cards cancel live narration.** FIXED by the Listen-mode rewrite — only the active card registers a stop; inactive cards never touch the narrator.
+      Was: The inactive branch calls the
       global `cancelSpeech()`; on any index change a later sibling flushes the
       utterance queue. Masked today because all pools ship rendered clips.
       `ExamView.tsx:50-69`.
-- [ ] **Canvas panels keep the old palette after a theme flip while stopped.**
+- [x] **Canvas panels keep the old palette after a theme flip while stopped.** FIXED — spectrum/ruler (d21dd83), Academy `LogAxis`, and the IQ scope now repaint on a theme flip.
+      Was:
       Draws are driven by engine events; only the waterfall is cleared. The
       spectrum plot, ruler, scopes and Academy `LogAxis` stay stale.
 - [x] **`loadPool` drops a rapid second click** FIXED — concurrent calls allowed, latest-wins.
@@ -96,9 +98,9 @@ and answer keys that accepted a spelling the UI never shows.
 - [x] **Deep-link `?topic=` is case-sensitive** FIXED — normalised, and a bare `?c=`/`?pool=` now implies its view.
       Was:, and a `?c=` link with no
       `view` param loses `c` on the first outbound write.
-- [ ] `index.html` hardcodes `color-scheme: dark` while the theme defaults to
+- [x] FIXED by the new shell — `color-scheme: light dark`, and `useTheme` sets it on every flip. Was: `index.html` hardcodes `color-scheme: dark` while the theme defaults to
       light and ignores `prefers-color-scheme`.
-- [ ] `render-narration.mjs` uses `new URL(...).pathname` for ROOT — breaks on
+- [x] FIXED — `fileURLToPath`. Was: `render-narration.mjs` uses `new URL(...).pathname` for ROOT — breaks on
       repo paths containing spaces. Use `fileURLToPath`.
 
 **Clean on review:** `urlState.ts`, `colormaps.ts`, CTF scoring/hints/

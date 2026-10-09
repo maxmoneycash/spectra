@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { getEngine } from '../engine/engine';
+import { useTheme } from '../hooks/useTheme';
 import { THEME } from './theme';
 
 const SIZE = 76;
@@ -46,6 +47,16 @@ export function IQScope() {
     });
     return unsub;
   }, []);
+  // Frames only arrive while the receiver runs, so a theme flip while it is
+  // stopped would leave the last frame in the old palette. Repaint the
+  // background; the trail restarts with the next frame.
+  const { theme } = useTheme();
+  useEffect(() => {
+    const ctx = ref.current?.getContext('2d');
+    if (!ctx) return;
+    ctx.fillStyle = THEME.scopeBg;
+    ctx.fillRect(0, 0, SIZE, SIZE);
+  }, [theme]);
   return (
     <div className="flex flex-col gap-1.5">
       <span className="mono-feats font-mono text-[8.5px] uppercase tracking-[0.16em] text-muted-foreground">

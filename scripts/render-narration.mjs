@@ -21,9 +21,10 @@ import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync, mkdirSync, existsSync, rmSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir, homedir } from 'node:os';
+import { fileURLToPath } from 'node:url';
 
 const run = promisify(execFile);
-const ROOT = new URL('..', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('..', import.meta.url)); // .pathname breaks on spaces
 const SRC = join(ROOT, 'vendor/pools');
 const OUT = join(ROOT, 'public/exam/audio');
 
