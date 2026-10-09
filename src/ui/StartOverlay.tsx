@@ -2,6 +2,8 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Power, GraduationCap } from 'lucide-react';
 import { useStore } from '../store/store';
 import { lock } from './kit/haptics';
+import { useGuide } from '../guide/store';
+import { LESSONS } from '../guide/lessons';
 
 const canHover = () =>
   typeof window !== 'undefined' && typeof window.matchMedia === 'function'
@@ -17,7 +19,8 @@ const canHover = () =>
 export function StartOverlay() {
   const running = useStore((s) => s.running);
   const start = useStore((s) => s.start);
-  const setView = useStore((s) => s.setView);
+  const inLesson = useGuide((s) => s.lessonId !== null);
+  const startLesson = useGuide((s) => s.start);
   const reduce = useReducedMotion();
   const hover = canHover();
 
@@ -58,17 +61,21 @@ export function StartOverlay() {
               </motion.button>
             </div>
             <p className="mt-5 text-[15px] font-semibold tracking-tight text-stage-foreground">Power on the receiver</p>
-            <p className="mt-1.5 text-[12.5px] leading-relaxed text-stage-muted">
-              A live radio band is synthesized right here. Tap a signal on the waterfall to lock onto it and listen.
-            </p>
+            {!inLesson && (
+              <p className="mt-1.5 text-[12.5px] leading-relaxed text-stage-muted">
+                A live radio band is synthesized right here. Tap a signal on the waterfall to lock onto it and listen.
+              </p>
+            )}
+            {!inLesson && (
             <button
-              onClick={() => setView('academy')}
+              onClick={() => startLesson(LESSONS[0].id)}
               className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-full border border-stage-border px-4 text-[12px] font-medium text-stage-foreground/90 transition-colors hover:bg-white/5"
             >
               <GraduationCap className="size-4" />
-              New to radio? Take the guided tour
+              New to radio? Start the first walkthrough
             </button>
-            {hover && (
+            )}
+            {hover && !inLesson && (
               <div className="mono-feats mt-5 flex flex-wrap justify-center gap-x-3.5 gap-y-1.5 font-mono text-[9.5px] text-stage-muted">
                 {[
                   ['Space', 'power'],

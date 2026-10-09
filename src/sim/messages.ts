@@ -249,3 +249,25 @@ export class SpeechMessage implements Message {
     }
   }
 }
+
+/**
+ * Speech over a quiet music bed, the way talk radio sounds. Broadcast FM
+ * never goes dead silent: between lines a bare program would leave an
+ * unmodulated carrier, a sharp spike the detector reads as Morse.
+ */
+export class BedMessage implements Message {
+  private scratch = new Float32Array(0);
+  constructor(
+    private readonly voice: Message,
+    private readonly bed: Message,
+    private readonly bedLevel = 0.3,
+  ) {}
+
+  fill(buf: Float32Array, len: number): void {
+    this.voice.fill(buf, len);
+    if (this.scratch.length < len) this.scratch = new Float32Array(len);
+    this.bed.fill(this.scratch, len);
+    const g = this.bedLevel;
+    for (let i = 0; i < len; i++) buf[i] += g * this.scratch[i];
+  }
+}

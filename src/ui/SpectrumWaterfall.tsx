@@ -533,16 +533,21 @@ export function SpectrumWaterfall() {
       }
       if (gesture === 'pending') {
         const off = xToOff(e.clientX - rectLeft());
-        // Nearest detected emission whose footprint (plus a finger's width)
-        // covers the tap wins; otherwise tune exactly where you tapped.
+        // Of the emissions whose footprint (plus a finger's width) covers the
+        // tap, the strongest wins, with up to 6 dB off for distance from its
+        // center. Nearest-center alone let a weak 4 kHz fragment on a station's
+        // skirt beat the 180 kHz station you actually tapped.
         const slopHz = (18 / Math.max(1, width)) * view.current.spanHz;
         let best: TrackMsg | null = null;
-        let bestD = Infinity;
+        let bestScore = -Infinity;
         for (const d of sig.current.detections) {
+          const reach = d.bandwidthHz / 2 + slopHz;
           const dist = Math.abs(d.offsetHz - off);
-          if (dist <= d.bandwidthHz / 2 + slopHz && dist < bestD) {
+          if (dist > reach) continue;
+          const score = d.snrDb - 6 * (dist / Math.max(reach, 1));
+          if (score > bestScore) {
             best = d;
-            bestD = dist;
+            bestScore = score;
           }
         }
         if (best) {

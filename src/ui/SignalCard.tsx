@@ -42,8 +42,10 @@ export function SignalCard() {
   const [expanded, setExpanded] = useState(false);
   useEffect(() => setExpanded(false), [selectedId]);
   const compact = !wide && !expanded;
-  // On wide screens, sit on the side away from the signal you tapped.
-  const side = track && track.offsetHz > 0 ? 'sm:left-3' : 'sm:right-3';
+  // On wide screens, sit on the side away from the signal you tapped. The
+  // left side shares the stage with the walkthrough coach, so cap it there.
+  const onLeft = Boolean(track && track.offsetHz > 0);
+  const side = onLeft ? 'sm:left-3' : 'sm:right-3';
 
   return (
     <div
@@ -61,6 +63,7 @@ export function SignalCard() {
             compact={compact}
             onExpand={() => setExpanded(true)}
             onCollapse={wide ? undefined : () => setExpanded(false)}
+            capped={onLeft}
             onClose={() => selectTrack(null)}
           />
         )}
@@ -75,11 +78,13 @@ function Card({
   compact,
   onExpand,
   onCollapse,
+  capped,
   onClose,
 }: {
   track: TrackMsg;
   lost: boolean;
   compact: boolean;
+  capped: boolean;
   onExpand: () => void;
   onCollapse?: () => void;
   onClose: () => void;
@@ -173,7 +178,10 @@ function Card({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 16, scale: 0.98 }}
       transition={{ type: 'spring', stiffness: 420, damping: 36 }}
-      className="pointer-events-auto thin-scroll max-h-[80%] w-full overflow-y-auto rounded-2xl border border-line bg-card/95 p-4 shadow-xl backdrop-blur-md sm:max-h-[62%]"
+      className={cn(
+        'pointer-events-auto thin-scroll max-h-[80%] w-full overflow-y-auto rounded-2xl border border-line bg-card/95 p-4 shadow-xl backdrop-blur-md',
+        capped ? 'sm:max-h-[62%]' : 'sm:max-h-full',
+      )}
     >
       <header className="flex items-start gap-3">
         <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl border border-line bg-secondary">

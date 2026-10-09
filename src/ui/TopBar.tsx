@@ -93,7 +93,9 @@ export function TopBar({
   const setView = useStore((s) => s.setView);
   const { theme, toggle } = useTheme();
 
+  const sceneLabel = useStore((s) => s.sceneLabel);
   const sc = scenarioById(scenarioId);
+  const chip = sceneLabel ?? (sc ? { name: sc.name, tag: sc.difficulty, from: null } : null);
   const isConsole = view === 'console';
 
   return (
@@ -124,18 +126,22 @@ export function TopBar({
         ))}
       </div>
 
-      {isConsole && sc && (
+      {isConsole && chip && (
         <button
           onClick={() => {
+            if (chip.from) {
+              setView(chip.from);
+              return;
+            }
             setPanel('scenario');
             onOpenPanels();
           }}
           className="mono-feats ml-2 hidden items-center gap-2 rounded-md border border-border px-2.5 py-1 font-mono text-[10px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground lg:flex"
-          title="Open mission briefing"
+          title={chip.from ? 'Back to where this scene came from' : 'Open mission briefing'}
         >
           <span className="size-1.5 rounded-full bg-foreground" />
-          <span className="max-w-40 truncate">{sc.name}</span>
-          <span className="uppercase">{sc.difficulty}</span>
+          <span className="max-w-40 truncate">{chip.name}</span>
+          <span className="uppercase">{chip.tag}</span>
         </button>
       )}
 

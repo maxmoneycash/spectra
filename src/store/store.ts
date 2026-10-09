@@ -89,6 +89,15 @@ export interface Intercept {
   text: string;
 }
 
+/** What the header chip says when the scene isn't a built-in scenario. */
+export interface SceneLabel {
+  name: string;
+  /** Short tag beside the name, e.g. "training" or "tasking". */
+  tag: string;
+  /** Where the chip leads back to. */
+  from: AppView;
+}
+
 /** A tap on the waterfall that snapped the VFO onto a signal. */
 export interface LockFx {
   offsetHz: number;
@@ -139,12 +148,14 @@ interface AppState {
   intercepts: Intercept[];
   scan: ScanSnapshot | null;
   deckPage: DeckPage;
+  /** Set for walkthrough and Tasking scenes; null for built-in scenarios. */
+  sceneLabel: SceneLabel | null;
 
   start: () => Promise<void>;
   stop: () => void;
   loadScenario: (id: string) => void;
   /** Load an ad-hoc scene (a CTF challenge or a walkthrough) into the engine. */
-  loadSpec: (spec: SceneSpec) => void;
+  loadSpec: (spec: SceneSpec, label?: SceneLabel) => void;
   setCenter: (hz: number) => void;
   setTuning: (offsetHz: number) => void;
   tuneTo: (freqHz: number) => void;
@@ -270,6 +281,7 @@ export const useStore = create<AppState>((set, get) => {
     intercepts: [],
     scan: null,
     deckPage: 'mode',
+    sceneLabel: null,
 
     start: async () => {
       const st = get();
@@ -296,10 +308,11 @@ export const useStore = create<AppState>((set, get) => {
       set({ running: false, playingSince: null });
     },
 
-    loadSpec: (spec) => {
+    loadSpec: (spec, label) => {
       scanner.reset();
       engine.loadScene(spec);
       set({
+        sceneLabel: label ?? { name: 'Custom scene', tag: 'sandbox', from: 'console' },
         sceneLoaded: true,
         centerFreqHz: spec.centerFreqHz,
         noiseSigma: spec.noiseSigma,
@@ -319,6 +332,7 @@ export const useStore = create<AppState>((set, get) => {
       scanner.reset();
       engine.loadScene(toSceneSpec(sc));
       set({
+        sceneLabel: null,
         sceneLoaded: true,
         scenarioId: id,
         centerFreqHz: sc.centerFreqHz,

@@ -60,13 +60,23 @@ function useGuideRunner() {
   return passed;
 }
 
-/** First visible element tagged with this guide target. */
+/**
+ * The most prominent visible element tagged with this guide target. Several
+ * controls can share a target (the header play button and the big power
+ * button on the start screen); the larger one is the one to point at.
+ */
 function findTarget(t: GuideTarget): HTMLElement | null {
+  let best: HTMLElement | null = null;
+  let bestArea = 0;
   for (const el of document.querySelectorAll<HTMLElement>(`[data-guide="${t}"]`)) {
     const r = el.getBoundingClientRect();
-    if (r.width > 0 && r.height > 0 && el.offsetParent !== null) return el;
+    const area = r.width * r.height;
+    if (area > bestArea && el.offsetParent !== null) {
+      best = el;
+      bestArea = area;
+    }
   }
-  return null;
+  return best;
 }
 
 /** A pulsing ring around the control the current step needs. */

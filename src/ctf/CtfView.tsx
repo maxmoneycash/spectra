@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Check, Lightbulb, Flag, RotateCcw, Radio, Trophy, Share2 } from 'lucide-react';
+import { ArrowRight, Check, GraduationCap, Lightbulb, Flag, RotateCcw, Radio, Trophy, Share2 } from 'lucide-react';
 import { useCtf, score, rankFor, shareText } from './store';
 import { CHALLENGES, CATEGORY_LABEL, challengeById, toSceneSpec, type Challenge } from './challenges';
 import { useStore } from '../store/store';
 import { BottomSheet } from '@/ui/BottomSheet';
 import { IconButton } from '@/ui/controls';
 import { cn } from '@/lib/utils';
+import { LESSONS } from '../guide/lessons';
+import { useGuide } from '../guide/store';
 
 function Row({ c, onOpen }: { c: Challenge; onOpen: (id: string) => void }) {
   const solve = useCtf((s) => s.solved[c.id]);
@@ -93,6 +95,8 @@ function ChallengeSheet({ id, onClose }: { id: string | null; onClose: () => voi
   const verdict = useCtf((s) => s.verdict);
   const checking = useCtf((s) => s.checking);
   const [answer, setAnswer] = useState('');
+  const lessonsDone = useGuide((s) => s.completed);
+  const startLesson = useGuide((s) => s.start);
 
   useEffect(() => setAnswer(''), [id]);
 
@@ -116,6 +120,27 @@ function ChallengeSheet({ id, onClose }: { id: string | null; onClose: () => voi
         </div>
 
         <p className="text-[13px] leading-relaxed text-foreground">{c.brief}</p>
+
+        {(() => {
+          // Point back to the walkthrough that teaches this skill, until it's done.
+          const lesson = LESSONS.find((l) => l.challengeId === c.id);
+          if (!lesson || lessonsDone.includes(lesson.id) || solve) return null;
+          return (
+            <button
+              onClick={() => {
+                onClose();
+                startLesson(lesson.id);
+              }}
+              className="flex min-h-11 w-full items-center gap-3 rounded-xl border border-line px-3 text-left transition-colors hover:bg-secondary"
+            >
+              <GraduationCap className="size-4 shrink-0 text-muted-foreground" />
+              <span className="min-w-0 flex-1 text-[12.5px] leading-snug text-muted-foreground">
+                New to this? Practice it first: <span className="text-foreground">{lesson.title}</span> · {lesson.minutes} min
+              </span>
+              <ArrowRight className="size-4 shrink-0 text-muted-foreground" />
+            </button>
+          );
+        })()}
 
         {(c.category === 'intercept' || c.category === 'decode') && <InterceptStrip />}
 
@@ -223,7 +248,7 @@ export function CtfView() {
     const c = challengeById(id);
     if (!c) return;
     const s = useStore.getState();
-    s.loadSpec(toSceneSpec(c));
+    s.loadSpec(toSceneSpec(c), { name: c.name, tag: 'tasking', from: 'ctf' });
     // Fresh receiver per challenge: a squelch someone lowered earlier would
     // otherwise solve "Below the Gate" before it starts.
     s.setSquelch(-80);

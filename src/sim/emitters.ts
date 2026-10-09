@@ -12,6 +12,7 @@ import {
   MusicMessage,
   ToneMessage,
   SpeechMessage,
+  BedMessage,
   type Message,
 } from './messages';
 import { emitTx } from './voicebank';
@@ -106,7 +107,9 @@ function audioFor(cfg: EmitterConfig, rng: Rng): { msg: Message; speech: SpeechM
         });
       },
     });
-    return { msg: speech, speech };
+    // Talk radio rides on a music bed; NFM and AM keep their real PTT gaps.
+    const msg = cfg.kind === 'wfm' ? new BedMessage(speech, new MusicMessage(new Rng((cfg.seed ?? 7) ^ 0x5eed))) : speech;
+    return { msg, speech };
   }
   return { msg: makeMessage(cfg.message ?? 'voice', rng), speech: null };
 }

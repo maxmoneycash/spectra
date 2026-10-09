@@ -34,7 +34,7 @@ const PRIORS: Prior[] = [
   { kind: 'fhss', logBw: Math.log10(20000), sigma: 0.4, continuous: false, carrier: 'any' },
   { kind: 'psk', logBw: Math.log10(100000), sigma: 0.25, continuous: false, carrier: 'no' },
   { kind: 'lora', logBw: Math.log10(125000), sigma: 0.2, continuous: false, carrier: 'no' },
-  { kind: 'wfm', logBw: Math.log10(180000), sigma: 0.13, continuous: true, carrier: 'no' },
+  { kind: 'wfm', logBw: Math.log10(150000), sigma: 0.18, continuous: true, carrier: 'no' },
   { kind: 'radar', logBw: Math.log10(300000), sigma: 0.32, continuous: false, carrier: 'no' },
 ];
 

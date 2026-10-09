@@ -91,7 +91,7 @@ export const useGuide = create<GuideState>((set, get) => ({
     const lesson = lessonById(id);
     if (!lesson) return;
     const s = useStore.getState();
-    s.loadSpec(lesson.scene);
+    s.loadSpec(lesson.scene, { name: lesson.title, tag: 'training', from: 'academy' });
     // A clean receiver, so earlier fiddling can't skip or block a lesson.
     s.setMode(lesson.startMode ?? 'nfm');
     s.setSquelch(DEFAULT_SQUELCH_DB);
@@ -125,7 +125,7 @@ export const useGuide = create<GuideState>((set, get) => ({
     const c = lesson && challengeById(lesson.challengeId);
     if (!c) return;
     const s = useStore.getState();
-    s.loadSpec(toSceneSpec(c));
+    s.loadSpec(toSceneSpec(c), { name: c.name, tag: 'tasking', from: 'ctf' });
     s.setSquelch(DEFAULT_SQUELCH_DB);
     useCtf.getState().setActive(c.id);
     s.setView('ctf');

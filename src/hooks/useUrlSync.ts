@@ -27,7 +27,7 @@ export function useUrlSync(): void {
     if (url.c) {
       const c = challengeById(url.c);
       if (c) {
-        useStore.getState().loadSpec(toSceneSpec(c));
+        useStore.getState().loadSpec(toSceneSpec(c), { name: c.name, tag: 'tasking', from: 'ctf' });
         useCtf.getState().setActive(c.id);
       }
     }

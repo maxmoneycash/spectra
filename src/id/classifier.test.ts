@@ -7,6 +7,16 @@ describe('classifier', () => {
     expect(g.kind).toBe('wfm');
   });
 
+  it('reads a narrow steady talk station as FM, not PSK', () => {
+    // Speech fills less of the channel than music: a talk station measures
+    // ~110 kHz. It used to lose to PSK and flip-flop on the waterfall.
+    expect(classify({ bandwidthHz: 112_000, snrDb: 40, duty: 0.95, crestDb: 4 })[0].kind).toBe('wfm');
+  });
+
+  it('keeps a very wide steady signal as radar, not FM', () => {
+    expect(classify({ bandwidthHz: 330_000, snrDb: 40, duty: 0.95, crestDb: 4 })[0].kind).toBe('radar');
+  });
+
   it('identifies a very wide bursty signal as radar over FM', () => {
     const g = bestGuess({ bandwidthHz: 300_000, snrDb: 45, duty: 0.9, crestDb: 4 });
     expect(g.kind).toBe('radar');
