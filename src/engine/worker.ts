@@ -209,6 +209,7 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
       for (const cfg of msg.scene.emitters) scene.add(cfg);
       tracker.reset();
       morseDecoder.reset();
+      cwKeyer.reset();
       lastMorse = '';
       specAvg.fill(-140);
       sendGroundTruth();
@@ -223,10 +224,12 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
     case 'setTuning':
       receiver.setTuning(msg.offsetHz);
       morseDecoder.reset();
+      cwKeyer.reset();
       break;
     case 'setMode':
       receiver.setMode(msg.mode);
       morseDecoder.reset();
+      cwKeyer.reset();
       lastMorse = '';
       break;
     case 'setBandwidth':

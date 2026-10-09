@@ -107,33 +107,54 @@ and answer keys that accepted a spelling the UI never shows.
 persistence, the exam spaced-repetition weighting, the narration manifest
 logic, `controls.tsx`.
 
-## CW keyer: power-on chatter — open, measured, deliberately unchanged
+## CW keyer: power-on chatter — RESOLVED (2026-10-09)
 
-- **Symptom.** On the Beacon Carousel, the first callsign after power-on copies
-  exactly only ~2 of 8 times (`=U1UN`, `XK6RBP`, `O6WD`: the first dot reads as
-  a dash). On an empty channel in CW mode, the decoder prints a phantom letter
-  roughly every 8 s. Later beacons copy perfectly.
-- **Cause (traced sample by sample).** With nothing heard, the keyer's peak
-  decays until its threshold (35% of peak) sits at the noise median, so noise
-  keys on for 18–115 ms stretches. The 10 ms minimum-interval rule then drops
-  the 2–5 ms gaps separating that noise from the first real dot, and they fuse
-  into one long mark (30 + 34 + 52 ms → a dash).
-- **The constraint.** After the AGC, the weak lesson/CTF beacons (−26 dB) sit
-  only ~5× (14 dB) above their gap noise, while noise envelope spikes reach
-  ~2.5–3× its median — under a 2× window for any level-based floor. And at
-  power-on a level detector cannot tell "a tone is already playing" from noise.
-- **Tried, all on identical audio (`CwKeyer` variants, 4 tests: empty channel,
-  both −26 dB beacons, 8 power-on carousel starts, squelch opened mid-stream).**
-  A threshold floor at 2–10× a noise estimate. Seeded estimators fix power-on
-  (8/8) and the empty channel but can seed from a tone's onset and lose a weak
-  beacon's first letter. Unseeded ones never learn — the chatter means the
-  keyer is never off for 15 ms. A 0.3 s warm-up keeps the weak beacons but
-  brings the chatter back. None beat today's keyer on every case, so it stays.
-- **Likely real fix: raise detection SNR instead of tuning thresholds.** A
-  narrowband (~80 Hz) detector tracking the CW note gains ~8 dB over the
-  500 Hz envelope; or a short lookahead so the noise floor is known before the
-  first element is keyed. Watch the gameplay: a narrow detector would also
-  separate Split the Pair's two beacons on its own.
+Two defects, one of which hid the other.
+
+**The receiver had no BFO.** The CW "Weaver" path mixed down by 650 Hz,
+lowpassed, and mixed back up by 650 Hz — net translation zero — so a tuned
+CW carrier came out at DC, not at the 650 Hz note the comment claimed.
+Decoding only worked because the envelope keyer is pitch-blind. Two
+consequences: a centred CW signal was nearly inaudible, and **Split the
+Pair was unsolvable** (narrowing 500 → 200 Hz produced byte-identical
+audio: the 187-tap FIRs have ~850 Hz transitions and the channel filter
+floors at ±300 Hz). Neither the CTF solvability test nor the lesson test
+had run the decoy through the DSP. Fixed in `17356eb`: CW now has a real
+BFO (`CW_NOTE_HZ`) and a 6th-order Butterworth bandpass as wide as the
+filter knob; measured decoy level −15 dB at 500 Hz, −36 dB at 200 Hz;
+pinned by `receiver.test.ts`.
+
+**The keyer judged levels with no idea of the floor.** Replaced the
+peak-tracking envelope keyer with a narrowband quadrature detector on the
+note (~8 dB more margin for weak beacons) plus a 250 ms lookahead
+threshold: each 10 ms hop is decided from a 500 ms window's low-percentile
+hop mean (floor) and max (ceiling), with a gate that keys nothing when the
+ceiling is not clearly above the floor. Measured on identical audio
+(`scratchpad/keyer-bench.ts`, 9 cases):
+
+| case | old keyer | new keyer |
+|---|---|---|
+| empty channel, 30 s | 1 phantom letter | 0 |
+| −26 dB lesson beacon | copies | copies |
+| −26 dB CTF beacon | copies | copies |
+| squelch opened mid-stream | copies | copies |
+| first NCDXF callsign after power-on, 8 starts | **0/8 exact** | **8/8** |
+| Split the Pair, stock width, VFO between | garbage | garbage |
+| narrowed, VFO between | garbage | quiet |
+| narrowed, centred on flag | copies | copies (clean) |
+
+The gameplay survives because the tracker bridges the pair into one
+detection, so a tap lands between the carriers: the stock filter hears both,
+narrowing silences both, centring copies one. (Tuning straight onto the flag
+at the stock width now copies by pitch — what a real operator does.)
+
+Dead ends worth not repeating: a bank of bins using the *minimum* bin as
+the noise reference (the tone's own skirt contaminates it, forcing the
+multiple so low that noise keys); a window floor from hop *minima* (dense
+keying puts a median floor at the tone level; narrowband envelopes fade so
+deep a low percentile of minima reads ~0 and the gate never engages) — use
+hop *means*; and any variant that skips the first half-window at startup
+(it truncates the first element of a transmission that begins at once).
 
 ## Second CTF set — needs redoing
 
