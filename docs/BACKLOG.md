@@ -107,6 +107,30 @@ and answer keys that accepted a spelling the UI never shows.
 persistence, the exam spaced-repetition weighting, the narration manifest
 logic, `controls.tsx`.
 
+## Tracker: skirt flickers and chirp fragments counted as emitters — FIXED (2026-10-09)
+
+Found by `src/ctf/recon.test.ts`, the first test to run the eight non-CW
+challenges through scene → spectrum → detector → tracker → classifier
+(`src/test/detectHarness.ts`, the worker's chain with its guess cache, plus an
+"ever seen" ledger that counts a track only once it has been on the posted
+list for ~170 ms). Measured: **First Light counted 8 emitters for 4** and
+**ISM Census 10 for 5** — exactly what a player following the brief ("let it
+accumulate") would have counted, so both recon flags were effectively
+unreachable. Cause: the tracker's dedup radius came from the *candidate's*
+bandwidth, so a 1 kHz flicker at a 138 kHz FM station's skirt (50 kHz out)
+and the fragments a LoRa chirp sheds inside its own 125 kHz were never merged
+into the station they belong to. Fix: the radius is the larger of the two
+tracks' widths. After: 4/4 and 5/5; the chirper lists once instead of five
+times. Fox Hunt reads 144.330, Carrier in the Clear reads 124.200, Diagonal
+Rain offers LoRa, Which Sideband offers both sidebands.
+
+Left honest, not fixed: the hopper's dwells still list as ~20 narrow "CW"
+entries (an FHSS emitter has no fixed frequency for a tracker keyed on one;
+the waterfall shows the scatter and FHSS is offered for the aggregate); and
+the chirp-width panel over-reads a 125 kHz chirp as ~148 kHz because the
+remembered width spans the sweep — the challenge's "standard channel widths"
+hint is what resolves it, and the test says so.
+
 ## Classifier: NFM voice read as AM, resting stations as CW — FIXED (2026-10-09)
 
 Found by `src/guide/identify-lesson.test.ts`, the first test to run the

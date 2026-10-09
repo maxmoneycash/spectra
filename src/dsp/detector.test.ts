@@ -83,6 +83,19 @@ describe('EmissionTracker', () => {
     expect(out.length).toBe(2);
   });
 
+  it('merges a flicker at a wide station\'s skirt into the station', () => {
+    // The dedup radius came from the candidate's width alone (8 kHz for a
+    // 1 kHz ghost), so skirt flickers 50 kHz out from a 138 kHz FM station
+    // were listed as emitters of their own: the FM band counted 8 for 4.
+    const station = { ...det(0, 42), bandwidthHz: 138_000 };
+    const ghost = { ...det(50_000, 14), bandwidthHz: 1_000 };
+    const tr = new EmissionTracker();
+    tr.update([station, ghost]);
+    const out = tr.update([station, ghost]);
+    expect(out.length).toBe(1);
+    expect(out[0].bandwidthHz).toBeCloseTo(138_000, -3);
+  });
+
   it('remembers occupied bandwidth: widens quickly, narrows slowly', () => {
     // A repeater's carrier-only hang (~0.3 s of narrow detections) used to
     // collapse a 12 kHz voice track to the carrier's width, and the

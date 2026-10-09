@@ -1,0 +1,93 @@
+import { describe, it, expect } from 'vitest';
+import { challengeById, toSceneSpec } from './challenges';
+import { checkFlag } from './store';
+import { detectScene, syntheticBank, nearestTrack, distinctEmitters, type DetectResult } from '../test/detectHarness';
+
+/**
+ * The eight non-CW challenges are graded on what the Stations list reports —
+ * a count, a frequency, a bandwidth, a guess. ctf.test.ts checks the hashes;
+ * it cannot see whether the DETECTOR reports something a player could read
+ * the flag from. This runs each challenge's scene through the worker's
+ * detection chain (src/test/detectHarness.ts) and validates the natural
+ * reading of the panel against the stored flag.
+ *
+ * What it found (2026-10-09): the FM band counted 8 emitters for 4 and the
+ * ISM band 10 for 5 — the tracker's dedup radius came from the candidate's
+ * width, so flickers at a wide station's skirt and fragments of a LoRa chirp
+ * were listed as emitters of their own. Fixed in the tracker; pinned here.
+ *
+ * Known, and left honest: the hopper's dwells still list as a score of
+ * narrow "CW" entries (the waterfall shows the scatter, and FHSS is offered);
+ * the chirp-width panel over-reads a 125 kHz chirp by ~20%, and the
+ * challenge's "standard channel widths" hint is what resolves it.
+ */
+const MHZ = 1e6;
+const bank = syntheticBank();
+const run = (id: string, sec: number): DetectResult => detectScene({ spec: toSceneSpec(challengeById(id)!), sec, bank });
+const mhz3 = (hz: number) => (hz / MHZ).toFixed(3);
+
+describe('recon: counting emitters', () => {
+  it('first-light: the FM band shows exactly the four transmitters, at the end and over time', async () => {
+    const r = run('first-light', 20);
+    expect(r.tracks.length).toBe(4);
+    expect(distinctEmitters(r.everSeen).length).toBe(4);
+    expect(await checkFlag('first-light', String(r.tracks.length))).toBe(true);
+  });
+
+  it('ism-census: a patient operator accumulates exactly five, bursty ones included', async () => {
+    const r = run('ism-census', 30);
+    const n = distinctEmitters(r.everSeen).length;
+    expect(n).toBe(5);
+    expect(await checkFlag('ism-census', String(n))).toBe(true);
+  });
+});
+
+describe('analysis: reading a frequency or a width off the panel', () => {
+  it('fox-hunt: the intermittent beacon is detected and its centre reads to the flag', async () => {
+    const t = nearestTrack(run('fox-hunt', 30).everSeen, 144.33 * MHZ);
+    expect(t).not.toBeNull();
+    expect(await checkFlag('fox-hunt', mhz3(t!.centerFreqHz))).toBe(true);
+  });
+
+  it('carrier-hunt: the AM station is detected and its centre reads to the flag', async () => {
+    const t = nearestTrack(run('carrier-hunt', 20).everSeen, 124.2 * MHZ);
+    expect(t).not.toBeNull();
+    expect(await checkFlag('carrier-hunt', mhz3(t!.centerFreqHz))).toBe(true);
+  });
+
+  it('chirp-width: the chirper reads near 125 kHz, and the standard width is the flag', async () => {
+    const t = nearestTrack(run('chirp-width', 30).everSeen, 915.1 * MHZ);
+    expect(t).not.toBeNull();
+    // The panel over-reads a chirp (its remembered width spans the sweep);
+    // the nearest standard LoRa width to anything in this range is 125 kHz.
+    expect(t!.bandwidthHz).toBeGreaterThan(90_000);
+    expect(t!.bandwidthHz).toBeLessThan(180_000);
+    expect(await checkFlag('chirp-width', '125')).toBe(true);
+  });
+});
+
+describe('identify: the panel offers the answer', () => {
+  it('mode-id: LoRa is among the chirper\'s candidates', async () => {
+    const t = nearestTrack(run('mode-id', 30).everSeen, 915.15 * MHZ);
+    expect(t).not.toBeNull();
+    expect(t!.candidates.some((c) => c.kind === 'lora')).toBe(true);
+    expect(await checkFlag('mode-id', 'lora')).toBe(true);
+  });
+
+  it('hopper: FHSS is offered for the hopper', async () => {
+    const r = run('hopper', 30);
+    const hopperish = r.everSeen.filter((t) => Math.abs(t.centerFreqHz - 2440.3 * MHZ) > 60_000);
+    expect(hopperish.length).toBeGreaterThan(0);
+    expect(hopperish.some((t) => t.candidates.some((c) => c.kind === 'fhss'))).toBe(true);
+    expect(await checkFlag('hopper', 'fhss')).toBe(true);
+  });
+
+  it('sideband: the voice signal is detected with both sidebands offered — the ear decides', async () => {
+    const t = nearestTrack(run('sideband', 20).everSeen, 7.16 * MHZ);
+    expect(t).not.toBeNull();
+    const kinds = t!.candidates.map((c) => c.kind);
+    expect(kinds).toContain('usb');
+    expect(kinds).toContain('lsb');
+    expect(await checkFlag('sideband', 'lsb')).toBe(true);
+  });
+});

@@ -177,8 +177,14 @@ export class EmissionTracker {
       .sort((a, b) => b.snrDb - a.snrDb);
     const kept: Track[] = [];
     for (const t of active) {
+      // Inside a stronger track's occupied band means the same emitter. The
+      // radius used to come from the candidate's width alone, so a 1 kHz
+      // flicker at a 138 kHz FM station's skirt (50 kHz out) was never merged
+      // and the band counted eight emitters for four.
       const merged = kept.some(
-        (k) => Math.abs(k.offsetHz - t.offsetHz) < Math.max(8000, t.bandwidthHz * 0.6),
+        (k) =>
+          Math.abs(k.offsetHz - t.offsetHz) <
+          Math.max(8000, k.bandwidthHz * 0.6, t.bandwidthHz * 0.6),
       );
       if (!merged) kept.push(t);
     }
