@@ -228,5 +228,15 @@ Gate mistake again. Making it real would mean narrowing the keyer's detector
 for every CW lesson at once, which is not worth one challenge. The skill the
 receiver *does* enforce is the filter, and Split the Pair already tests it.
 
-Next for this category: copying through deliberate adjacent-channel splatter —
-measured before it is designed, like everything above.
+**Adjacent-channel splatter — dropped (measured 2026-10-09).** SSB voice on
+top of a CW flag does not block the copy at any setting tried: a 0 dB USB
+voice with its carrier 400 Hz below a −14 dB flag still copies cleanly at the
+stock 500 Hz filter, and 1.2 kHz below (flag inside the voice band) copies at
+500/300/200. The keyer detects a narrow tone at the beat note and broadband
+voice never is one, so the filter has nothing to reject. A "copy through the
+splatter" challenge would be unenforced — the same class as zero-beat.
+
+The intercept category's enforceable skills are therefore: the filter (Split
+the Pair — a *CW* decoy inside the passband is the only interferer the keyer
+cannot ignore), the squelch (Below the Gate), frequency planning (Working the
+Input) and timing (Catch the Rotation). New ideas start from a measurement.
