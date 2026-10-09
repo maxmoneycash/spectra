@@ -55,7 +55,8 @@ export interface Recording {
 }
 
 /** Label of the nearest detected emission to the current VFO, if any. */
-export function nearestLabel(detections: TrackMsg[], tuningOffsetHz: number): string | null {
+/** The detected signal the VFO is sitting on, if any. */
+export function nearestTrack(detections: TrackMsg[], tuningOffsetHz: number): TrackMsg | null {
   let best: TrackMsg | null = null;
   let bd = Infinity;
   for (const d of detections) {
@@ -65,7 +66,11 @@ export function nearestLabel(detections: TrackMsg[], tuningOffsetHz: number): st
       best = d;
     }
   }
-  return best ? best.guessLabel : null;
+  return best;
+}
+
+export function nearestLabel(detections: TrackMsg[], tuningOffsetHz: number): string | null {
+  return nearestTrack(detections, tuningOffsetHz)?.guessLabel ?? null;
 }
 
 /** Someone transmitting right now (from the simulator's tx events). */

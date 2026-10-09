@@ -5,6 +5,8 @@
  * lives here in both light and dark variants. Ember stays the one data accent
  * in both — it reads on paper and on ink.
  */
+import type { SignalFamily } from '../sim/signal-kinds';
+
 export interface CanvasTheme {
   /** Spectrum plot background */
   plotBg: string;
@@ -33,6 +35,8 @@ export interface CanvasTheme {
   accentSoft: string;
   /** Text drawn on top of the accent pill */
   onAccent: string;
+  /** Signal-family marks: carets, leaders, dots. Mirrors --sig-* in index.css. */
+  sig: Record<SignalFamily, string>;
   /** Scope backgrounds */
   scopeBg: string;
   /** Translucent wash that fades the previous scope frame (phosphor trail) */
@@ -63,6 +67,7 @@ const DARK: CanvasTheme = {
   accentHi: '#ff8a5c',
   accentSoft: 'rgba(245,98,47,0.55)',
   onAccent: '#2a1006',
+  sig: { voice: '#3987e5', data: '#d55181', spread: '#008300' },
   scopeBg: '#09090b',
   scopeFade: 'rgba(9,9,11,0.3)',
   scopeGrid: 'rgba(255,255,255,0.07)',
@@ -88,6 +93,7 @@ const LIGHT: CanvasTheme = {
   accentHi: '#c2410c',
   accentSoft: 'rgba(226,85,31,0.5)',
   onAccent: '#ffffff',
+  sig: { voice: '#2a78d6', data: '#e87ba4', spread: '#008300' },
   scopeBg: '#fcfcfb',
   scopeFade: 'rgba(252,252,251,0.32)',
   scopeGrid: 'rgba(9,9,11,0.08)',

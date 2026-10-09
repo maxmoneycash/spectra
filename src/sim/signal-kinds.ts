@@ -24,6 +24,28 @@ export type SignalCategory =
   | 'radar'
   | 'spread';
 
+/**
+ * The three families the receiver colors signals by. Twelve kinds can't each
+ * get a distinguishable hue (a categorical palette tops out well short of
+ * that), so color carries the family and the label carries the kind.
+ */
+export type SignalFamily = 'voice' | 'data' | 'spread';
+
+const FAMILY_OF: Record<SignalCategory, SignalFamily> = {
+  broadcast: 'voice',
+  voice: 'voice',
+  beacon: 'data',
+  data: 'data',
+  spread: 'spread',
+  radar: 'spread',
+};
+
+export const FAMILY_LABEL: Record<SignalFamily, string> = {
+  voice: 'Voice & broadcast',
+  data: 'Keyed & data',
+  spread: 'Spread spectrum & radar',
+};
+
 export interface KindInfo {
   kind: SignalKind;
   label: string;
@@ -32,8 +54,6 @@ export interface KindInfo {
   category: SignalCategory;
   /** The demod mode that best recovers this signal. */
   recommendedDemod: DemodMode;
-  /** Waterfall/marker colour. */
-  color: string;
   /** Whether the emission is continuous or transmitted in bursts. */
   continuous: boolean;
   /** Short "what is it" blurb for the signal library. */
@@ -51,7 +71,6 @@ export const KIND_INFO: Record<SignalKind, KindInfo> = {
     bandwidthHz: 180_000,
     category: 'broadcast',
     recommendedDemod: 'wfm',
-    color: '#4ade80',
     continuous: true,
     blurb:
       'Wideband frequency modulation carrying high-fidelity audio. ±75 kHz deviation gives it a fat, ~180 kHz-wide footprint.',
@@ -65,7 +84,6 @@ export const KIND_INFO: Record<SignalKind, KindInfo> = {
     bandwidthHz: 12_000,
     category: 'voice',
     recommendedDemod: 'nfm',
-    color: '#38bdf8',
     continuous: true,
     blurb:
       'Narrow FM voice, ±2.5–5 kHz deviation. The workhorse of two-way radio.',
@@ -79,7 +97,6 @@ export const KIND_INFO: Record<SignalKind, KindInfo> = {
     bandwidthHz: 8_000,
     category: 'voice',
     recommendedDemod: 'am',
-    color: '#fbbf24',
     continuous: true,
     blurb:
       'Amplitude modulation: a steady carrier with sidebands. The carrier shows as a bright centre spike.',
@@ -93,7 +110,6 @@ export const KIND_INFO: Record<SignalKind, KindInfo> = {
     bandwidthHz: 2_700,
     category: 'voice',
     recommendedDemod: 'usb',
-    color: '#f472b6',
     continuous: true,
     blurb:
       'Single sideband, upper. Suppressed carrier and one sideband — spectrum-efficient voice used on HF.',
@@ -107,7 +123,6 @@ export const KIND_INFO: Record<SignalKind, KindInfo> = {
     bandwidthHz: 2_700,
     category: 'voice',
     recommendedDemod: 'lsb',
-    color: '#f472b6',
     continuous: true,
     blurb:
       'Single sideband, lower. Same as USB but the audio lives below the carrier frequency.',
@@ -121,7 +136,6 @@ export const KIND_INFO: Record<SignalKind, KindInfo> = {
     bandwidthHz: 200,
     category: 'beacon',
     recommendedDemod: 'cw',
-    color: '#e879f9',
     continuous: false,
     blurb:
       'On/off keyed carrier — Morse code. Extremely narrow, punches through noise better than any voice mode.',
@@ -135,7 +149,6 @@ export const KIND_INFO: Record<SignalKind, KindInfo> = {
     bandwidthHz: 12_000,
     category: 'data',
     recommendedDemod: 'nfm',
-    color: '#22d3ee',
     continuous: false,
     blurb:
       'Binary frequency-shift keying: bits toggle between two tones. Sent in short packets.',
@@ -148,7 +161,6 @@ export const KIND_INFO: Record<SignalKind, KindInfo> = {
     bandwidthHz: 6_000,
     category: 'data',
     recommendedDemod: 'am',
-    color: '#fb923c',
     continuous: false,
     blurb:
       'On/off keying — the carrier simply switches on and off to send bits. Dead simple, everywhere in the ISM bands.',
@@ -162,7 +174,6 @@ export const KIND_INFO: Record<SignalKind, KindInfo> = {
     bandwidthHz: 125_000,
     category: 'spread',
     recommendedDemod: 'raw',
-    color: '#a78bfa',
     continuous: false,
     blurb:
       'Chirp spread spectrum: each symbol is a frequency sweep. Trades data rate for astonishing range and noise immunity.',
@@ -176,7 +187,6 @@ export const KIND_INFO: Record<SignalKind, KindInfo> = {
     bandwidthHz: 100_000,
     category: 'data',
     recommendedDemod: 'raw',
-    color: '#f87171',
     continuous: false,
     blurb:
       'Phase-shift-keyed digital burst. Constant-ish envelope, rectangular occupied bandwidth — a modern data/telemetry link.',
@@ -190,7 +200,6 @@ export const KIND_INFO: Record<SignalKind, KindInfo> = {
     bandwidthHz: 20_000,
     category: 'spread',
     recommendedDemod: 'nfm',
-    color: '#facc15',
     continuous: false,
     blurb:
       'Frequency-hopping spread spectrum. A narrow carrier that leaps pseudo-randomly across the band to resist jamming and interception.',
@@ -205,7 +214,6 @@ export const KIND_INFO: Record<SignalKind, KindInfo> = {
     bandwidthHz: 300_000,
     category: 'radar',
     recommendedDemod: 'raw',
-    color: '#fca5a5',
     continuous: false,
     blurb:
       'Periodic high-power pulses, often chirped. The pulse repetition interval sets the rhythm.',
@@ -216,3 +224,7 @@ export const KIND_INFO: Record<SignalKind, KindInfo> = {
 };
 
 export const ALL_KINDS: SignalKind[] = Object.keys(KIND_INFO) as SignalKind[];
+
+export function familyOf(kind: SignalKind): SignalFamily {
+  return FAMILY_OF[KIND_INFO[kind].category];
+}

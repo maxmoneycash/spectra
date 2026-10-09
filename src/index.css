@@ -50,6 +50,12 @@
      white ink keeps its contrast. */
   --tuned: #e2551f;
   --tuned-ink: #ffffff;
+  /* Signal families (voice & broadcast, keyed & data, spread & radar).
+     Validated as a categorical set in both modes with the dataviz palette
+     checker: every pair clears CVD and normal-vision separation. */
+  --sig-voice: #2a78d6;
+  --sig-data: #e87ba4;
+  --sig-spread: #008300;
 
   --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
@@ -85,6 +91,10 @@
 
   --tuned: #f5622f;
   --tuned-ink: #2a1006;
+
+  --sig-voice: #3987e5;
+  --sig-data: #d55181;
+  --sig-spread: #008300;
 }
 
 @theme inline {
@@ -116,6 +126,9 @@
   --color-ember: var(--ember);
   --color-tuned: var(--tuned);
   --color-tuned-ink: var(--tuned-ink);
+  --color-sig-voice: var(--sig-voice);
+  --color-sig-data: var(--sig-data);
+  --color-sig-spread: var(--sig-spread);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);

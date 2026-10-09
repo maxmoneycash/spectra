@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { ChevronsLeft, ChevronsRight } from 'lucide-react';
-import { useStore, nearestLabel, type DeckPage, BW_RANGE } from '@/store/store';
+import { useStore, nearestTrack, type DeckPage, BW_RANGE } from '@/store/store';
+import { familyColor } from '../signalColor';
 import { getEngine } from '@/engine/engine';
 import { SAMPLE_RATE } from '@/engine/protocol';
 import type { DemodMode } from '@/sim/signal-kinds';
@@ -93,7 +94,8 @@ export function MobileDeck() {
   const goPage = useCallback((p: Page) => setPage(p), [setPage]);
 
   const tuned = centerFreqHz + tuningOffsetHz;
-  const station = nearestLabel(detections, tuningOffsetHz);
+  const near = nearestTrack(detections, tuningOffsetHz);
+  const station = near?.guessLabel ?? null;
   const [bwMin, bwMax, bwStep] = BW_RANGE[mode];
   const canSeek = running && detections.length > 0;
 
@@ -113,7 +115,12 @@ export function MobileDeck() {
             <span className="ml-1.5 text-[11px] font-normal text-muted-foreground">MHz</span>
           </span>
           <span className="mono-feats mt-1 flex max-w-full items-center gap-1.5 truncate font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
-            <span className={cn('size-1.5 shrink-0 rounded-full', station ? 'bg-emerald-500' : 'bg-border')} />
+            {/* Lit in the station's family color, the same dot it wears in the
+                Stations list; unlit when there's nothing under the VFO. */}
+            <span
+              className={cn('size-1.5 shrink-0 rounded-full', !near && 'bg-border')}
+              style={near ? { background: familyColor(near.guessKind) } : undefined}
+            />
             <span className={cn('truncate', station && 'text-foreground')}>{station ?? 'No signal'}</span>
             <span>· {mode}</span>
             <span>· {fmtBw(bandwidthHz)}</span>

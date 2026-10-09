@@ -9,6 +9,7 @@ import { KIND_INFO } from '../sim/signal-kinds';
 import { lutFor } from './colormaps';
 import { WaterfallControls } from './WaterfallControls';
 import { placeLabels, type LabelCandidate } from './labelPlacement';
+import { familyHex } from './signalColor';
 import { THEME, isCanvasDark } from './theme';
 import { useTheme } from '../hooks/useTheme';
 
@@ -51,7 +52,7 @@ function hexA(hex: string, alpha: number): string {
 }
 
 function kindColor(kind: TrackMsg['guessKind']): string {
-  return KIND_INFO[kind]?.color ?? '#8a8680';
+  return KIND_INFO[kind] ? familyHex(kind) : THEME.label;
 }
 
 export function SpectrumWaterfall() {
@@ -335,7 +336,9 @@ export function SpectrumWaterfall() {
         ctx.moveTo(Math.round(l.x) + 0.5, 0);
         ctx.lineTo(Math.round(l.x) + 0.5, 8);
         ctx.stroke();
-        ctx.fillStyle = l.selected ? l.color : hexA(l.color, 0.85);
+        // The caret and leader carry the family color; the name itself is ink,
+        // so it stays legible on the light stage.
+        ctx.fillStyle = l.selected ? THEME.trace : THEME.label;
         ctx.fillText(l.label, left, 9);
       }
       ctx.font = `9px ${THEME.mono}`;

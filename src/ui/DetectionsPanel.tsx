@@ -5,11 +5,12 @@ import { nearestGroundTruth } from '../scenarios/scoring';
 import type { TrackMsg } from '../engine/protocol';
 import { KIND_INFO } from '../sim/signal-kinds';
 import { SnrHistory } from './SnrHistory';
+import { familyColor } from './signalColor';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 function kindColor(track: TrackMsg): string {
-  return KIND_INFO[track.guessKind]?.color ?? '#8e8e96';
+  return KIND_INFO[track.guessKind] ? familyColor(track.guessKind) : 'var(--muted-foreground)';
 }
 
 function Metrics() {
