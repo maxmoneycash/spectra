@@ -22,6 +22,7 @@ import { CwKeyer } from '../src/dsp/cwKeyer';
 import { challengeById } from '../src/ctf/challenges';
 import { checkFlag } from '../src/ctf/store';
 import { DEFAULT_SQUELCH_DB } from '../src/store/modes';
+import { NCDXF_BEACONS, SLOT_MS } from '../src/sim/ncdxf';
 
 const SR = 1_152_000, BLOCK = 16384;
 const blocksFor = (sec: number) => Math.round((sec * SR) / BLOCK);
@@ -71,8 +72,13 @@ async function solves(id: string, text: string): Promise<boolean> {
   return false;
 }
 
-type Case = { label: string; expect: 'solves' | 'blocked' | 'info'; opts: RunOpts };
+/** `now`: pin the wall clock for scenes that rotate on it (the NCDXF carousel). */
+type Case = { label: string; expect: 'solves' | 'blocked' | 'info'; opts: RunOpts; now?: number };
 const MHZ = 1e6;
+// 1 s into W6WX's slot on band 0, so a run spans the handoff to the next beacon.
+const W6WX = NCDXF_BEACONS.findIndex((b) => b.call === 'W6WX');
+const CYCLE_MS = SLOT_MS * NCDXF_BEACONS.length;
+const ROTATION_T0 = Math.floor(1_760_000_000_000 / CYCLE_MS) * CYCLE_MS + W6WX * SLOT_MS + 1000;
 const cases: Case[] = [
   // Beacon Traffic: tune the carrier (7.061 from 7.05 centre), stock CW filter.
   { label: 'morse-beacon  tuned, stock 500 Hz', expect: 'solves', opts: { id: 'morse-beacon', tune: 0.011 * MHZ, sec: 24 } },
@@ -96,12 +102,19 @@ const cases: Case[] = [
   { label: 'squelch-down  tuned, squelch -40', expect: 'info', opts: { id: 'squelch-down', tune: 0.005 * MHZ, squelch: -40, sec: 26 } },
   { label: 'squelch-down  tuned, squelch -30', expect: 'info', opts: { id: 'squelch-down', tune: 0.005 * MHZ, squelch: -30, sec: 26 } },
   { label: 'squelch-down  tuned, squelch open (-120)', expect: 'solves', opts: { id: 'squelch-down', tune: 0.005 * MHZ, squelch: -120, sec: 26 } },
+
+  // Catch the Rotation: the flag is the beacon after W6WX, so the run must
+  // copy a callsign across a slot handoff, not just the first beacon.
+  { label: 'rotation      on the beacon, across a handoff', expect: 'solves', now: ROTATION_T0, opts: { id: 'catch-the-rotation', tune: 0.015 * MHZ, sec: 20 } },
 ];
 
 let failures = 0;
 console.log('\n== CTF solvability through the real receiver ==');
 for (const k of cases) {
+  const realNow = Date.now;
+  if (k.now !== undefined) Date.now = () => k.now!;
   const r = run(k.opts);
+  Date.now = realNow;
   const ok = await solves(k.opts.id, r.text);
   const verdict =
     k.expect === 'info' ? (ok ? 'copies' : 'no copy') :

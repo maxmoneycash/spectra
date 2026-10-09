@@ -339,6 +339,29 @@ export const CHALLENGES: Challenge[] = [
     startSquelchDb: CLOSED_SQUELCH_DB,
     suggest: 'cw',
   },
+  {
+    id: 'catch-the-rotation',
+    name: 'Catch the Rotation',
+    category: 'intercept',
+    points: 300,
+    brief:
+      'The NCDXF network shares 14.100 MHz between eighteen beacons worldwide. Each transmits for exactly ten seconds — callsign, four long dashes, grid square — then hands off, in a fixed order that repeats every three minutes. Find the beacon, settle in CW, and copy the rotation. The flag is the callsign of the beacon that transmits immediately after W6WX.',
+    answerHint: 'A callsign, e.g. ZL6B',
+    hints: [
+      'Ten seconds per station. Let the decoder run through a whole rotation instead of chasing single letters.',
+      'The order never changes. Once you have copied W6WX, the very next slot is your answer.',
+    ],
+    flagHash: '44138339109914c3e794996613d81ba4',
+    // The beacon keeps its real frequency; the band is centred below it so
+    // it has to be found and tuned, not handed over at the centre marker.
+    centerFreqHz: 14.085 * MHZ,
+    noiseSigma: 0.028,
+    emitters: [
+      { id: 'ncdxf-live', kind: 'cw', freqHz: 14.1 * MHZ, powerDb: -4, ncdxfBand: 0 },
+      { id: 'v', kind: 'lsb', freqHz: 14.07 * MHZ, powerDb: -10, speech: 'hf-ssb', seed: 506 },
+    ],
+    suggest: 'cw',
+  },
 ];
 
 export const challengeById = (id: string) => CHALLENGES.find((c) => c.id === id);

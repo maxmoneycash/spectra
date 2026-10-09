@@ -213,5 +213,12 @@ The challenge sheet carries a live receiver strip (frequency, mode,
 bandwidth, and what the decoder is copying right now) so wrong operating
 reads as garbage and correct operating resolves into text as you work.
 
-Next for this category: zero-beat tuning precision, catching one beacon in a
-timed rotation, and copying through deliberate adjacent-channel splatter.
+Done 2026-10-09: **Catch the Rotation** (`catch-the-rotation`, 300 pts) — the
+live NCDXF carousel, centred 15 kHz below the beacon so it has to be found;
+the flag is the beacon after W6WX, which means copying a callsign across a
+slot handoff. `src/ctf/rotation.test.ts` pins that through the receiver and
+derives the expected answer from the roster, so a stale hash fails loudly.
+
+Next for this category: zero-beat tuning precision, and copying through
+deliberate adjacent-channel splatter. Both get a bench case and a receiver
+test before they ship — see the gate finding above for why.
