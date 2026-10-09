@@ -1,165 +1,172 @@
-<div align="center">
-
 # SPECTRA
 
-### A software-defined radio lab in your browser — no hardware required.
+**Learn radio by working a listening post — in your browser, with no radio.**
 
-**Live: [spectra-one.vercel.app](https://spectra-one.vercel.app)** — every push to `main` deploys automatically via Vercel.
+SPECTRA simulates a live slice of the radio spectrum and hands you a real
+software receiver to work it. You tune, pick the demodulator, narrow the
+filter, copy Morse, work a repeater, and name what you're hearing. Guided
+walkthroughs teach each skill on the live receiver, intercept missions test
+it, and a full license-prep section gets you through the ham exam.
 
-A physics-based RF **signal-environment simulator**, a real **DSP receiver** with live demodulated audio, automatic **emission detection & identification**, **SigMF** recording, and mission-based **training** — all running client-side in TypeScript. It's a flight simulator for spectrum operators.
+**▶ [spectra-one.vercel.app](https://spectra-one.vercel.app)** — free, no
+sign-up, built for phones as much as desktops.
 
-</div>
+## Why it exists
 
-![SPECTRA tuned to a simulated FM broadcast band](docs/screenshots/fm-broadcast.png)
+Every browser SDR — OpenWebRX, WebSDR, KiwiSDR — is a remote control for
+someone else's antenna. That's great once you know what you're doing, and no
+help while you're learning: you can't choose what's on the air, nothing tells
+you whether you got it right, and the band is quiet whenever you sit down to
+practice.
 
----
+SPECTRA generates the signals itself. Because the simulator places every
+emitter, it always knows the answer, so it can coach you step by step, score a
+challenge, and grade an exam question, which no live receiver can do.
 
-## Why this exists
+## What's in it
 
-Open-source SDR is bimodal: world-class native DSP (GNU Radio, SDR++, URH) on one side, and browser front-ends that are only **remote controls for a physical radio** (OpenWebRX, WebSDR, KiwiSDR) on the other. The one hardware-free browser tool, IQEngine, only views *static* recordings. **Nobody synthesizes a live, dense, realistic RF spectrum in the browser and hands you a real receiver to work it.** SPECTRA is that missing tool. Full analysis in [`docs/RESEARCH.md`](docs/RESEARCH.md); product thesis in [`docs/PRODUCT.md`](docs/PRODUCT.md).
+### Train — learn the receiver by using it
 
-## What it does
+- **Seven guided walkthroughs**, about 19 minutes in all: tune and listen,
+  pick the right mode, narrow the filter, open the squelch, work a repeater,
+  scan the band, and identify a signal. Each runs on the live receiver. A coach
+  card says what to do and why, a ring marks the control to use, and the step
+  advances when the receiver shows you actually did it.
+- **A 25-chapter course** in five parts, from electricity fundamentals through
+  propagation and regulations, with a 284-term inline glossary. Adapted from
+  The Radio Bench.
+- **Explorer**: the radio spectrum from 100 kHz to 10 GHz on one log axis,
+  with the bands and services that live on it.
 
-- **Simulates a live band.** 12 emitter types — broadcast/narrowband FM, AM, SSB (USB/LSB), CW/Morse, 2-FSK, OOK/ASK, LoRa chirps, PSK bursts, frequency hoppers, and pulsed radar — rendered into a wideband I/Q stream with a real noise floor, in real time.
-- **Is a real receiver.** Click the spectrum to tune. Demodulate **WFM / NFM / AM / USB / LSB / CW** with live audio, adjustable bandwidth, squelch, and volume. The DSP is genuine — FFT, FIR channelizers, a quadrature FM discriminator, and Weaver-method SSB (so USB and LSB actually differ).
-- **Finds and identifies signals.** A CFAR-style detector locates and tracks every emission; a classifier guesses each modulation from bandwidth, duty cycle, and carrier shape with a confidence score. A live **Morse decoder** reads CW beacons.
-- **Teaches.** An **interactive signal library** lets you inject any signal into the live band to see and hear it. **Mission scenarios** give you scored objectives and a graded "identify this emitter" quiz. The **RF Academy** maps the whole spectrum from 100 kHz to 10 GHz and drops you into the simulator at any band it covers.
-- **Records to SigMF.** Capture the wideband I/Q and export a standard, annotated `.sigmf-meta` + `.sigmf-data` pair that opens in IQEngine, inspectrum, or GNU Radio.
-- **Mints your Operator Card.** Signals you identify, missions you complete, and course progress are tracked on a persistent operator record — rendered as a shareable 1080×1080 license-style card with a QR back to the app (top bar → card icon). Download the PNG, copy it, or copy the share text and post it.
+### Receiver — a live spectrum to work
 
-## A real receiver console
+- A spectrum and waterfall over 1.152 MHz of simulated band, computed in real
+  time. Pinch to zoom; tap a signal to lock onto it.
+- **Seven demodulators** (WFM, NFM, AM, USB, LSB, CW, raw) with bandwidth,
+  squelch, and volume on knobs built for touch.
+- **Twelve signal types**: broadcast FM, NFM voice, AM, both sidebands, CW,
+  2-FSK, OOK sensors, LoRa chirps, PSK bursts, frequency hoppers, and pulsed
+  radar.
+- **Voice traffic on the air**: 51 scripted transmissions across a 2 m
+  repeater, a 70 cm net, airband, HF sideband, and talk radio, modulated
+  through the receiver's own DSP chain and shown as live transcripts.
+- **Tap any signal** for a card that says what it is, whether you're listening
+  in the right mode (one tap fixes it), and what's being said, and lets you
+  confirm the ID.
+- A scanner that stops on activity, an intercept log stamped in UTC, a CW
+  decoder, and recording to SigMF, the open I/Q format that inspectrum and
+  IQEngine read.
 
-An engineering-grid instrument in the [chanhdai.com](https://chanhdai.com) idiom — zinc-monochrome ruled chrome (light default + animated dark toggle, Geist Sans/Mono) around an always-dark spectrum stage. The **receiver deck** sits under the panadapter: rolling-digit **VFO readout** (click to type a frequency), demod mode toggle group, console **faders** for bandwidth / squelch / volume / noise, a dot-matrix **S-meter VU** ([ElevenLabs UI](https://github.com/elevenlabs/ui) Matrix), and live **scopes** — IQ constellation plus an ElevenLabs **BarVisualizer** fed by a `MediaStreamDestination` tap on the engine's Web Audio graph. The stage integrates the tuner scale with kind-colored detection carets that tie 1:1 to the lined Stations list, a **peak-hold** envelope, **wheel-zoom** centered on the cursor with a live frequency/dB hover readout, selectable **colormaps**, and an **auto-leveling** dB range. Fully responsive: panels become a bottom sheet on small screens.
+### Tasking — intercept missions
 
-**Keyboard:** `Space` start/stop · `← →` nudge tune (`Shift` coarse) · `↑ ↓` hop detections · `M` cycle mode · `R` record · `?` shortcuts.
+- **Thirteen challenges worth 2,900 points**, in five categories: recon,
+  decode, identify, analysis, and intercept.
+- The intercept challenges can only be solved by operating the radio: two
+  beacons inside one filter, a flag keyed on a repeater's input, a beacon
+  sitting under the squelch. Copying the flag is the proof you did it right.
+- Hints cost points, ranks run from Listener to Signals Officer, and the result
+  card shares without spoilers.
+- Every walkthrough ends by offering the challenge that tests its skill, and
+  those seven challenges link back to their walkthrough.
 
-![SPECTRA in the dark theme](docs/screenshots/analyzer-dark.png)
+### Exam — license prep
 
-![Receiver with tuning scale, IQ constellation, audio, and audio-spectrum scopes](docs/screenshots/receiver-scopes.png)
+- **All 1,431 questions** in the current NCVEC pools: Technician 2026–2030
+  (409), General 2023–2027 (423), and Extra 2024–2028 (599).
+- **Reels**: swipe through questions while spaced repetition brings back the
+  ones you miss.
+- **Practice exams** draw one question from each group, the way a volunteer
+  examiner session builds the real test, and score against the real pass
+  marks: 26 of 35 for Technician and General, 37 of 50 for Extra. Answers stay
+  hidden until you submit; then you can drill your misses.
+- **Listen mode** for hands-free study: each question, then its answer, read by
+  an open neural voice at 0.85× to 1.75×.
 
-Works on mobile too — the console condenses and the panels slide up as a sheet:
-
-<img src="docs/screenshots/mobile-sheet.png" width="360" alt="SPECTRA on a phone with the Stations sheet open" />
-
-## RF Academy
-
-A second view (top bar → **Academy**) with three tabs:
-
-- **Explorer** — the radio spectrum from 100 kHz to 10 GHz on a zoomable log axis, with an inspector per band and five live concept demos.
-- **Course** — a complete 25-chapter ham-radio curriculum (foundations, electricity, radio theory, station equipment, propagation) with **206 quiz questions** with explanations, per-chapter bench labs, and progress tracking — adapted from [The Radio Bench](https://github.com/jemcik/the-radio-bench) (MIT). Twelve interactive widgets (AM/FM modulation explorers, SWR, resonance, dipole length, dB, Ohm's law…) are embedded in the chapters they teach.
-- **Reference** — a searchable 284-term glossary with see-also links, plus the widget playground: 14 interactives including a UTC-synced **NCDXF beacon clock**, a **beam-heading** calculator (Maidenhead grid ↔ great-circle), and an **antenna-length** calculator (dipole/vertical/loop with end-effect K).
-
-Everything hands off into the simulator: bands marked ▶ and every chapter's try-it chips load the matching live scenario, so you read about FM and then hear it.
-
-![RF Academy spectrum explorer](docs/screenshots/academy.png)
-
-**ISM band** — the unmistakable diagonal LoRa chirp ramps and stuttering OOK/FSK sensor bursts:
-
-![ISM band with LoRa chirps](docs/screenshots/ism-lora.png)
-
-## Quick start
-
-```bash
-npm install
-npm run dev          # http://localhost:5173  — press the play button (or Space)
-```
-
-```bash
-npm test             # 35 unit tests (DSP, simulator, receiver, detector, classifier)
-npm run build        # type-check + production build
-```
-
-> Uses Web Workers, AudioWorklet, and Canvas — best in a Chromium-based browser. All audio starts on the first play (browser autoplay policy). Nothing leaves your machine.
-
-## Missions
-
-| Mission | Band | Skill |
-|---|---|---|
-| **First Contact** | FM broadcast | Tune & identify a WFM station (tutorial) |
-| **The Air Band** | Airband | Find AM voice by its carrier spike |
-| **Morse Intercept** | HF / 40 m | Tune CW and let the decoder read the beacon |
-| **ISM Sensor Sweep** | 915 MHz ISM | Catalog LoRa / OOK / FSK sensors |
-| **Drone Hunt** | 2.4 GHz-style | Identify a PSK downlink and a hopping control link |
-| **Fox Hunt** | 2 m | Dig a weak beacon out of the noise |
-| **Beacon Carousel** | 14.1 MHz | Copy the real NCDXF beacon network, UTC-synced |
-| **Wideband Sandbox** | — | One of everything; free play |
+Every view, challenge, and band has a shareable URL, so a link can drop someone
+straight into a specific mission.
 
 ## How it works
 
-Everything runs in a **DSP Web Worker**: the simulator generates wideband I/Q at 1.152 MSPS, one path FFTs it for the waterfall, another tunes/decimates/demodulates it to 48 kHz audio, and a third detects and classifies emissions. The main thread renders Canvas and drives an AudioWorklet. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+```mermaid
+flowchart LR
+  subgraph W["Web Worker"]
+    SC["Scene<br/>12 emitter models + noise"] --> IQ["I/Q samples<br/>1.152 MS/s"]
+    IQ --> FFT["8192-point FFT"] --> DT["Detector<br/>+ tracker"] --> CL["Classifier"]
+    IQ --> RX["Receiver<br/>tune · decimate · filter · demod"] --> AU["Audio<br/>48 kHz"]
+    AU --> CW["CW decoder"]
+  end
+  FFT --> WF["Waterfall<br/>+ spectrum"]
+  AU --> AW["AudioWorklet<br/>to speaker"]
+  CL --> UI["Signal card · Tasking<br/>· Walkthroughs"]
+  CW --> UI
+```
+
+- **Everything runs in the browser.** There's no backend; the deployed site is
+  static files.
+- **The DSP is written from scratch in TypeScript**: a radix-2 FFT,
+  windowed-sinc FIR filters, decimating channelizers, a quadrature FM
+  discriminator, and a Weaver-method SSB demodulator. It runs in a Web Worker,
+  and audio plays through an AudioWorklet.
+- **The simulator is the answer key.** The signal detector, the classifier,
+  CTF flags, and walkthrough steps are all checked against ground truth the
+  worker already has.
+
+## Run it locally
+
+Requires Node 20 or later.
+
+```bash
+npm install
+npm run dev      # http://localhost:5173
+npm test         # DSP, decoder, lessons, flags, scoring
+npm run build    # typecheck, production build, prerendered signal pages
+```
+
+## Content pipelines
+
+| Command | What it produces |
+|---|---|
+| `npm run pools:gen` | Typed, lazy-loaded modules for the three question pools, with every answer key cross-checked |
+| `npm run course:gen` | The course and glossary, ported from The Radio Bench |
+| `npm run prerender` | A static, crawlable page for each signal type, plus `sitemap.xml` |
+| `scripts/kokoro_render.py` | Exam narration, two clips per question (see [docs/NARRATION.md](docs/NARRATION.md)) |
+| `scripts/render_traffic.py` | The simulated voice traffic, from `scripts/radio-traffic.json` |
+
+## Project layout
 
 ```
 src/
-├── dsp/        FFT, windows, FIR, mixer, decimator, spectrum, receiver, detector  (unit-tested)
-├── sim/        emitters, scene, message audio, modulation, morse, seeded RNG
-├── id/         rule-based signal classifier
-├── engine/     DSP worker, main-thread orchestrator, message protocol
-├── scenarios/  training missions + objective scoring
-├── recording/  SigMF export / import
-├── store/      Zustand UI state
-├── academy/    RF Academy: log-spectrum explorer, band inspector, live concept lessons
-└── ui/         spectrum+waterfall stage, receiver deck (VFO, faders, meter, scopes), stations / library / mission panels
+  sim/        the signal environment: emitters, voice bank, Morse
+  dsp/        FFT, filters, receiver, detector, CW keyer
+  engine/     the DSP worker, the main-thread engine, and their protocol
+  guide/      walkthroughs and the on-screen coach
+  ctf/        Tasking challenges, flag checking, scoring
+  exam/       question pools, reels, practice exams, Listen mode, narration
+  academy/    course, glossary, spectrum explorer
+  scenarios/  receiver missions
+  ui/         receiver, controls, sheets, signal card, app shell
 ```
 
-**Charts & UI kit:** the per-signal SNR-history strip uses **[uPlot](https://github.com/leeoniya/uPlot)** — a tiny canvas charting library that streams at 60 fps via imperative `setData`. The spectrum/waterfall and IQ scopes are hand-rolled canvas for maximum throughput. Chrome is **Tailwind CSS v4 + shadcn/ui** with components from **[ElevenLabs UI](https://github.com/elevenlabs/ui)** (MIT) and the **[@ncdai registry](https://chanhdai.com/blocks)**; UI motion is **motion** springs (see `DESIGN.md`). (Considered but rejected `bklit` — it's a lovely SVG/Motion component set, but SVG re-render at signal rates janks; see `docs/RESEARCH.md`.)
+Built with React, Vite, TypeScript, Tailwind CSS v4, Radix, Motion, Vaul,
+uPlot, and Torph.
 
-**Built directly on the research:** the receiver mirrors Signal-Weaver's tested pure-TS demodulators; the worker+AudioWorklet path follows SDRLab; the sample-source seam generalizes web_hackrf's swappable-driver idea; and the whole thing turns hackrf-webui's "simulator mode" (a test convenience) into the product. Unlike several of the seed repos, this is clean-room and permissively licensed.
+## Credits
 
-## Exam reels
-
-A swipeable, one-question-at-a-time trainer for the FCC amateur radio licence exams — **1,431 questions** across all three current pools:
-
-| Pool | Element | Valid | Questions |
-|---|---|---|---|
-| Technician | 2 | Jul 2026 – Jun 2030 | 409 |
-| General | 3 | Jul 2023 – Jun 2027 | 423 |
-| Extra | 4 | Jul 2024 – Jun 2028 | 599 |
-
-Swipe (or ↑/↓) to move, tap an answer or press **A–D** to commit. Wrong answers reveal the right one with its FCC Part 97 reference. Progress uses **Leitner spaced repetition** — unseen and repeatedly-missed questions surface first, mastered ones fade back — persisted locally. Filter by syllabus topic. Each pool is a lazily-loaded chunk, so it costs the main bundle nothing.
-
-### Narration
-
-Every question ships with pre-rendered audio — the question and all four choices, one clip each — voiced by **[Piper](https://github.com/rhasspy/piper)**, a local neural TTS (`en_US-ryan-high`). Toggle the speaker in the reel header; audio follows whichever card is on screen. Anything unrendered falls back to the browser's live speech synthesis, so narration works even with no clips built.
-
-Audio is generated from the public-domain pool text — nothing is sampled from third-party recordings.
-
-```bash
-npm run narrate                             # all pools with the default engine
-npm run narrate -- --pool technician --engine piper --voice en_US-ryan-high
-npm run narrate -- --sample                 # audition local voices on one line
-```
-
-Rendering is incremental (a clip is redone only when its narration text changes) and the engine is pluggable: `piper` (local neural, free), `say` (macOS built-in), `openai`, `elevenlabs`, `google`, `azure`. Every engine normalizes to mono AAC, so the app never cares which produced a clip.
-
-Piper setup — one time, free, offline:
-
-```bash
-python3 -m venv ~/.local/share/piper-venv && ~/.local/share/piper-venv/bin/pip install piper-tts
-mkdir -p ~/.local/share/piper-voices && cd ~/.local/share/piper-voices
-curl -LO https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ryan/high/en_US-ryan-high.onnx
-curl -LO https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ryan/high/en_US-ryan-high.onnx.json
-```
-
-Override locations with `PIPER_BIN` / `PIPER_MODEL`.
-
-## RF CTF
-
-Ten capture-the-flag challenges worked on the live receiver, graded against the simulator's ground truth — no hardware, no server, nothing to install. Categories mirror real operator skills: **recon** (count what's on the band), **decode** (read a CW beacon buried under a louder neighbour), **identify** (name a modulation from its waterfall signature), and **analysis** (measure a frequency or an occupied bandwidth).
-
-Answers are checked against a salted hash, so flags aren't sitting in plain sight in the bundle. Hints are available and cost 15% each. Score and rank — Listener through Signals Officer — persist locally.
-
-Distribution thinking lives in [`docs/GROWTH.md`](docs/GROWTH.md).
-
-## Roadmap
-
-Next up: a **macOS menu-bar WiFi console** (CoreWLAN channel-occupancy graphs, RSSI history, security audit — see [`docs/ROADMAP.md`](docs/ROADMAP.md) for the phased plan and research notes), then **WebUSB SDR ingest** and a **WiFi sensing lab**. Near-term additions: a morse/CW audio trainer, per-card dynamic OG images and FCC callsign validation for the Operator Card (v2 notes in `docs/ROADMAP.md`).
-
-More emitters (ADS-B, POCSAG, APRS, digital voice), fading/multipath channels, a spectrogram chirp detector + learned classifier (trained on the simulator's own labeled output), a scenario editor, and a WebUSB **hardware-ingest** path so a real HackRF/RTL-SDR drops in behind the same receiver.
+- **Question pools**: the official NCVEC pools, released into the public domain
+  by the NCVEC Question Pool Committee. Machine-readable transcription from
+  [russolsen/ham_radio_question_pool](https://github.com/russolsen/ham_radio_question_pool)
+  (Apache-2.0).
+- **Course**: adapted from [The Radio Bench](https://github.com/jemcik/the-radio-bench),
+  © 2026 Yevhen Yemchynskyi, MIT. See [`NOTICE`](NOTICE).
+- **Narration**: [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M)
+  (Apache-2.0), voice `af_heart`.
+- **UI**: waveform and visualizer components from
+  [ElevenLabs UI](https://github.com/elevenlabs/ui) (MIT), and the wheel picker
+  from [@ncdai](https://github.com/ncdai/react-wheel-picker) (MIT).
 
 ## License
 
-MIT — see [`LICENSE`](LICENSE).
+MIT. See [`LICENSE`](LICENSE).
 
-*Built as a from-scratch clean-room implementation. All signals are simulated; SPECTRA neither transmits nor requires any radio hardware. Course content adapted from The Radio Bench (MIT) — see [`NOTICE`](NOTICE).*
-
-*Exam question pools are the official NCVEC pools, released into the public domain by the NCVEC Question Pool Committee. Machine-readable transcription via [russolsen/ham_radio_question_pool](https://github.com/russolsen/ham_radio_question_pool) (Apache-2.0). Regenerate with `node scripts/convert-pools.mjs`.*
+SPECTRA is a simulator. Every signal is generated in your browser; it doesn't
+receive or transmit real radio traffic, and it needs no hardware.
