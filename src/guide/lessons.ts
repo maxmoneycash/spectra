@@ -165,25 +165,32 @@ export const LESSONS: Lesson[] = [
       noiseSigma: 0.028,
       emitters: [
         { id: 'p1', kind: 'cw', freqHz: 7.03 * MHZ, powerDb: -5, wpm: 15, text: 'PRACTICE COPY  ', seed: 921 },
-        { id: 'p2', kind: 'cw', freqHz: 7.03045 * MHZ, powerDb: -5, wpm: 15, text: 'VVV VVV TEST  ', seed: 922 },
+        // 250 Hz apart, measured (2026-10-09): at the stock 500 Hz filter the
+        // copy is garbled anywhere within the pair — including dialled exactly
+        // onto p1 — and a 200–250 Hz filter centred on p1 copies clean. At 300
+        // or 450 Hz the keyer rejected the neighbour by pitch, so a student
+        // who dialled 7.030 as instructed saw a clean copy and step 2 was false.
+        { id: 'p2', kind: 'cw', freqHz: 7.03025 * MHZ, powerDb: -5, wpm: 15, text: 'VVV VVV TEST  ', seed: 922 },
       ],
     },
     steps: [
       {
         title: 'Tune the pair',
-        body: 'Tune 7.030 MHz in CW.',
-        why: 'Two Morse stations are keying 450 Hz apart. On a wide view they look like one line.',
+        body: 'Tune onto the pair at 7.030 MHz in CW: tap it, or dial to anywhere between the two stations.',
+        why: 'Two Morse stations are keying 250 Hz apart. On a wide view they look like one line.',
         target: 'tune',
-        check: (c) => c.mode === 'cw' && near(c, 7.0302 * MHZ, 1_500),
+        // Within the pair. 25 Hz below the lower station the stock filter
+        // already copies it clean, which would make the next step a lie.
+        check: (c) => c.mode === 'cw' && near(c, 7.030125 * MHZ, 125),
       },
       {
-        title: 'Why the copy is garbage',
-        body: 'Look at the decoder output: it reads as nonsense.',
+        title: 'Why the copy is garbled',
+        body: 'Look at the decoder output: words half-form and break up.',
         why: 'Your CW filter is 500 Hz wide, so both stations fit inside it and the decoder hears their dots and dashes interleaved.',
       },
       {
         title: 'Narrow the filter',
-        body: 'Turn the bandwidth below 250 Hz.',
+        body: 'Turn the bandwidth down to 250 Hz or less.',
         why: 'A narrower filter passes less of the band. Now only one station can fit inside it.',
         target: 'bandwidth',
         deckPage: 'filter',
@@ -191,10 +198,11 @@ export const LESSONS: Lesson[] = [
       },
       {
         title: 'Center one station',
-        body: 'Fine-tune with the dial until the decoder prints words.',
+        body: 'Fine-tune with the dial until the decoder prints clean words.',
         why: 'With one carrier in the passband the copy turns clean. This is exactly how operators pull a weak station out from beside a loud one.',
         target: 'tune',
-        check: (c) => c.morseText.includes('COPY'),
+        // The full phrase: a half-centred filter still prints "COPY" inside garbage.
+        check: (c) => c.morseText.includes('PRACTICE COPY'),
       },
     ],
   },

@@ -57,7 +57,7 @@ function solutions(lesson: Lesson): (Partial<GuideCtx> | null)[] {
         { tunedHz: 118.8 * MHZ, mode: 'nfm' },
       ];
     case 'filter':
-      return [{ tunedHz: 7.0302 * MHZ, mode: 'cw' }, null, { mode: 'cw', bandwidthHz: 200 }, { morseText: heard }];
+      return [{ tunedHz: 7.030125 * MHZ, mode: 'cw' }, null, { mode: 'cw', bandwidthHz: 200 }, { morseText: heard }];
     case 'squelch':
       return [{ tunedHz: 3.565 * MHZ, mode: 'cw' }, null, { morseText: heard }];
     case 'repeater':
