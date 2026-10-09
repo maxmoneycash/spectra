@@ -187,6 +187,24 @@ within one step of a station, resumes after the hang time, and a transmission
 is heard through during a hold. Mutation-checked: disabling the guard fails
 the same three assertions.
 
+## Modes lesson: audio premise measured — PINNED (2026-10-09)
+
+The last lesson whose premise nothing ran through the receiver: the AM tower
+"comes through clean" in AM and "goes quiet or distorted" in NFM. Now measured
+by `src/test/audioHarness.ts` (`demodAudio` = scene → receiver → 48 kHz audio;
+`intelligibility` = peak normalised correlation between the audio's detrended
+syllable envelope and the voice lines the station was keying) and pinned by
+`src/guide/modes-lesson.test.ts`. Tower in AM 0.945, in NFM 0.561 (USB 0.599,
+WFM 0.522); the 118.8 station in NFM 0.940, in AM 0.574.
+
+Two things the measurement taught: a push-to-talk line's on/off step must be
+trimmed from the reference and the envelopes detrended, or a mismatched
+demodulator's loud-noise → quiet → loud box scores 0.67 just by lining an edge
+up with a burst onset; and a mismatched FM discriminator still carries the
+speech *rhythm* (its noise output quiets with the sidebands' power), which is
+the "distorted" the lesson promises — so the honest floor for "wrong mode" is
+~0.5, not 0. Only the tune lesson remains unpinned, and its premise is trivial.
+
 ## CW keyer: power-on chatter — RESOLVED (2026-10-09)
 
 Two defects, one of which hid the other.
