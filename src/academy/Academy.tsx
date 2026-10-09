@@ -7,7 +7,7 @@ import { Inspector } from './Inspector';
 import { Lessons } from './Lessons';
 import { CourseView } from './course/CourseView';
 import { ReferenceView } from './course/ReferenceView';
-import { UnderlineTabs } from '@/ui/controls';
+import { GroupLabel, UnderlineTabs } from '@/ui/controls';
 import { WalkthroughList } from '../guide/WalkthroughList';
 
 type AcademyTab = 'walkthroughs' | 'explorer' | 'course' | 'reference';
@@ -27,12 +27,13 @@ function ExplorerView({ onTune }: { onTune: (scenarioId: string) => void }) {
     <div className="thin-scroll h-full overflow-y-auto">
       <div className="mx-auto min-h-full max-w-2xl border-x border-line">
         <section className="screen-line-bottom px-4 py-5 sm:px-6">
-          <h1 className="text-2xl font-medium tracking-tight text-foreground">
+          <GroupLabel>Spectrum explorer</GroupLabel>
+          <h1 className="mt-1.5 text-[19px] font-semibold tracking-tight text-foreground">
             The radio spectrum
           </h1>
           <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
-            100 kHz to 10 GHz. Scroll to zoom, drag to pan, click a band to inspect it. Bands
-            marked ▶ exist live in the simulator.
+            100 kHz to 10 GHz on one axis. Zoom in to see the services, then pick a band to learn
+            who uses it. Bands marked ▶ are live on the receiver.
           </p>
         </section>
 

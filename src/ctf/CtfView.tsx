@@ -272,14 +272,14 @@ export function CtfView() {
           <div className="flex items-start gap-3">
             <div className="min-w-0 flex-1">
               <p className="mono-feats font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                Capture the flag
+                Tasking
               </p>
               <h1 className="mt-0.5 text-[19px] font-semibold tracking-tight text-foreground">
-                RF CTF
+                Intercept missions
               </h1>
               <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
-                Ten signals problems, solved on the live receiver. Every answer is graded against
-                the simulator's ground truth — no hardware, no server, nothing to install.
+                {s.total} signal problems, worked on the live receiver. Every answer is checked
+                against the simulator's ground truth, so the flag is the proof you did it right.
               </p>
             </div>
             <IconButton label="Reset progress" onClick={reset}>
@@ -316,7 +316,7 @@ export function CtfView() {
               className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-border px-3 text-[12px] text-muted-foreground transition-colors hover:text-foreground"
             >
               <Radio className="size-4" />
-              Open the console to work a signal
+              Open the receiver
             </button>
             {s.solvedCount > 0 && (
               <button

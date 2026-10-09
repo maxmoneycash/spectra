@@ -8,6 +8,7 @@ import type { TrackMsg } from '../engine/protocol';
 import { KIND_INFO } from '../sim/signal-kinds';
 import { lutFor } from './colormaps';
 import { WaterfallControls } from './WaterfallControls';
+import { placeLabels, type LabelCandidate } from './labelPlacement';
 import { THEME, isCanvasDark } from './theme';
 import { useTheme } from '../hooks/useTheme';
 
@@ -309,8 +310,8 @@ export function SpectrumWaterfall() {
 
       // Detection carets on the scale + labels at the plot top, kind-colored
       // (ties the stage to the Stations list).
-      let lastDetLabelX = -Infinity;
       ctx.font = `8.5px ${THEME.mono}`;
+      const labels: (LabelCandidate & { color: string })[] = [];
       for (const d of st.detections) {
         const x = offToX(d.offsetHz);
         if (x < -20 || x > width + 20) continue;
@@ -323,18 +324,19 @@ export function SpectrumWaterfall() {
         ctx.lineTo(x, plotH + 6.5);
         ctx.closePath();
         ctx.fill();
+        if (x >= 0 && x <= width) labels.push({ x, label: d.guessLabel, color: c, selected: sel, snrDb: d.snrDb });
+      }
+      // Selected and strongest first, no overlaps, flipped at the right edge.
+      for (const { item: l, left } of placeLabels(labels, width, (t) => ctx.measureText(t).width)) {
         // Leader line from the plot top to the label, then the label itself.
-        if (x - lastDetLabelX > 66) {
-          ctx.strokeStyle = hexA(c, sel ? 0.9 : 0.5);
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(x + 0.5, 0);
-          ctx.lineTo(x + 0.5, 8);
-          ctx.stroke();
-          ctx.fillStyle = sel ? c : hexA(c, 0.85);
-          ctx.fillText(d.guessLabel, x + 5, 9);
-          lastDetLabelX = x;
-        }
+        ctx.strokeStyle = hexA(l.color, l.selected ? 0.9 : 0.5);
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(Math.round(l.x) + 0.5, 0);
+        ctx.lineTo(Math.round(l.x) + 0.5, 8);
+        ctx.stroke();
+        ctx.fillStyle = l.selected ? l.color : hexA(l.color, 0.85);
+        ctx.fillText(l.label, left, 9);
       }
       ctx.font = `9px ${THEME.mono}`;
 
@@ -404,6 +406,17 @@ export function SpectrumWaterfall() {
           lk.style.display = 'block';
           lk.style.left = `${lx - lw / 2}px`;
           lk.style.width = `${lw}px`;
+          // Keep the LOCK tag on the stage. It's centered on the signal when
+          // there's room, and slides inward near either edge. Its width only
+          // changes with a new lock (a new element), so measure it once.
+          const tag = lk.querySelector<HTMLElement>('[data-lock-tag]');
+          if (tag) {
+            tag.dataset.w ??= String(tag.offsetWidth);
+            const tw = Number(tag.dataset.w);
+            const left = Math.max(4, Math.min(width - 4 - tw, lx - tw / 2));
+            tag.style.left = `${left - (lx - lw / 2)}px`;
+            tag.style.translate = '0';
+          }
           const away = Math.abs(st.tuning - fx.offsetHz) > Math.max(fx.bandwidthHz / 2, 1500);
           lk.style.opacity = away ? '0' : '1';
         }
@@ -676,6 +689,7 @@ function LockReticle({ mode, label }: { mode: string; label: string }) {
         initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.12 }}
+        data-lock-tag
         className="mono-feats absolute bottom-[7px] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-sm bg-emerald-500 px-1.5 py-[1px] font-mono text-[8.5px] font-semibold uppercase tracking-[0.12em] text-white shadow-sm dark:bg-emerald-400 dark:text-emerald-950"
       >
         Lock · {mode} · {label}

@@ -24,7 +24,9 @@ export function BottomNav() {
         {NAV.map((n) => {
           const active = view === n.id;
           const Icon = n.icon;
-          const badge = n.id === 'console' && running && detections > 0 ? detections : 0;
+          // Live signal count, shown from the other sections. On the receiver itself
+          // the panels button carries it, so it isn't repeated here.
+          const badge = n.id === 'console' && !active && running && detections > 0 ? detections : 0;
           return (
             <button
               key={n.id}

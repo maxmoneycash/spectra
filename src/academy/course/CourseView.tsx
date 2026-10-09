@@ -7,6 +7,7 @@ import { RichText } from './RichText';
 import { WIDGETS, CHAPTER_WIDGETS } from '../widgets/registry';
 import type { Chapter, GlossaryMap } from './types';
 import { cn } from '@/lib/utils';
+import { GroupLabel } from '@/ui/controls';
 
 /* ---------------- progress ---------------- */
 
@@ -344,10 +345,10 @@ export function CourseView({ onTune }: { onTune: (scenarioId: string) => void })
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.18 }}
               >
-                <div className="mono-feats font-mono text-[9.5px] uppercase tracking-[0.14em] text-muted-foreground">
+                <GroupLabel>
                   Chapter {chapter.id} · {data.PARTS[chapter.part]}
-                </div>
-                <h1 className="mt-1 text-xl font-medium tracking-tight text-foreground">
+                </GroupLabel>
+                <h1 className="mt-1.5 text-[19px] font-semibold tracking-tight text-foreground">
                   {chapter.title}
                 </h1>
 

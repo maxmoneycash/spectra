@@ -59,6 +59,8 @@ export function LogAxis({ selectedId, onSelect }: LogAxisProps) {
     const ctx = canvas.getContext('2d')!;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     let width = 0;
+    const coarse =
+      typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches;
     let height = 0;
     let raf = 0;
 
@@ -210,11 +212,19 @@ export function LogAxis({ selectedId, onSelect }: LogAxisProps) {
         for (const b of BANDS) if (b.tier === 2) drawBand(b, SVC_Y, SVC_H, lane2);
       }
 
-      // hint to zoom when services hidden
+      // Hint to zoom while the services are hidden: the longest wording that
+      // fits the axis, so it never runs off a phone screen. Touch devices are
+      // told to pinch; everything else to scroll.
       if (v.span >= 2.6) {
         ctx.font = `9.5px ${THEME.mono}`;
         ctx.fillStyle = THEME.labelDim;
-        ctx.fillText('scroll to zoom — services and channels appear as you descend', 8, SVC_Y + 18);
+        const verb = coarse ? 'pinch' : 'scroll';
+        const hint = [
+          `${verb} to zoom — services and channels appear as you descend`,
+          `${verb} to zoom in for services and channels`,
+          `${verb} to zoom in`,
+        ].find((h) => ctx.measureText(h).width <= width - 16);
+        if (hint) ctx.fillText(hint, 8, SVC_Y + 18);
       }
 
       // --- hover ---

@@ -274,7 +274,7 @@ export function TopBar({
         <IconButton label="Open panels" onClick={onOpenPanels} className="lg:hidden">
           <LayoutGrid className="size-4" strokeWidth={1.75} />
           {detections.length > 0 && (
-            <span className="mono-feats absolute -right-1 -top-1 grid min-h-3.5 min-w-3.5 place-items-center rounded-full bg-primary px-0.5 font-mono text-[9px] font-medium text-primary-foreground">
+            <span className="mono-feats absolute right-1 top-1 grid min-h-3.5 min-w-3.5 place-items-center rounded-full bg-primary sm:-right-1 sm:-top-1 px-0.5 font-mono text-[9px] font-medium text-primary-foreground">
               {detections.length}
             </span>
           )}

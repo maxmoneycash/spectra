@@ -69,7 +69,7 @@ export function StartOverlay() {
             {!inLesson && (
             <button
               onClick={() => startLesson(LESSONS[0].id)}
-              className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-full border border-stage-border px-4 text-[12px] font-medium text-stage-foreground/90 transition-colors hover:bg-white/5"
+              className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-full border border-stage-border px-4 text-[12px] font-medium text-stage-foreground/90 transition-colors hover:bg-stage-foreground/5"
             >
               <GraduationCap className="size-4" />
               New to radio? Start the first walkthrough
@@ -84,7 +84,7 @@ export function StartOverlay() {
                   ['↑↓', 'next signal'],
                 ].map(([k, v]) => (
                   <span key={k}>
-                    <kbd className="rounded border border-stage-border bg-white/5 px-1 py-0.5">{k}</kbd> {v}
+                    <kbd className="rounded border border-stage-border bg-stage-foreground/5 px-1 py-0.5">{k}</kbd> {v}
                   </span>
                 ))}
               </div>
