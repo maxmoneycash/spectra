@@ -130,3 +130,51 @@ describe('Receiver demodulation', () => {
     expect(wp.mag).toBeLessThan(gp.mag * 0.5);
   });
 });
+
+/** Two equal carriers: one on the VFO, one `splitHz` above it. */
+function genCarrierPair(splitHz: number, t0: number) {
+  const re = new Float32Array(BLOCK);
+  const im = new Float32Array(BLOCK);
+  for (let i = 0; i < BLOCK; i++) {
+    const t = (t0 + i) / FS;
+    const ph = 2 * Math.PI * splitHz * t;
+    re[i] = 0.5 + 0.5 * Math.cos(ph);
+    im[i] = 0.5 * Math.sin(ph);
+  }
+  return { re, im };
+}
+
+/** Level (dB) of the audio spectrum at `freqHz`, taking the strongest of three bins. */
+function audioLevelDb(audio: Float32Array, freqHz: number): number {
+  const N = 4096;
+  const w = makeWindow('hann', N);
+  const re = new Float32Array(N);
+  const im = new Float32Array(N);
+  for (let i = 0; i < N; i++) re[i] = audio[i] * w[i];
+  new FFT(N).forward(re, im);
+  const k = Math.round((freqHz / AUDIO_RATE) * N);
+  let m = 0;
+  for (let j = k - 1; j <= k + 1; j++) m = Math.max(m, re[j] * re[j] + im[j] * im[j]);
+  return 10 * Math.log10(m + 1e-20);
+}
+
+describe('CW receiver', () => {
+  it('beats the tuned carrier to the 650 Hz note', () => {
+    // Before the BFO existed, a tuned carrier came out at DC: inaudible, and
+    // impossible to separate from a neighbour by filtering.
+    const { freq } = peakAudioFreq(receive('cw', 0, 500, (t0) => genComplexTone(0, t0)));
+    expect(freq).toBeGreaterThan(600);
+    expect(freq).toBeLessThan(700);
+  });
+
+  it('hears a station 350 Hz away at the stock width and rejects it when narrowed', () => {
+    // Split the Pair: a decoy 350 Hz above the flag. With the stock 500 Hz
+    // filter it still gets in (the copy interleaves); at 200 Hz it is gone.
+    // Measured: −15 dB at 500, −36 dB at 200. This is what makes the
+    // challenge solvable — and what the old chain silently failed at.
+    const stock = receive('cw', 0, 500, (t0) => genCarrierPair(350, t0));
+    expect(audioLevelDb(stock, 650) - audioLevelDb(stock, 1000)).toBeLessThan(20);
+    const narrow = receive('cw', 0, 200, (t0) => genCarrierPair(350, t0));
+    expect(audioLevelDb(narrow, 650) - audioLevelDb(narrow, 1000)).toBeGreaterThan(30);
+  });
+});

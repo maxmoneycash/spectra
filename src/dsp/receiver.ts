@@ -1,9 +1,12 @@
 import { ComplexOsc } from './oscillator';
+import { BandpassCascade } from './biquad';
 import { ComplexFIR, designLowpass } from './fir';
 import { FIRDecimator } from './decimator';
 import type { DemodMode } from '../sim/signal-kinds';
 
 export const AUDIO_RATE = 48000;
+/** The pitch a tuned CW carrier beats at. A station f Hz above it sounds at 650 + f. */
+export const CW_NOTE_HZ = 650;
 
 /**
  * Software-defined receiver: takes wideband complex baseband at the SDR sample
@@ -33,6 +36,9 @@ export class Receiver {
   private wOsc1 = new ComplexOsc();
   private wOsc2 = new ComplexOsc();
   private ssbFilter!: ComplexFIR;
+  /** CW only: a real bandpass around the beat note, as wide as the filter knob. */
+  private cwBpf: BandpassCascade | null = null;
+  private cwBfo = new ComplexOsc();
 
   // FM demod state
   private fmPrevRe = 1;
@@ -145,15 +151,21 @@ export class Receiver {
     const taps = this.mode === 'wfm' ? 63 : 187;
     this.chan = new ComplexFIR(designLowpass(taps, cutoff, 'hamming'));
 
-    // SSB Weaver setup.
+    // SSB Weaver setup (USB/LSB): down-mix to centre the sideband, lowpass,
+    // mix back. Net translation is zero, so the audio is the sideband as sent.
     const fc = Math.max(300, this.bandwidthHz / 2);
-    const usb = this.mode === 'usb' || this.mode === 'cw';
-    // CW uses a fixed 650 Hz beat note; SSB centres on the sideband.
-    const shift = this.mode === 'cw' ? 650 : fc;
-    this.wOsc1.setFrequency(usb ? -shift : shift, AUDIO_RATE);
-    this.wOsc2.setFrequency(usb ? shift : -shift, AUDIO_RATE);
-    const ssbCut = this.mode === 'cw' ? 500 / AUDIO_RATE : (fc + 200) / AUDIO_RATE;
-    this.ssbFilter = new ComplexFIR(designLowpass(187, Math.min(0.45, ssbCut), 'hamming'));
+    const usb = this.mode === 'usb';
+    this.wOsc1.setFrequency(usb ? -fc : fc, AUDIO_RATE);
+    this.wOsc2.setFrequency(usb ? fc : -fc, AUDIO_RATE);
+    this.ssbFilter = new ComplexFIR(designLowpass(187, Math.min(0.45, (fc + 200) / AUDIO_RATE), 'hamming'));
+
+    // CW: a real BFO, which the Weaver path never was (its net shift was zero,
+    // so a tuned carrier came out at DC — inaudible, and impossible to filter
+    // apart from a neighbour). The channel is shifted up so the tuned carrier
+    // beats at CW_NOTE_HZ, then a Butterworth bandpass as wide as the filter
+    // knob does the selecting; the 187-tap FIRs here are far too short to.
+    this.cwBfo.setFrequency(CW_NOTE_HZ, AUDIO_RATE);
+    this.cwBpf = this.mode === 'cw' ? new BandpassCascade(CW_NOTE_HZ, this.bandwidthHz, AUDIO_RATE) : null;
   }
 
   /** Process one wideband block; writes audio (48 kHz) to `audioOut`, returns count. */
@@ -201,8 +213,10 @@ export class Receiver {
         break;
       case 'usb':
       case 'lsb':
-      case 'cw':
         this.demodSSB(n1, audioOut);
+        break;
+      case 'cw':
+        this.demodCW(n1, audioOut);
         break;
       case 'raw':
         this.demodRaw(n1, audioOut);
@@ -268,6 +282,12 @@ export class Receiver {
     this.ssbFilter.process(this.txRe, this.txIm, this.ifRe, this.ifIm, n);
     this.wOsc2.mix(this.ifRe, this.ifIm, this.cfRe, this.cfIm, n);
     for (let i = 0; i < n; i++) audioOut[i] = this.cfRe[i] * 3;
+  }
+
+  private demodCW(n: number, audioOut: Float32Array): void {
+    this.cwBfo.mix(this.cfRe, this.cfIm, this.txRe, this.txIm, n);
+    for (let i = 0; i < n; i++) audioOut[i] = this.txRe[i] * 3;
+    this.cwBpf?.process(audioOut, n);
   }
 
   private demodRaw(n: number, audioOut: Float32Array): void {
