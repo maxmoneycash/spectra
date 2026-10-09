@@ -219,6 +219,14 @@ the flag is the beacon after W6WX, which means copying a callsign across a
 slot handoff. `src/ctf/rotation.test.ts` pins that through the receiver and
 derives the expected answer from the roster, so a stale hash fails loudly.
 
-Next for this category: zero-beat tuning precision, and copying through
-deliberate adjacent-channel splatter. Both get a bench case and a receiver
-test before they ship — see the gate finding above for why.
+**Zero-beat tuning precision — dropped (measured 2026-10-09).** The receiver
+does not enforce it: a CW flag copies with the VFO up to ±300 Hz off at the
+stock 500 Hz filter (breaks at 400) and ±200 Hz off at 200 Hz (breaks at 250),
+with only the first letter garbling near the edge. A challenge that demanded
+±50 Hz would be a premise the DSP does not impose — the Deep Cut / Below the
+Gate mistake again. Making it real would mean narrowing the keyer's detector
+for every CW lesson at once, which is not worth one challenge. The skill the
+receiver *does* enforce is the filter, and Split the Pair already tests it.
+
+Next for this category: copying through deliberate adjacent-channel splatter —
+measured before it is designed, like everything above.
