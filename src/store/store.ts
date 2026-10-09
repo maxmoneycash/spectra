@@ -216,7 +216,7 @@ export const useStore = create<AppState>((set, get) => {
     };
     // Log it if the receiver is actually tuned to it: inside the passband.
     const tuned = st.centerFreqHz + st.tuningOffsetHz;
-    const heard = st.running && Math.abs(tuned - e.freqHz) <= Math.max(1500, st.bandwidthHz / 2);
+    const heard = st.running && inPassband(tuned, st.bandwidthHz, e.freqHz);
     const intercepts = heard
       ? [
           { id: `${e.emitterId}-${now}`, at: now, freqHz: e.freqHz, mode: st.mode, who: e.who, text: e.text },

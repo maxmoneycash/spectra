@@ -196,6 +196,28 @@ export const CHALLENGES: Challenge[] = [
     suggest: 'raw',
   },
   {
+    id: 'net-traffic',
+    name: 'Net Traffic',
+    category: 'intercept',
+    points: 250,
+    brief:
+      'A directed net is running on one of the repeaters in this span, and one check-in brought traffic for the net. Monitor the net and name that station.',
+    answerHint: 'Callsign, e.g. KX6ABC',
+    hints: [
+      'Nets run on repeaters: an NFM voice signal that keys and unkeys with a courtesy tone. Stay on it — the log keeps only what you were tuned to.',
+      'Net control hands the floor to whoever has traffic. Read the log.',
+    ],
+    flagHash: 'ce79465d91a7ed3bbbd5498ba39807e1',
+    centerFreqHz: 442.5 * MHZ,
+    noiseSigma: 0.03,
+    emitters: [
+      { id: 'net', kind: 'nfm', freqHz: 442.35 * MHZ, powerDb: -6, speech: 'net-70cm', seed: 601 },
+      { id: 'rpt', kind: 'nfm', freqHz: 442.9 * MHZ, powerDb: -5, speech: 'repeater-2m', seed: 602 },
+      { id: 'd', kind: 'fsk2', freqHz: 442.6 * MHZ, powerDb: -10, seed: 603 },
+    ],
+    suggest: 'nfm',
+  },
+  {
     id: 'ism-census',
     name: 'ISM Census',
     category: 'recon',

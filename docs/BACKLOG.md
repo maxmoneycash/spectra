@@ -349,6 +349,21 @@ can read it (tap, let the receiver watch a few symbols, the card shows
 asserts 125 kHz and SF 9, and checks the flag with the measured value rather
 than a typed one. Set is now 15 challenges / 3,400 points.
 
+Done 2026-10-09: **Net Traffic** (`net-traffic`, intercept, 250 pts) — the
+first challenge graded on the intercept log. A directed net runs on one 70 cm
+repeater and one check-in brings traffic; a decoy repeater carries a different
+conversation. The log keeps a transmission only if the VFO was inside its
+passband when it started (`src/store/intercept.ts`, `inPassband`, extracted
+so the test applies the store's actual rule), so the flag — the station net
+control hands the floor to — reaches the log only by finding the net and
+staying through a rotation. `ctf/traffic.test.ts` derives the answer from
+`scripts/radio-traffic.json`, runs the scene's speech scheduler with the real
+speakers, and checks that the net logs every station, the decoy logs only its
+own, and empty air logs nothing. Set is now 16 challenges / 3,650 points.
+Parked: "Follow the QSY" (the simplex-2m pair announce a move to 146.55) would
+need the second half of that conversation authored and rendered, and a way to
+play a line range per emitter.
+
 **Zero-beat tuning precision — dropped (measured 2026-10-09).** The receiver
 does not enforce it: a CW flag copies with the VFO up to ±300 Hz off at the
 stock 500 Hz filter (breaks at 400) and ±200 Hz off at 200 Hz (breaks at 250),

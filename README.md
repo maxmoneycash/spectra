@@ -59,11 +59,13 @@ challenge, and grade an exam question, which no live receiver can do.
 
 ### Tasking — intercept missions
 
-- **Fifteen challenges worth 3,400 points**, in five categories: recon,
+- **Sixteen challenges worth 3,650 points**, in five categories: recon,
   decode, identify, analysis, and intercept.
 - The intercept challenges can only be solved by operating the radio: two
   beacons inside one filter, a flag keyed on a repeater's input, a beacon
-  sitting under the squelch. Copying the flag is the proof you did it right.
+  sitting under the squelch, a net whose traffic reaches your log only if you
+  found its repeater and stayed on it. Copying the flag is the proof you did
+  it right.
 - Hints cost points, ranks run from Listener to Signals Officer, and the result
   card shares without spoilers.
 - Every walkthrough ends by offering the challenge that tests its skill, and
