@@ -251,11 +251,11 @@ export const CHALLENGES: Challenge[] = [
     category: 'decode',
     points: 350,
     brief:
-      'A weak beacon is buried under a loud neighbour and the noise floor is up. Dig it out and read its message. The flag is the two-word message after the callsign.',
+      'A weak beacon is keying near a much louder signal, and the noise floor is up. Find it on the waterfall, dig it out of the noise, and read its message. The flag is the two-word message after the callsign.',
     answerHint: 'Two words, e.g. GOOD MORNING',
     hints: [
-      'Narrow the bandwidth — CW needs only a few hundred Hz.',
-      'The loud one is a decoy. The beacon sits below it in level, not in frequency.',
+      'The loud signal is a decoy. The beacon sits well below it in level, not under it in frequency.',
+      'Narrow the bandwidth: CW needs only a few hundred Hz, and every hertz you exclude is noise you do not hear.',
     ],
     flagHash: '8aa3ecfcd0e0396a22c682132d47155e',
     centerFreqHz: 14.1 * MHZ,
