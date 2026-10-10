@@ -10,6 +10,7 @@ import { SAMPLE_RATE } from '../engine/protocol';
 
 export { MODE_BW, BW_RANGE, DEMOD_MODES } from './modes';
 import { MODE_BW, DEFAULT_SQUELCH_DB } from './modes';
+import type { CaptureDatatype, CaptureMeta } from '../capture/decode';
 import { inPassband } from './intercept';
 
 export type PanelTab = 'signals' | 'scan' | 'log' | 'library' | 'scenario';
@@ -112,6 +113,15 @@ export interface Intercept {
   text: string;
 }
 
+/** A capture file playing in place of the simulator. Position streams from the engine's `capture` event. */
+export interface CaptureState {
+  name: string;
+  sampleRate: number;
+  datatype: CaptureDatatype;
+  centerFreqHz: number;
+  totalSec: number;
+}
+
 /** What the header chip says when the scene isn't a built-in scenario. */
 export interface SceneLabel {
   name: string;
@@ -150,6 +160,15 @@ interface AppState {
   detections: TrackMsg[];
   morseText: string;
   revealTruth: boolean;
+  /** A capture file playing in place of the simulator; null while the sim runs. */
+  capture: CaptureState | null;
+  captureSheetOpen: boolean;
+  /** Files dropped on the stage, for the sheet to read. */
+  captureDrop: File[] | null;
+  setCaptureSheetOpen: (open: boolean) => void;
+  setCaptureDrop: (files: File[] | null) => void;
+  loadCapture: (file: File, meta: CaptureMeta) => Promise<void>;
+  stopCapture: () => void;
   correctlyIdentified: SignalKind[];
   idFeedback: IdFeedback | null;
   selectedId: string | null;
@@ -290,6 +309,9 @@ export const useStore = create<AppState>((set, get) => {
     recording: false,
     panel: 'signals',
     view: 'station',
+    capture: null,
+    captureSheetOpen: false,
+    captureDrop: null,
     cardOpen: false,
     operator: loadOperator(),
     audioStarted: false,
@@ -516,6 +538,41 @@ export const useStore = create<AppState>((set, get) => {
     scanClearLockouts: () => scanner.clearLockouts(),
 
     toggleReveal: () => set((s) => ({ revealTruth: !s.revealTruth })),
+
+    setCaptureSheetOpen: (open) => set({ captureSheetOpen: open }),
+    setCaptureDrop: (files) => set({ captureDrop: files }),
+
+    loadCapture: async (file, meta) => {
+      const { totalSec } = await engine.openCapture(file, meta);
+      engine.setTuning(0);
+      set({
+        capture: {
+          name: file.name,
+          sampleRate: meta.sampleRate,
+          datatype: meta.datatype,
+          centerFreqHz: meta.centerFreqHz,
+          totalSec,
+        },
+        centerFreqHz: meta.centerFreqHz,
+        tuningOffsetHz: 0,
+        detections: [],
+        selectedId: null,
+        sceneLabel: { name: file.name, tag: 'capture', from: 'console' },
+        sceneLoaded: true,
+        revealTruth: false,
+        captureSheetOpen: false,
+        captureDrop: null,
+        view: 'console',
+      });
+      if (!get().running) await get().start();
+    },
+
+    stopCapture: () => {
+      engine.closeCapture();
+      set({ capture: null, detections: [], selectedId: null });
+      // Back to the simulator, on the scenario that was loaded before.
+      get().loadScenario(get().scenarioId);
+    },
 
     toggleRecording: () => {
       const rec = get().recording;

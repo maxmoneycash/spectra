@@ -8,6 +8,7 @@ import { CtfView } from './ctf/CtfView';
 import { TopBar } from './ui/TopBar';
 import { SpectrumWaterfall } from './ui/SpectrumWaterfall';
 import { StartOverlay } from './ui/StartOverlay';
+import { CaptureSheet, CaptureDropZone } from './ui/CaptureSheet';
 import { OnAirCaption } from './ui/OnAirCaption';
 import { GuideCoach } from './guide/GuideCoach';
 import { SignalCard } from './ui/SignalCard';
@@ -108,13 +109,14 @@ export function App() {
             {view === 'console' ? (
               <div className="flex h-full min-h-0 flex-col">
                 <div className="grid min-h-0 min-w-0 flex-1 grid-cols-[minmax(0,1fr)_360px] max-lg:grid-cols-[minmax(0,1fr)] xl:grid-cols-[minmax(0,1fr)_380px]">
-                  <div className="relative min-h-0 min-w-0 overflow-hidden bg-stage">
+                  <CaptureDropZone className="relative min-h-0 min-w-0 overflow-hidden bg-stage">
                     <SpectrumWaterfall />
                     <OnAirCaption />
                     <StartOverlay />
                     <SignalCard />
                     <GuideCoach />
-                  </div>
+                    <CaptureSheet />
+                  </CaptureDropZone>
                   <aside
                     aria-label="Inspector"
                     className="flex min-h-0 flex-col border-l border-line bg-background max-lg:hidden"

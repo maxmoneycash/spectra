@@ -16,6 +16,8 @@ import {
   parseSigMFData,
   type SigMFAnnotation,
 } from '../recording/sigmf';
+import { CaptureStream } from '../capture/stream';
+import type { CaptureMeta } from '../capture/decode';
 
 type Listeners = {
   spectrum: (db: Float32Array, centerFreqHz: number, binHz: number) => void;
@@ -28,6 +30,8 @@ type Listeners = {
   audio: (pcm: Float32Array) => void;
   chanIQ: (re: Float32Array, im: Float32Array) => void;
   tx: (e: TxEvent) => void;
+  /** Capture playback position, ~8 Hz while a file plays. */
+  capture: (s: { posSec: number; totalSec: number }) => void;
 };
 
 /**
@@ -58,6 +62,7 @@ export class SpectraEngine {
     recordingSaved: new Set(),
     audio: new Set(),
     chanIQ: new Set(),
+    capture: new Set(),
     tx: new Set(),
   };
 
@@ -108,6 +113,14 @@ export class SpectraEngine {
         break;
       case 'recording':
         this.finishRecording(msg.iq, msg.centerFreqHz, msg.durationSec);
+        break;
+      case 'playNeed':
+        void this.capture?.feed();
+        break;
+      case 'playPos':
+        if (this.capture) {
+          this.emit('capture', { posSec: this.capture.posSec(msg.consumed), totalSec: this.capture.totalSec });
+        }
         break;
       case 'tx': {
         const { type: _t, ...e } = msg;
@@ -271,6 +284,25 @@ export class SpectraEngine {
     const { re, im } = parseSigMFData(buf);
     this.centerFreqHz = centerFreqHz;
     this.send({ type: 'playIQ', re, im, centerFreqHz }, [re.buffer, im.buffer]);
+  }
+
+  private capture: CaptureStream | null = null;
+
+  /** Stream a capture file in place of the simulator. Resolves once the worker has its first chunks. */
+  async openCapture(file: File, meta: CaptureMeta): Promise<{ totalSec: number }> {
+    this.closeCapture();
+    const s = new CaptureStream(file, meta, (m, t) => this.send(m, t));
+    this.capture = s;
+    this.centerFreqHz = meta.centerFreqHz;
+    this.lastGroundTruth = [];
+    await s.open();
+    return { totalSec: s.totalSec };
+  }
+
+  closeCapture(): void {
+    if (!this.capture) return;
+    this.capture.close();
+    this.capture = null;
   }
 
   stopPlayback(): void {

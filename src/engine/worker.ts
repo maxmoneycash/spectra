@@ -8,6 +8,7 @@ import { classify } from '../id/classifier';
 import { MorseDecoder } from '../sim/morse';
 import { CwKeyer } from '../dsp/cwKeyer';
 import { interleave } from '../recording/sigmf';
+import { StreamResampler } from '../dsp/resample';
 import { setVoiceBank, onTx } from '../sim/voicebank';
 import {
   SAMPLE_RATE,
@@ -62,8 +63,74 @@ function sendGroundTruth() {
   post({ type: 'groundTruth', list: gt });
 }
 
+/**
+ * Streamed capture playback. Input arrives in native-rate chunks on demand;
+ * a resampler fills a small FIFO at the engine rate, and each block takes
+ * BLOCK_SIZE from it. Underrun plays silence rather than stalling — the
+ * next chunk is already on its way.
+ */
+interface CapturePlay {
+  rate: number;
+  rs: StreamResampler;
+  queue: { re: Float32Array; im: Float32Array }[];
+  /** Input samples queued but not yet resampled. */
+  qIn: number;
+  /** Input samples consumed so far (the main thread turns this into a position). */
+  consumed: number;
+  fifoRe: Float32Array;
+  fifoIm: Float32Array;
+  fifoLen: number;
+  tmpRe: Float32Array;
+  tmpIm: Float32Array;
+  ticks: number;
+}
+let play: CapturePlay | null = null;
+
+function fillFromCapture(p: CapturePlay) {
+  while (p.fifoLen < BLOCK_SIZE && p.queue.length) {
+    const c = p.queue.shift()!;
+    const n = c.re.length;
+    const cap = p.rs.outCapacity(n);
+    if (p.tmpRe.length < cap) {
+      p.tmpRe = new Float32Array(cap);
+      p.tmpIm = new Float32Array(cap);
+    }
+    const k = p.rs.process(c.re, c.im, n, p.tmpRe, p.tmpIm);
+    if (p.fifoLen + k > p.fifoRe.length) {
+      const grow = (p.fifoLen + k) * 2;
+      const nr = new Float32Array(grow);
+      const ni = new Float32Array(grow);
+      nr.set(p.fifoRe.subarray(0, p.fifoLen));
+      ni.set(p.fifoIm.subarray(0, p.fifoLen));
+      p.fifoRe = nr;
+      p.fifoIm = ni;
+    }
+    p.fifoRe.set(p.tmpRe.subarray(0, k), p.fifoLen);
+    p.fifoIm.set(p.tmpIm.subarray(0, k), p.fifoLen);
+    p.fifoLen += k;
+    p.qIn -= n;
+    p.consumed += n;
+  }
+  const take = Math.min(BLOCK_SIZE, p.fifoLen);
+  bandRe.set(p.fifoRe.subarray(0, take));
+  bandIm.set(p.fifoIm.subarray(0, take));
+  if (take < BLOCK_SIZE) {
+    bandRe.fill(0, take);
+    bandIm.fill(0, take);
+  }
+  p.fifoRe.copyWithin(0, take, p.fifoLen);
+  p.fifoIm.copyWithin(0, take, p.fifoLen);
+  p.fifoLen -= take;
+  // Keep about three blocks of input ahead.
+  const need = (3 * BLOCK_SIZE * p.rate) / SAMPLE_RATE;
+  if (p.qIn < need) post({ type: 'playNeed', queuedSamples: p.qIn });
+  if (++p.ticks % 8 === 0) post({ type: 'playPos', consumed: p.consumed });
+}
+
 function generateBlock() {
-  if (playRe && playIm) {
+  if (play) {
+    fillFromCapture(play);
+  } else if (playRe && playIm) {
     const n = playRe.length;
     for (let i = 0; i < BLOCK_SIZE; i++) {
       const p = (playPos + i) % n;
@@ -216,6 +283,7 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
       break;
     case 'loadScene': {
       playRe = playIm = null;
+      play = null;
       scene = new Scene(
         { sampleRate: SAMPLE_RATE, centerFreqHz: msg.scene.centerFreqHz, noiseSigma: msg.scene.noiseSigma },
         BLOCK_SIZE,
@@ -309,6 +377,41 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
       break;
     case 'stopPlayback':
       playRe = playIm = null;
+      break;
+    case 'playOpen': {
+      playRe = playIm = null;
+      play = {
+        rate: msg.sampleRate,
+        rs: new StreamResampler(msg.sampleRate, SAMPLE_RATE),
+        queue: [],
+        qIn: 0,
+        consumed: 0,
+        fifoRe: new Float32Array(BLOCK_SIZE * 4),
+        fifoIm: new Float32Array(BLOCK_SIZE * 4),
+        fifoLen: 0,
+        tmpRe: new Float32Array(0),
+        tmpIm: new Float32Array(0),
+        ticks: 0,
+      };
+      centerFreqHz = msg.centerFreqHz;
+      tracker.reset();
+      chirper.reset();
+      morseDecoder.reset();
+      cwKeyer.reset();
+      lastMorse = '';
+      specAvg.fill(-140);
+      // No simulator behind a capture: nothing is known about its emitters.
+      post({ type: 'groundTruth', list: [] });
+      break;
+    }
+    case 'playChunk':
+      if (play) {
+        play.queue.push({ re: msg.re, im: msg.im });
+        play.qIn += msg.re.length;
+      }
+      break;
+    case 'playStop':
+      play = null;
       break;
   }
 };

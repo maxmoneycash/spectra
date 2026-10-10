@@ -92,6 +92,7 @@ function Card({
   const mode = useStore((s) => s.mode);
   const setMode = useStore((s) => s.setMode);
   const identify = useStore((s) => s.identify);
+  const capture = useStore((s) => s.capture);
   const idFeedback = useStore((s) => s.idFeedback);
   const onAir = useStore((s) => s.onAir);
   const [more, setMore] = useState(false);
@@ -311,8 +312,15 @@ function Card({
         </>
       )}
 
+      {/* A capture has no answer key, so there is nothing to grade against. */}
+      {capture && (
+        <p className="mono-feats mt-3 border-t border-line pt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+          Unattributed capture · classifier only
+        </p>
+      )}
+
       {/* The analyst's call: confirm or correct the machine. */}
-      {track.candidates.length > 0 && (
+      {!capture && track.candidates.length > 0 && (
         <div className="mt-3 border-t border-line pt-3">
           <p className="mono-feats font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
             Confirm the ID

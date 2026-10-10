@@ -81,6 +81,10 @@ export type ToWorker =
   | { type: 'stopRecording' }
   | { type: 'playIQ'; re: Float32Array; im: Float32Array; centerFreqHz: number }
   | { type: 'stopPlayback' }
+  /** Streamed capture: open with its native rate, then feed chunks on demand. */
+  | { type: 'playOpen'; sampleRate: number; centerFreqHz: number; totalSamples: number }
+  | { type: 'playChunk'; re: Float32Array; im: Float32Array }
+  | { type: 'playStop' }
   | { type: 'voiceBank'; sets: Record<string, BankSetMsg> };
 
 // --- Worker -> Main ---
@@ -93,4 +97,8 @@ export type FromWorker =
   | { type: 'groundTruth'; list: GroundTruth[] }
   | { type: 'morse'; text: string }
   | { type: 'recording'; iq: Float32Array; centerFreqHz: number; durationSec: number }
+  /** The capture queue is running low: send the next chunk. */
+  | { type: 'playNeed'; queuedSamples: number }
+  /** Input samples consumed so far (the main thread knows the loop length). */
+  | { type: 'playPos'; consumed: number }
   | ({ type: 'tx' } & TxEvent);

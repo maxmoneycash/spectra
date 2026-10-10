@@ -14,6 +14,7 @@ import {
   IdCard,
   MoreHorizontal,
 } from 'lucide-react';
+import { FolderOpen } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { IconButton } from './controls';
 
@@ -84,6 +85,8 @@ export function TopBar({
   const tuneStep = useStore((s) => s.tuneStep);
   const recording = useStore((s) => s.recording);
   const toggleRecording = useStore((s) => s.toggleRecording);
+  const capture = useStore((s) => s.capture);
+  const setCaptureSheetOpen = useStore((s) => s.setCaptureSheetOpen);
   const revealTruth = useStore((s) => s.revealTruth);
   const toggleReveal = useStore((s) => s.toggleReveal);
   const scenarioId = useStore((s) => s.scenarioId);
@@ -193,6 +196,13 @@ export function TopBar({
             className={recording ? 'animate-pulse' : ''}
           >
             <Circle className={cn('size-4', recording && 'fill-current')} strokeWidth={1.75} />
+          </IconButton>
+          <IconButton
+            label={capture ? `Playing ${capture.name} — manage` : 'Load a capture file (SigMF, cf32, cs16, cu8)'}
+            onClick={() => setCaptureSheetOpen(true)}
+            active={!!capture}
+          >
+            <FolderOpen className="size-4" strokeWidth={1.75} />
           </IconButton>
           <IconButton
             label="Reveal ground truth"
