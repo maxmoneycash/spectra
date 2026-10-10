@@ -161,7 +161,7 @@ export function score(solved: Record<string, Solve>) {
  * which challenges fell and how hard they were, and never the answers.
  * Category order is stable so two people's grids are comparable.
  */
-export function shareText(solved: Record<string, Solve>, origin?: string): string {
+export function shareText(solved: Record<string, Solve>, origin: string | undefined, rank: string): string {
   const s = score(solved);
   const grid = CHALLENGES.map((c) => {
     const hit = solved[c.id];
@@ -176,18 +176,9 @@ export function shareText(solved: Record<string, Solve>, origin?: string): strin
   return [
     `SPECTRA RF CTF — ${s.points}/${s.totalPoints}`,
     ...rows,
-    `${rankFor(s.points)} · ${s.solvedCount}/${s.total} flags`,
+    `${rank} · ${s.solvedCount}/${s.total} flags`,
     `${base}/?view=ctf`,
   ].join('\n');
 }
 
 /** Operator rank, for the share card and a bit of pull up the ladder. */
-export function rankFor(points: number): string {
-  const pct = TOTAL_POINTS ? points / TOTAL_POINTS : 0;
-  if (pct >= 1) return 'Signals Officer';
-  if (pct >= 0.75) return 'Spectrum Analyst';
-  if (pct >= 0.5) return 'Operator';
-  if (pct >= 0.25) return 'Apprentice';
-  if (points > 0) return 'Listener';
-  return 'Unlicensed';
-}

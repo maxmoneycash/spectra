@@ -35,6 +35,38 @@ function load(): Persisted {
   return { progress: {}, pool: 'technician' };
 }
 
+/** One sat practice exam. Its own key, so the Leitner map keeps its shape. */
+export interface ExamResult {
+  pool: ElementId;
+  correct: number;
+  total: number;
+  passed: boolean;
+  at: number;
+}
+const RESULTS_KEY = 'spectra.exam.results.v1';
+
+function loadResults(): ExamResult[] {
+  try {
+    const raw = JSON.parse(localStorage.getItem(RESULTS_KEY) || 'null');
+    if (Array.isArray(raw)) {
+      return raw.filter(
+        (r): r is ExamResult => !!r && typeof r.at === 'number' && typeof r.correct === 'number' && typeof r.pool === 'string',
+      );
+    }
+  } catch {
+    /* ignore corrupt storage */
+  }
+  return [];
+}
+
+function saveResults(results: ExamResult[]): void {
+  try {
+    localStorage.setItem(RESULTS_KEY, JSON.stringify(results.slice(-50)));
+  } catch {
+    /* quota or private mode */
+  }
+}
+
 /** Narration and mode preferences — separate key so progress keeps its shape. */
 export type StudyMode = 'quiz' | 'listen';
 interface Prefs {
@@ -171,6 +203,8 @@ export interface ExamState {
   correct: number;
   /** Non-null while a practice exam is in progress or being reviewed. */
   session: ExamSession | null;
+  /** Sat practice exams, oldest first. */
+  results: ExamResult[];
   /** Study feed: restrict to questions previously answered wrong. */
   missedOnly: boolean;
 
@@ -236,6 +270,7 @@ export const useExam = create<ExamState>((set, get) => {
     answered: 0,
     correct: 0,
     session: null,
+    results: loadResults(),
     missedOnly: false,
 
     async loadPool(id) {
@@ -356,11 +391,13 @@ export const useExam = create<ExamState>((set, get) => {
       // question resurfaces in the study feed straight away.
       const progress: ProgressMap = { ...st.progress };
       const now = Date.now();
+      let correct = 0;
       for (const id of s0.ids) {
         const q = st.byId[id];
         if (!q) continue;
         const chosen = s0.answers[id];
         const right = chosen === q.c;
+        if (right) correct++;
         const prev = progress[id];
         progress[id] = {
           box: right ? Math.min(4, (prev?.box ?? 0) + 1) : 0,
@@ -369,12 +406,19 @@ export const useExam = create<ExamState>((set, get) => {
           at: now,
         };
       }
+      const meta = poolMeta(st.pool);
+      const results = [
+        ...st.results,
+        { pool: st.pool, correct, total: meta.examQuestions, passed: correct >= meta.passing, at: now },
+      ];
       set({
         session: { ...s0, finishedAt: now },
         progress,
+        results,
         queue: rebuild(st.questions, st.subFilter, progress, st.missedOnly),
       });
       persist({ progress, pool: st.pool });
+      saveResults(results);
     },
 
     exitExam() {

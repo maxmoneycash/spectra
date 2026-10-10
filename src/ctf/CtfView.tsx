@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ArrowRight, Check, GraduationCap, Flag, RotateCcw, Radio, Trophy, Share2, Unlock } from 'lucide-react';
-import { useCtf, score, rankFor, shareText } from './store';
+import { useCtf, score, shareText } from './store';
+import { useProgression } from '../progression/progression';
 import { CHALLENGES, CATEGORY_LABEL, challengeById, toSceneSpec, type Challenge } from './challenges';
 import { useStore } from '../store/store';
 import { DEFAULT_SQUELCH_DB } from '../store/modes';
@@ -263,11 +264,11 @@ export function CtfView() {
   const setView = useStore((s) => s.setView);
 
   const s = useMemo(() => score(solved), [solved]);
-  const rank = rankFor(s.points);
+  const { rank } = useProgression();
   const [copied, setCopied] = useState(false);
 
   const onShare = async () => {
-    const text = shareText(solved);
+    const text = shareText(solved, undefined, rank);
     try {
       // Native share on phones; clipboard everywhere else.
       if (navigator.share) await navigator.share({ text });

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { CHALLENGES, TOTAL_POINTS } from './challenges';
-import { checkFlag, normalise, score, rankFor, shareText, type Solve } from './store';
+import { checkFlag, normalise, score, shareText, type Solve } from './store';
 import { encodeMorse, MorseDecoder, MORSE } from '../sim/morse';
 
 const solve = (points: number, hintsUsed = 0): Solve => ({ at: 0, points, hintsUsed });
@@ -58,16 +58,12 @@ describe('scoring', () => {
     expect(s.totalPoints).toBe(TOTAL_POINTS);
   });
 
-  it('ranks by share of the total, not raw points', () => {
-    expect(rankFor(0)).toBe('Unlicensed');
-    expect(rankFor(TOTAL_POINTS)).toBe('Signals Officer');
-    expect(rankFor(Math.round(TOTAL_POINTS * 0.5))).toBe('Operator');
-  });
+  // Rank moved to src/progression/rank.ts — one ladder for the card and the CTF.
 });
 
 describe('share text', () => {
   const built = () =>
-    shareText({ [CHALLENGES[0].id]: solve(100), [CHALLENGES[1].id]: solve(170, 1) }, 'https://x.test');
+    shareText({ [CHALLENGES[0].id]: solve(100), [CHALLENGES[1].id]: solve(170, 1) }, 'https://x.test', 'Listener');
 
   it('never leaks a flag or a challenge name', () => {
     const t = built();

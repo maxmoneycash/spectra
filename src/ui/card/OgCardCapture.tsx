@@ -28,6 +28,7 @@ export function OgCardCapture() {
             missions: 5,
             coursePct: 64,
             since: new Date('2026-07-18'),
+            rank: 'Analyst',
             qr: im,
           });
           setReady(true);

@@ -8,20 +8,10 @@ export interface CardData {
   missions: number;
   coursePct: number;
   since: Date;
+  /** The one app-wide rank (`src/progression`), so the card can't disagree with Tasking. */
+  rank: string;
   /** QR code as an already-loaded image (drawn bottom-right). */
   qr: HTMLImageElement | null;
-}
-
-export const RANKS: [min: number, rank: string][] = [
-  [10, 'SPECTRUM SPECIALIST'],
-  [6, 'ANALYST'],
-  [3, 'OPERATOR'],
-  [0, 'LISTENER'],
-];
-
-export function rankFor(signals: number): string {
-  for (const [min, rank] of RANKS) if (signals >= min) return rank;
-  return 'LISTENER';
 }
 
 const INK = '#18181b';
@@ -178,7 +168,7 @@ export function renderOperatorCard(canvas: HTMLCanvasElement, d: CardData): void
 
   // rank pill
   y += 84;
-  const rank = rankFor(d.signals);
+  const rank = d.rank.toUpperCase();
   ctx.font = `600 19px ${MONO}`;
   const rw = ctx.measureText(rank).width + 36;
   ctx.fillStyle = EMBER;
@@ -253,7 +243,7 @@ export function renderOgCard(canvas: HTMLCanvasElement, d: CardData): void {
   ctx.fillText(d.name || 'Samuel Morse', X, y);
 
   y += 66;
-  const rank = rankFor(d.signals);
+  const rank = d.rank.toUpperCase();
   ctx.font = `600 17px ${MONO}`;
   const rw = ctx.measureText(rank).width + 30;
   ctx.fillStyle = EMBER;

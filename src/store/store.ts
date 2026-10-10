@@ -24,20 +24,37 @@ export interface OperatorRecord {
   since: number;
   identified: SignalKind[];
   missions: string[];
+  /** When each mission / signal was first logged — feeds the Station log. Older saves lack these. */
+  missionsAt: Record<string, number>;
+  identifiedAt: Record<string, number>;
 }
 
 const OPERATOR_KEY = 'spectra.operator.v1';
+
+function timesOf(raw: unknown): Record<string, number> {
+  const out: Record<string, number> = {};
+  if (raw && typeof raw === 'object') {
+    for (const [k, v] of Object.entries(raw as Record<string, unknown>)) if (typeof v === 'number') out[k] = v;
+  }
+  return out;
+}
 
 function loadOperator(): OperatorRecord {
   try {
     const raw = JSON.parse(localStorage.getItem(OPERATOR_KEY) || 'null');
     if (raw && Array.isArray(raw.identified) && Array.isArray(raw.missions)) {
-      return { since: raw.since ?? Date.now(), identified: raw.identified, missions: raw.missions };
+      return {
+        since: raw.since ?? Date.now(),
+        identified: raw.identified,
+        missions: raw.missions,
+        missionsAt: timesOf(raw.missionsAt),
+        identifiedAt: timesOf(raw.identifiedAt),
+      };
     }
   } catch {
     /* ignore */
   }
-  return { since: Date.now(), identified: [], missions: [] };
+  return { since: Date.now(), identified: [], missions: [], missionsAt: {}, identifiedAt: {} };
 }
 
 function saveOperator(rec: OperatorRecord): void {
@@ -438,7 +455,11 @@ export const useStore = create<AppState>((set, get) => {
         if (!cur.includes(kind)) set({ correctlyIdentified: [...cur, kind] });
         const op = get().operator;
         if (!op.identified.includes(kind)) {
-          const next = { ...op, identified: [...op.identified, kind] };
+          const next = {
+            ...op,
+            identified: [...op.identified, kind],
+            identifiedAt: { ...op.identifiedAt, [kind]: Date.now() },
+          };
           saveOperator(next);
           set({ operator: next });
         }
@@ -519,7 +540,7 @@ export const useStore = create<AppState>((set, get) => {
     recordMission: (id) => {
       const op = get().operator;
       if (op.missions.includes(id)) return;
-      const next = { ...op, missions: [...op.missions, id] };
+      const next = { ...op, missions: [...op.missions, id], missionsAt: { ...op.missionsAt, [id]: Date.now() } };
       saveOperator(next);
       set({ operator: next });
     },

@@ -9,6 +9,8 @@ const KEY = 'spectra.guide.v1';
 
 interface Saved {
   completed: string[];
+  /** When each lesson was finished — feeds the Station log. Older saves lack it. */
+  completedAt: Record<string, number>;
 }
 
 function load(): Saved {
@@ -16,12 +18,17 @@ function load(): Saved {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const p = JSON.parse(raw) as Partial<Saved>;
-      return { completed: Array.isArray(p.completed) ? p.completed.filter((x) => typeof x === 'string') : [] };
+      const completed = Array.isArray(p.completed) ? p.completed.filter((x) => typeof x === 'string') : [];
+      const completedAt: Record<string, number> = {};
+      if (p.completedAt && typeof p.completedAt === 'object') {
+        for (const [k, v] of Object.entries(p.completedAt)) if (typeof v === 'number') completedAt[k] = v;
+      }
+      return { completed, completedAt };
     }
   } catch {
     /* private mode or corrupt — start fresh */
   }
-  return { completed: [] };
+  return { completed: [], completedAt: {} };
 }
 
 function save(s: Saved) {
@@ -39,6 +46,7 @@ interface GuideState {
   /** Intercept count when the lesson began, so "log one" means a new one. */
   baseIntercepts: number;
   completed: string[];
+  completedAt: Record<string, number>;
   /** Lesson that just finished — drives the completion card. */
   finishedId: string | null;
 
@@ -81,11 +89,14 @@ function steer(lessonId: string, step: number) {
   if (st.panel && s.panel !== st.panel) s.setPanel(st.panel);
 }
 
+const saved = load();
+
 export const useGuide = create<GuideState>((set, get) => ({
   lessonId: null,
   step: 0,
   baseIntercepts: 0,
-  completed: load().completed,
+  completed: saved.completed,
+  completedAt: saved.completedAt,
   finishedId: null,
 
   start(id) {
@@ -114,8 +125,10 @@ export const useGuide = create<GuideState>((set, get) => ({
       return;
     }
     const done = completed.includes(lesson.id) ? completed : [...completed, lesson.id];
-    save({ completed: done });
-    set({ lessonId: null, step: 0, completed: done, finishedId: lesson.id });
+    // First completion keeps its time; a repeat doesn't rewrite history.
+    const completedAt = { ...get().completedAt, [lesson.id]: get().completedAt[lesson.id] ?? Date.now() };
+    save({ completed: done, completedAt });
+    set({ lessonId: null, step: 0, completed: done, completedAt, finishedId: lesson.id });
   },
 
   quit: () => set({ lessonId: null, step: 0 }),
@@ -134,7 +147,7 @@ export const useGuide = create<GuideState>((set, get) => ({
   },
 
   reset() {
-    save({ completed: [] });
-    set({ completed: [], lessonId: null, step: 0, finishedId: null });
+    save({ completed: [], completedAt: {} });
+    set({ completed: [], completedAt: {}, lessonId: null, step: 0, finishedId: null });
   },
 }));

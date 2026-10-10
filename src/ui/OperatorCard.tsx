@@ -4,7 +4,8 @@ import { Check, Copy, Download, Link2, Share2 } from 'lucide-react';
 import { useStore } from '../store/store';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { renderOperatorCard, rankFor, type CardData } from './card/renderOperatorCard';
+import { renderOperatorCard, type CardData } from './card/renderOperatorCard';
+import { useProgression } from '../progression/progression';
 import { cn } from '@/lib/utils';
 
 const SITE_URL = 'https://spectra-one.vercel.app';
@@ -45,6 +46,7 @@ export function OperatorCard() {
   const open = useStore((s) => s.cardOpen);
   const setOpen = useStore((s) => s.setCardOpen);
   const operator = useStore((s) => s.operator);
+  const { rank } = useProgression();
 
   const [callsign, setCallsign] = useState('M0RSE');
   const [name, setName] = useState('');
@@ -62,9 +64,10 @@ export function OperatorCard() {
       missions: operator.missions.length,
       coursePct: coursePct(),
       since: new Date(operator.since),
+      rank,
       qr,
     }),
-    [callsign, name, grid, operator, qr],
+    [callsign, name, grid, operator, rank, qr],
   );
 
   const dataRef = useRef(data);
@@ -125,7 +128,7 @@ export function OperatorCard() {
         <div className="border-b border-line px-4 py-3">
           <DialogTitle className="text-[14px] font-medium">Your operator card</DialogTitle>
           <p className="mt-0.5 text-[11px] text-muted-foreground">
-            Rank: {rankFor(operator.identified.length).toLowerCase()} — earned inside the
+            Rank: {rank.toLowerCase()} — earned inside the
             simulator. Share it anywhere.
           </p>
         </div>
