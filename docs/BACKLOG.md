@@ -440,6 +440,6 @@ Still open from the "components, borders, buttons, cards, animations" ask:
 ## Open — capture playback, seen in Arc 2026-10-09
 
 - **cu8 floor narrows measured bandwidth → WFM reads as PSK.** A First Light render at 2.4 MSPS cu8 showed the three FM stations at ~72 kHz (live sim: ~130 kHz), classified PSK Burst at ~34%. The 8-bit quantisation floor sits where the live sim's skirts still show. Real rtl_sdr files will do the same. Options: measure bandwidth at a fixed depth below the peak (−20 dB) rather than above the floor; or let a wide continuous signal with no symbol structure fall to FM. Forensics missions render ci16 to sidestep it; user cu8 files still hit it.
-- **Stations rows overlapping** (two rows drawn on top of each other at 98.4657 / 98.1947) when the list reorders under heavy churn — layout animation glitch in the Stations panel.
+- **Stations rows overlapping** — FIXED 2026-10-10. Measured in Arc: every overlap was two rows mid-swap in opposite directions (a `layout="position"` reorder), triggered because the SNR sort flipped whenever a bursty emitter keyed. The list is now in arrival order (`sig-N` id order) like a log, with no position animation: 20 overlapping pairs → 0 over the same 10 s ISM sample.
 - **Marker labels crowd** at the top of the spectrum with 13 tracks on a 1.15 MHz span; placement avoids off-screen and left-of-louder cases but not density. Consider hiding labels below an SNR rank beyond N.
 - Loop-seam click **fixed**: `seamTaper` in `src/capture/stream.ts` (1 ms raised-cosine at both ends of the window), unit-tested.

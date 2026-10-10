@@ -56,7 +56,6 @@ function DetRow({ track }: { track: TrackMsg }) {
 
   return (
     <motion.div
-      layout="position"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2 }}
@@ -132,7 +131,13 @@ export function DetectionsPanel() {
   const detections = useStore((s) => s.detections);
   const idFeedback = useStore((s) => s.idFeedback);
   const running = useStore((s) => s.running);
-  const sorted = [...detections].sort((a, b) => b.snrDb - a.snrDb);
+  // Arrival order, like a log: a row never moves once listed. Sorting by SNR
+  // reordered the list every time a bursty emitter keyed up or down, and two
+  // rows swapping places have to cross — measured in Arc, every "overlapping
+  // rows" sighting was exactly that mid-swap frame. Track ids are `sig-N`
+  // from a monotonic counter, so numeric id order is first-seen order.
+  const seq = (id: string) => Number(id.slice(id.lastIndexOf('-') + 1));
+  const sorted = [...detections].sort((a, b) => seq(a.id) - seq(b.id));
 
   return (
     <div>
