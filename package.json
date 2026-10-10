@@ -1,6 +1,12 @@
 {
   "name": "spectra",
   "private": true,
+  "license": "MIT",
+  "homepage": "https://spectra-one.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/maxmoneycash/spectra"
+  },
   "version": "0.1.0",
   "type": "module",
   "description": "A browser-based software-defined radio lab: live RF signal-environment simulation, a real DSP receiver, emission detection, signal identification, and training scenarios — with zero hardware.",

@@ -1,5 +1,10 @@
 # SPECTRA — Expansion Roadmap
 
+> **Historical.** Written July 2026, before the project refocused on teaching
+> radio (guided walkthroughs, the Tasking CTF, exam prep). Phases 2–4 below
+> were not pursued. The current state is described in the [README](../README.md)
+> and the open work in [BACKLOG.md](BACKLOG.md).
+
 > Status board for the four-phase expansion. Research synthesis from five reference repos lives here so the next session can pick up cold.
 
 - [x] **Phase 1 — RF Academy (web, this repo).** Zoomable log-spectrum explorer (100 kHz–10 GHz) with LOD tiers, band inspector, five live concept lessons, and "Tune the simulator here" handoffs into scenarios. Shipped in `src/academy/`.

@@ -1,5 +1,10 @@
 # SPECTRA — Product Brief
 
+> **Historical.** Written July 2026 for the original "SDR lab" framing. The
+> product has since refocused on teaching radio: see the [README](../README.md)
+> for what it is now and [GROWTH.md](GROWTH.md) for the current audience
+> thinking. Kept for the reasoning behind the hardware-free thesis.
+
 > A software-defined radio lab in the browser. Live RF signal simulation, a real DSP receiver, automatic emission detection and identification, SigMF recording, and mission-based training — with **zero hardware**.
 
 ## The problem

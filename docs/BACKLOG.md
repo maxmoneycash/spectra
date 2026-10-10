@@ -53,8 +53,10 @@ competitor. Only worth building once set one has an audience.
 
 ## Standing quality bar
 
-Every increment: `npx tsc --noEmit`, `npx vitest run`, `npm run build`, plus a
-real browser check (`scripts/qa-*.mjs`) before commit. Ship to production and
+Every increment: `./node_modules/.bin/tsc --noEmit`, `./node_modules/.bin/vitest run`,
+`npm run build`, plus a real browser check through Playwriter on Arc (the
+`scripts/qa-*.mjs` drivers launch a browser directly, which the local browser
+policy blocks) before commit. Ship to production and
 verify against the live URL, not just localhost.
 
 ---
