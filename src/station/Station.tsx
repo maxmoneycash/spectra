@@ -10,7 +10,6 @@ import type { ElementId } from '../exam/types';
 import { useProgression, type ExamStanding, type Progression } from '../progression/progression';
 import type { LogEntry, NextUp } from '../progression/rank';
 import { GroupLabel, IconButton } from '@/ui/controls';
-import { UtcClock } from '@/ui/shell/UtcClock';
 import { BottomSheet } from '@/ui/BottomSheet';
 import { tick } from '@/ui/kit/haptics';
 import { cn } from '@/lib/utils';
@@ -22,9 +21,9 @@ function stamp(at: number): string {
 }
 
 const PRIMARY =
-  'inline-flex min-h-10 items-center gap-2 rounded-lg border border-foreground bg-foreground px-3 text-[12px] font-medium text-background transition-opacity hover:opacity-85';
+  'inline-flex min-h-11 items-center gap-2 rounded-lg border border-foreground bg-foreground px-3.5 text-[12px] font-medium text-background transition-opacity hover:opacity-85 sm:min-h-10';
 const SECONDARY =
-  'inline-flex min-h-10 items-center gap-2 rounded-lg border border-border px-3 text-[12px] text-muted-foreground transition-colors hover:text-foreground';
+  'inline-flex min-h-11 items-center gap-2 rounded-lg border border-border px-3.5 text-[12px] text-muted-foreground transition-colors hover:text-foreground sm:min-h-10';
 
 /**
  * The board: what to do next, how ready you are, what you've done. Every
@@ -53,12 +52,9 @@ export function Station() {
                 identified
               </p>
             </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <UtcClock className="text-[12px] text-foreground" />
-              <IconButton label="Operator card" onClick={() => setCardOpen(true)}>
-                <IdCard />
-              </IconButton>
-            </div>
+            <IconButton label="Operator card" onClick={() => setCardOpen(true)}>
+              <IdCard />
+            </IconButton>
           </div>
         </header>
 
@@ -129,7 +125,8 @@ function NextCard({
       const n = String(LESSONS.findIndex((x) => x.id === l.id) + 1).padStart(2, '0');
       eyebrow = `Tasking ${n} · ${l.minutes} min`;
       title = l.title;
-      body = `Teaches ${l.skill}. ${l.steps.length} steps on the live receiver; each confirms itself when the receiver shows you did it.`;
+      const skill = l.skill.charAt(0).toLowerCase() + l.skill.slice(1);
+      body = `Teaches ${skill}. ${l.steps.length} steps on the live receiver; each confirms itself when the receiver shows you did it.`;
       action = (
         <button
           className={PRIMARY}
@@ -230,7 +227,8 @@ function Readiness({ p, setView }: { p: Progression; setView: (v: 'academy' | 'e
       key: 'exam',
       label: `Exam · ${e.name}`,
       value: `${e.predicted} / ${e.total}`,
-      sub: e.passedPractice ? `Passed · best ${e.best?.correct ?? e.predicted}` : `Pass ${e.passing} · likely ${e.low}–${e.high}`,
+      // The likely range lives in the NEXT card; the cell is too narrow on a phone.
+      sub: e.passedPractice ? `Passed · best ${e.best?.correct ?? e.predicted}` : `Pass mark ${e.passing}`,
       pct: e.total ? (e.predicted / e.total) * 100 : 0,
       view: 'exam',
       icon: ClipboardCheck,
