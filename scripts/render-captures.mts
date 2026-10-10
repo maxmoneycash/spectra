@@ -15,6 +15,8 @@ import { SAMPLE_RATE, BLOCK_SIZE } from '../src/engine/protocol';
 import { challengeById, toSceneSpec as missionSpec } from '../src/ctf/challenges';
 import { scenarioById, toSceneSpec as scenarioSpec } from '../src/scenarios/scenarios';
 import { ENCODE_SCALE, encodeSamples, type CaptureDatatype } from '../src/capture/decode';
+import { setVoiceBank } from '../src/sim/voicebank';
+import { syntheticBank } from '../src/test/detectHarness';
 
 function arg(name: string, dflt: string): string {
   const i = process.argv.indexOf(`--${name}`);
@@ -36,6 +38,11 @@ if (!mission && !scenario) {
 const spec = mission ? missionSpec(mission) : scenarioSpec(scenario!);
 const name = mission ? mission.name : scenario!.name;
 
+// Voice stations modulate from a bank. Without one they render as bare
+// carriers (73 kHz wide, read as PSK), which is how the first captures shipped.
+// Node has no Web Audio to decode the recorded traffic, so use the simulator's
+// procedural voice: same bandwidth, same keying, no transcript.
+setVoiceBank(syntheticBank());
 const scene = new Scene({ sampleRate: rate, centerFreqHz: spec.centerFreqHz, noiseSigma: spec.noiseSigma, seed: 7 }, BLOCK_SIZE);
 for (const cfg of spec.emitters) scene.add(cfg);
 

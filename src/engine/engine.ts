@@ -303,8 +303,18 @@ export class SpectraEngine {
   private capture: CaptureStream | null = null;
   private renders = new Map<string, (r: { blob: Blob; meta: CaptureMeta }) => void>();
 
-  /** Have the worker render a scene to a capture Blob. Progress arrives on the `captureProgress` event. */
-  renderCapture(id: string, scene: SceneSpec, seconds: number, datatype: 'cu8' | 'ci16_le' | 'cf32_le', seed: number) {
+  /**
+   * Have the worker render a scene to a capture Blob. Progress arrives on the
+   * `captureProgress` event.
+   *
+   * Waits for the voice bank first. A mission opened a second after page load
+   * used to race the ~2 MB bank fetch: lose it and every voice station in the
+   * capture rendered as a bare, unmodulated carrier — 73 kHz wide instead of
+   * 138, classified PSK. The bank message and the render message travel the
+   * same port in order, so once `loadVoiceBank` resolves the worker has it.
+   */
+  async renderCapture(id: string, scene: SceneSpec, seconds: number, datatype: 'cu8' | 'ci16_le' | 'cf32_le', seed: number) {
+    await this.loadVoiceBank();
     return new Promise<{ blob: Blob; meta: CaptureMeta }>((resolve) => {
       this.renders.set(id, resolve);
       this.send({ type: 'renderCapture', id, scene, seconds, datatype, seed });

@@ -117,7 +117,11 @@ function audioFor(cfg: EmitterConfig, rng: Rng): { msg: Message; speech: SpeechM
       },
     });
     // Talk radio rides on a music bed; NFM and AM keep their real PTT gaps.
-    const msg = cfg.kind === 'wfm' ? new BedMessage(speech, new MusicMessage(new Rng((cfg.seed ?? 7) ^ 0x5eed))) : speech;
+    // The bed sits near the voice's own level (voice RMS 0.26, bed 0.25 × 0.9):
+    // FM bandwidth follows the audio, so a quiet bed let every pause between
+    // words collapse the station to a 50–70 kHz near-bare carrier that read as
+    // PSK. A real broadcast chain's limiter never lets modulation fall that far.
+    const msg = cfg.kind === 'wfm' ? new BedMessage(speech, new MusicMessage(new Rng((cfg.seed ?? 7) ^ 0x5eed)), 0.9) : speech;
     return { msg, speech };
   }
   return { msg: makeMessage(cfg.message ?? 'voice', rng), speech: null };
