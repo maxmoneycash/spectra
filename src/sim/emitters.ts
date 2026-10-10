@@ -42,6 +42,8 @@ export interface EmitterConfig {
   /** Seconds between transmissions in the conversation, and the rest after it loops. */
   speechGap?: [number, number];
   speechRest?: [number, number];
+  /** Only start transmissions inside a UTC window (`minute % periodMin === offsetMin`, first `onSec` s). */
+  schedule?: { periodMin: number; offsetMin: number; onSec: number };
   devHz?: number;
   depth?: number;
   // Keying / data options
@@ -56,6 +58,12 @@ export interface EmitterConfig {
   sf?: number;
   bwHz?: number;
   symRate?: number;
+  /** PSK: fixed-period bursts instead of random ones (telemetry beacons). */
+  burstPeriodMs?: number;
+  burstMs?: number;
+  /** FHSS: hop on a fixed period, `syncLeadMs` ahead of scene time — lockstep with a periodic emitter. */
+  syncPeriodMs?: number;
+  syncLeadMs?: number;
   // Radar
   priUs?: number;
   pulseUs?: number;
@@ -93,6 +101,7 @@ function audioFor(cfg: EmitterConfig, rng: Rng): { msg: Message; speech: SpeechM
     const speech = new SpeechMessage(setId, rng, {
       gap: cfg.speechGap,
       rest: cfg.speechRest,
+      schedule: cfg.schedule,
       continuous: cfg.kind === 'wfm',
       onLine: (line, set) => {
         const ln = set.lines[line];
@@ -566,11 +575,18 @@ class PSKEmitter extends Emitter {
   private inPacket = false;
   private wait = 0;
   private symbolsLeft = 0;
+  private period = 0;
+  private burstSyms = 0;
+  private nextBurstAt = 0;
 
   constructor(cfg: EmitterConfig, sr: number) {
     super(cfg, sr);
     this.symStep = (cfg.symRate ?? 90_000) / sr;
     this.wait = this.rng.int(Math.round(0.2 * sr), Math.round(0.9 * sr));
+    // Periodic telemetry: a burst every `burstPeriodMs`, `burstMs` long.
+    this.period = cfg.burstPeriodMs ? Math.round((cfg.burstPeriodMs / 1000) * sr) : 0;
+    this.burstSyms = cfg.burstMs ? Math.max(8, Math.round((cfg.burstMs / 1000) * this.symStep * sr)) : 0;
+    this.nextBurstAt = this.period;
   }
 
   private nextSymbol(): void {
@@ -593,9 +609,11 @@ class PSKEmitter extends Emitter {
       if (!this.inPacket) {
         re[i] = 0;
         im[i] = 0;
-        if (--this.wait <= 0) {
+        const due = this.period ? this.t + i >= this.nextBurstAt : --this.wait <= 0;
+        if (due) {
+          if (this.period) this.nextBurstAt += this.period;
           this.inPacket = true;
-          this.symbolsLeft = this.rng.int(200, 800);
+          this.symbolsLeft = this.period ? this.burstSyms : this.rng.int(200, 800);
           this.symAcc = 1;
           this.cr = 0;
           this.ci = 0;
@@ -621,6 +639,9 @@ class PSKEmitter extends Emitter {
 class FHSSEmitter extends Emitter {
   private hops: number[];
   private dwell: number;
+  /** Samples of lead on scene time: a synced link hops just before the emitter it serves. */
+  private lead = 0;
+  private synced = false;
 
   constructor(cfg: EmitterConfig, sr: number) {
     super(cfg, sr);
@@ -631,6 +652,11 @@ class FHSSEmitter extends Emitter {
       this.hops.push(this.freqHz - span / 2 + (span * i) / (channels - 1));
     }
     this.dwell = Math.max(1, Math.round(((cfg.dwellMs ?? 40) / 1000) * sr));
+    if (cfg.syncPeriodMs) {
+      this.synced = true;
+      this.dwell = Math.max(1, Math.round((cfg.syncPeriodMs / 1000) * sr));
+      this.lead = Math.round(((cfg.syncLeadMs ?? 0) / 1000) * sr);
+    }
   }
 
   private hopFreq(index: number): number {
@@ -644,9 +670,10 @@ class FHSSEmitter extends Emitter {
     len: number,
     ctx: EmitterContext,
   ): void {
-    const hopIndex = Math.floor(this.t / this.dwell);
-    // Some hops are silent (transmitter idle), giving a sparse look.
-    const active = (Math.imul(hopIndex + 7, 40503) >>> 0) % 5 !== 0;
+    const hopIndex = Math.floor((this.t + this.lead) / this.dwell);
+    // Some hops are silent (transmitter idle), giving a sparse look. A synced
+    // control link never idles: its whole point is to be there for every burst.
+    const active = this.synced || (Math.imul(hopIndex + 7, 40503) >>> 0) % 5 !== 0;
     const freq = this.hopFreq(hopIndex);
     const offset = freq - ctx.centerFreqHz;
     if (active && Math.abs(offset) <= ctx.sampleRate * 0.5) {

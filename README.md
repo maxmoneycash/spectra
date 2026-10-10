@@ -85,9 +85,15 @@ real rotation schedule, and a wideband sandbox with one of everything.
 
 ## Radio CTF (Tasking)
 
-Sixteen challenges, 3,650 points, five categories.
+Twenty-two challenges, 5,250 points, seven categories.
 
 | Challenge | Category | Points |
+| Cold Case | Forensics | 200 |
+| The Callsign | Forensics | 250 |
+| Repeater Pair | Forensics | 200 |
+| Scheduled Net | Tradecraft | 300 |
+| Pattern of Life | Tradecraft | 300 |
+| Link Pair | Tradecraft | 350 |
 |---|---|---|
 | First Light | Recon | 100 |
 | ISM Census | Recon | 200 |

@@ -155,6 +155,24 @@ export interface SpeechOptions {
  * every transmission ends with a tail longer than that; the last syllable
  * is never clipped by the carrier dropping.
  */
+/**
+ * A net that only meets at scheduled times: on UTC minutes where
+ * `minute % periodMin === offsetMin`, for the first `onSec` seconds. Outside
+ * the window no transmission starts (one already keyed finishes), so the
+ * intercept log only ever holds traffic that was really on the air.
+ */
+export interface SpeechSchedule {
+  periodMin: number;
+  offsetMin: number;
+  onSec: number;
+}
+
+export function inScheduleWindow(s: SpeechSchedule, nowMs: number): boolean {
+  const minute = Math.floor(nowMs / 60_000);
+  const sec = (nowMs % 60_000) / 1000;
+  return minute % s.periodMin === s.offsetMin && sec < s.onSec;
+}
+
 export class SpeechMessage implements Message {
   keyed = false;
   private state: SpeechState = 'gap';
@@ -164,11 +182,14 @@ export class SpeechMessage implements Message {
   private beepPh = 0;
   private readonly gap: [number, number];
   private readonly rest: [number, number];
+  /** Wall clock at creation, advanced in simulated time (like the NCDXF rotation). */
+  private readonly wall0 = Date.now();
+  private elapsed = 0;
 
   constructor(
     private readonly setId: string,
     private readonly rng: Rng,
-    private readonly opts: SpeechOptions = {},
+    private readonly opts: SpeechOptions & { schedule?: SpeechSchedule } = {},
   ) {
     this.gap = opts.gap ?? [0.7, 2.2];
     this.rest = opts.rest ?? [7, 15];
@@ -186,6 +207,8 @@ export class SpeechMessage implements Message {
 
   fill(buf: Float32Array, len: number): void {
     const set = voiceSet(this.setId);
+    this.elapsed += len;
+    const nowMs = this.wall0 + (this.elapsed / MSG_RATE) * 1000;
     for (let i = 0; i < len; i++) {
       switch (this.state) {
         case 'gap':
@@ -194,6 +217,10 @@ export class SpeechMessage implements Message {
           if (--this.counter > 0) break;
           if (!set || set.lines.length === 0) {
             this.counter = MSG_RATE; // bank not here yet — look again in a second
+            break;
+          }
+          if (this.opts.schedule && !inScheduleWindow(this.opts.schedule, nowMs)) {
+            this.counter = MSG_RATE >> 2; // off the schedule — check again in a quarter second
             break;
           }
           this.line = (((this.line + 1) % set.lines.length) + set.lines.length) % set.lines.length;

@@ -2,7 +2,7 @@ import type { EmitterConfig } from '../sim/emitters';
 import type { SceneSpec } from '../engine/protocol';
 import { CLOSED_SQUELCH_DB } from '../store/modes';
 
-export type CtfCategory = 'recon' | 'decode' | 'identify' | 'analysis' | 'intercept' | 'forensics';
+export type CtfCategory = 'recon' | 'decode' | 'identify' | 'analysis' | 'intercept' | 'forensics' | 'tradecraft';
 
 /**
  * A forensics mission is worked from a recording, not a live scene. The
@@ -491,6 +491,74 @@ export const CHALLENGES: Challenge[] = [
     ],
     capture: { seconds: 15, datatype: 'ci16_le', seed: 6003 },
   },
+  // ── Tradecraft: timing, patterns and pairing, not knobs ────────────────────
+  {
+    id: 'scheduled-net',
+    name: 'Scheduled Net',
+    category: 'tradecraft',
+    points: 300,
+    brief:
+      'A directed net meets on the 446.100 repeater every five minutes — on UTC minutes ending in 2 and 7 — and runs for about forty-five seconds. The rest of the time the frequency is dead; a simplex pair chatters lower in the band. Be on frequency when the net opens and name net control.',
+    answerHint: 'A callsign, e.g. KX6ABC',
+    hints: [
+      'The station clock in the header is UTC. Minutes ending in 2 or 7 — :02, :07, :12 …',
+      'Net control opens the net by calling it and giving its own callsign first.',
+      'The Log tab keeps everything you heard, with the time.',
+    ],
+    flagHash: 'a69d73ac07dd04ddcf90bd89df4d2e34',
+    centerFreqHz: 446.0 * MHZ,
+    noiseSigma: 0.03,
+    emitters: [
+      { id: 'net', kind: 'nfm', freqHz: 446.1 * MHZ, powerDb: -5, speech: 'net-70cm', schedule: { periodMin: 5, offsetMin: 2, onSec: 45 }, seed: 701 },
+      { id: 'chat', kind: 'nfm', freqHz: 445.8 * MHZ, powerDb: -8, speech: 'simplex-2m', seed: 702 },
+    ],
+    suggest: 'nfm',
+  },
+  {
+    id: 'pattern-of-life',
+    name: 'Pattern of Life',
+    category: 'tradecraft',
+    points: 300,
+    brief:
+      'Three stations use the 146.760 repeater. Over one full pass of their conversation, which station transmitted the most times? Not the loudest, not the longest — the most. Count keyed transmissions.',
+    answerHint: 'A callsign, e.g. KX6ABC',
+    hints: [
+      'The Log tab counts for you: every transmission heard on the tuned channel, with its callsign.',
+      'A pass of the conversation is about a minute; the counts only make sense after a whole one.',
+      'One station is on the air for half the transmissions.',
+    ],
+    flagHash: 'fd5caf9fa7ec3d49a4bb75624a611ee4',
+    centerFreqHz: 146.5 * MHZ,
+    noiseSigma: 0.03,
+    emitters: [
+      { id: 'rpt', kind: 'nfm', freqHz: 146.76 * MHZ, powerDb: -4, speech: 'repeater-2m', speechRest: [2, 4], seed: 711 },
+      { id: 'spx', kind: 'nfm', freqHz: 146.52 * MHZ, powerDb: -9, speech: 'simplex-2m', seed: 712 },
+    ],
+    suggest: 'nfm',
+  },
+  {
+    id: 'link-pair',
+    name: 'Link Pair',
+    category: 'tradecraft',
+    points: 350,
+    brief:
+      'A UAS telemetry downlink bursts once a second. Two frequency-hopping links share the band: one is the aircraft\'s control uplink and hops in lockstep, a beat ahead of every burst; the other is somebody else\'s. Report the centre frequency of the control link in MHz.',
+    answerHint: 'MHz to 3 decimals, e.g. 2440.250',
+    hints: [
+      'Watch the waterfall, not the Stations list: timing is the tell.',
+      'The paired link hops a fixed 50 ms before each burst, every time. The other hops on its own clock.',
+      'A hopper\'s centre is the middle of the span it hops across.',
+    ],
+    flagHash: '18acc6ec1a661ed4841d90b786bf5053',
+    centerFreqHz: 2_440.0 * MHZ,
+    noiseSigma: 0.04,
+    emitters: [
+      { id: 'tlm', kind: 'psk', freqHz: 2_440.2 * MHZ, powerDb: -5, symRate: 90_000, burstPeriodMs: 1000, burstMs: 80, seed: 721 },
+      { id: 'ctl', kind: 'fhss', freqHz: 2_439.7 * MHZ, powerDb: -7, hopSpanHz: 400_000, syncPeriodMs: 1000, syncLeadMs: 50, seed: 722 },
+      { id: 'oth', kind: 'fhss', freqHz: 2_440.55 * MHZ, powerDb: -7, hopSpanHz: 300_000, dwellMs: 45, seed: 723 },
+    ],
+    suggest: 'raw',
+  },
 ];
 
 export const challengeById = (id: string) => CHALLENGES.find((c) => c.id === id);
@@ -510,4 +578,5 @@ export const CATEGORY_LABEL: Record<CtfCategory, string> = {
   analysis: 'Analysis',
   intercept: 'Intercept',
   forensics: 'Forensics',
+  tradecraft: 'Tradecraft',
 };

@@ -298,7 +298,11 @@ deep a low percentile of minima reads ~0 and the gate never engages) — use
 hop *means*; and any variant that skips the first half-window at startup
 (it truncates the first element of a transmission that begins at once).
 
-## Second CTF set — needs redoing
+## Second CTF set — DONE 2026-10-09 (forensics ×3 + tradecraft ×3, see `src/ctf/forensics.test.ts`, `src/ctf/tradecraft.test.ts`; answers recorded in the mission commit messages / tests)
+
+_Original notes kept below for the requirements a retry had to meet:_
+
+## (historical) Second CTF set — needs redoing
 
 An agent produced 10 challenges then stalled mid-fix. The file carried ten
 flag hashes and **no record of the intended answers**, and SHA-256 is one-way,
