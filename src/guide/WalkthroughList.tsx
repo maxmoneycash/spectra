@@ -30,8 +30,8 @@ export function WalkthroughList() {
             Learn the receiver by using it
           </h1>
           <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
-            Seven short walkthroughs on the live receiver. Each one teaches a skill on a practice band, then
-            hands you a Tasking challenge that tests it for points.
+            {LESSONS.length} walkthroughs on the live receiver, about {totalMin} minutes in all. Each one
+            drills a skill on a practice band, then hands you the Tasking mission that tests it for points.
           </p>
 
           <div className="mt-4 flex items-center gap-3">
