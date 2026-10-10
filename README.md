@@ -88,12 +88,6 @@ real rotation schedule, and a wideband sandbox with one of everything.
 Twenty-two challenges, 5,250 points, seven categories.
 
 | Challenge | Category | Points |
-| Cold Case | Forensics | 200 |
-| The Callsign | Forensics | 250 |
-| Repeater Pair | Forensics | 200 |
-| Scheduled Net | Tradecraft | 300 |
-| Pattern of Life | Tradecraft | 300 |
-| Link Pair | Tradecraft | 350 |
 |---|---|---|
 | First Light | Recon | 100 |
 | ISM Census | Recon | 200 |
@@ -111,6 +105,12 @@ Twenty-two challenges, 5,250 points, seven categories.
 | Below the Gate | Intercept | 250 |
 | Net Traffic | Intercept | 250 |
 | Catch the Rotation | Intercept | 300 |
+| Cold Case | Forensics | 200 |
+| The Callsign | Forensics | 250 |
+| Repeater Pair | Forensics | 200 |
+| Scheduled Net | Tradecraft | 300 |
+| Pattern of Life | Tradecraft | 300 |
+| Link Pair | Tradecraft | 350 |
 
 - **Recon / Analysis** — count emitters, report a hidden carrier's frequency,
   measure occupied bandwidth, recover a LoRa node's spreading factor from its
@@ -124,15 +124,26 @@ Twenty-two challenges, 5,250 points, seven categories.
   squelch. A net whose traffic reaches your log only if you found its
   repeater and stayed on it. A beacon that transmits in one timed slot of a
   rotation.
+- **Forensics** — worked from a recording, not a live scene. The simulator
+  renders the mission's emitters once (fixed seed, so everyone gets the same
+  file) and the receiver plays it back on a loop with no ground truth and no
+  reveal — count what's there, copy a callsign, find a repeater's input.
+- **Tradecraft** — timing, patterns and pairing. A net that only meets on UTC
+  minutes ending in 2 and 7; the station that transmitted most over a pass of
+  a repeater (the log counts); and two hoppers, one of which hops a fixed
+  50 ms ahead of every telemetry burst.
 
 Opening a challenge loads its scene into the live receiver, and the challenge
 sheet shows a live readout (frequency, mode, bandwidth, decoder copy) while
 you work. Flags are checked as SHA-256 of a salted, normalized answer
 (case, whitespace, and underscores ignored); no plaintext flags ship in the
 bundle. Each hint costs 15% of the challenge's points, floored at 40%. Rank
-runs Unlicensed → Listener → Apprentice (25%) → Operator (50%) → Spectrum
-Analyst (75%) → Signals Officer (100%). The result card shares as a text grid
-with no spoilers.
+is one ladder across the whole app — Unlicensed → Listener (first lesson or
+flag) → Operator (all nine lessons, or 40% of the points) → Analyst (all
+lessons and 60%) → Signals Officer (all lessons, every flag, and a passed
+practice exam) — and the Station board, the Operator Card and the share text
+all read the same one. The result card shares as a text grid with no
+spoilers.
 
 ## Guided walkthroughs
 
