@@ -59,6 +59,33 @@ function Row({ c, onOpen }: { c: Challenge; onOpen: (id: string) => void }) {
   );
 }
 
+/** A forensics mission is a recording: say so, and show the render developing. */
+function CaptureStatus({ id, seconds }: { id: string; seconds: number }) {
+  const rendering = useStore((s) => s.captureRendering);
+  const capture = useStore((s) => s.capture);
+  const mine = rendering?.id === id;
+  const playing = capture?.name === `${id}.capture`;
+  return (
+    <div className="mb-3 rounded-lg border border-line bg-background p-3">
+      <div className="mono-feats flex items-center gap-2 font-mono text-[9.5px] uppercase tracking-[0.14em] text-muted-foreground">
+        <span className={cn('size-1.5 rounded-full', playing ? 'bg-tuned' : mine ? 'animate-pulse bg-foreground' : 'bg-border')} />
+        Recording · {seconds} s loop
+        <span className="flex-1" />
+        {mine ? `Developing ${rendering.pct}%` : playing ? 'Playing' : 'Not loaded'}
+      </div>
+      {mine && (
+        <div className="mt-2 h-[3px] overflow-hidden rounded-full bg-border">
+          <div className="h-full rounded-full bg-foreground transition-[width] duration-300" style={{ width: `${rendering.pct}%` }} />
+        </div>
+      )}
+      <p className="mt-2 text-[11.5px] leading-relaxed text-muted-foreground">
+        No live scene behind this one: the receiver plays a capture, there is no ground truth to reveal, and it loops.
+        Work it the way you would a file someone handed you.
+      </p>
+    </div>
+  );
+}
+
 /** Live receiver state plus what the CW decoder is copying this second. */
 function InterceptStrip() {
   const centerFreqHz = useStore((s) => s.centerFreqHz);
@@ -151,6 +178,7 @@ function ChallengeSheet({ id, onClose }: { id: string | null; onClose: () => voi
         </div>
 
         <section>
+          {c.capture && <CaptureStatus id={c.id} seconds={c.capture.seconds} />}
           <GroupLabel>Situation</GroupLabel>
           <p className="mt-1.5 text-[13px] leading-relaxed text-foreground">{c.brief}</p>
         </section>
@@ -283,7 +311,7 @@ export function CtfView() {
   /** Open a mission: load its RF scene into the live engine, then the sheet. */
   /** Open a mission: load its RF scene into the live engine, then the sheet. */
   const open = (id: string) => {
-    openMission(id);
+    void openMission(id);
   };
 
   const byCategory = useMemo(() => {

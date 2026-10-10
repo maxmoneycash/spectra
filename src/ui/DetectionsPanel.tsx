@@ -17,10 +17,11 @@ function Metrics() {
   const detections = useStore((s) => s.detections);
   const running = useStore((s) => s.running);
   const strongest = detections.reduce((m, d) => Math.max(m, d.snrDb), -Infinity);
+  const capture = useStore((s) => s.capture);
   const items: [string, string][] = [
     ['Tracked', String(detections.length)],
     ['Strongest SNR', strongest === -Infinity ? '—' : `${strongest.toFixed(0)} dB`],
-    ['Engine', running ? 'Live' : 'Idle'],
+    ['Engine', capture ? 'Playback' : running ? 'Live' : 'Idle'],
   ];
   return (
     <div className="mb-3 grid grid-cols-3 border border-line">

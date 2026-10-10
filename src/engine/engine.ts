@@ -32,6 +32,7 @@ type Listeners = {
   tx: (e: TxEvent) => void;
   /** Capture playback position, ~8 Hz while a file plays. */
   capture: (s: { posSec: number; totalSec: number }) => void;
+  captureProgress: (p: { id: string; pct: number }) => void;
 };
 
 /**
@@ -63,6 +64,7 @@ export class SpectraEngine {
     audio: new Set(),
     chanIQ: new Set(),
     capture: new Set(),
+    captureProgress: new Set(),
     tx: new Set(),
   };
 
@@ -117,6 +119,18 @@ export class SpectraEngine {
       case 'playNeed':
         void this.capture?.feed();
         break;
+      case 'captureProgress':
+        this.emit('captureProgress', { id: msg.id, pct: msg.pct });
+        break;
+      case 'captureRendered': {
+        const r = this.renders.get(msg.id);
+        this.renders.delete(msg.id);
+        r?.({
+          blob: new Blob([msg.data]),
+          meta: { sampleRate: msg.sampleRate, datatype: msg.datatype, centerFreqHz: msg.centerFreqHz },
+        });
+        break;
+      }
       case 'playPos':
         if (this.capture) {
           this.emit('capture', { posSec: this.capture.posSec(msg.consumed), totalSec: this.capture.totalSec });
@@ -287,9 +301,18 @@ export class SpectraEngine {
   }
 
   private capture: CaptureStream | null = null;
+  private renders = new Map<string, (r: { blob: Blob; meta: CaptureMeta }) => void>();
+
+  /** Have the worker render a scene to a capture Blob. Progress arrives on the `captureProgress` event. */
+  renderCapture(id: string, scene: SceneSpec, seconds: number, datatype: 'cu8' | 'ci16_le' | 'cf32_le', seed: number) {
+    return new Promise<{ blob: Blob; meta: CaptureMeta }>((resolve) => {
+      this.renders.set(id, resolve);
+      this.send({ type: 'renderCapture', id, scene, seconds, datatype, seed });
+    });
+  }
 
   /** Stream a capture file in place of the simulator. Resolves once the worker has its first chunks. */
-  async openCapture(file: File, meta: CaptureMeta): Promise<{ totalSec: number }> {
+  async openCapture(file: Blob, meta: CaptureMeta): Promise<{ totalSec: number }> {
     this.closeCapture();
     const s = new CaptureStream(file, meta, (m, t) => this.send(m, t));
     this.capture = s;

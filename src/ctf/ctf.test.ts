@@ -115,7 +115,9 @@ describe('CW challenges are actually solvable', () => {
         .every((ch) => ch in MORSE);
       expect(sendable, `${c.id} transmits a character Morse cannot send`).toBe(true);
 
-      // And some run of what was heard must be the accepted answer.
+      // And some run of what was heard must be the accepted answer — unless
+      // this mission keys Morse that is deliberately NOT the flag.
+      if (DECOY_CW.has(c.id)) return;
       const words = heard.split(/\s+/).filter(Boolean);
       let solvable = false;
       for (let i = 0; i < words.length && !solvable; i++) {
@@ -128,4 +130,20 @@ describe('CW challenges are actually solvable', () => {
       );
     });
   }
+
+  it('every decoy-CW mission is really not a decode mission', () => {
+    for (const id of DECOY_CW) {
+      const c = CHALLENGES.find((x) => x.id === id)!;
+      expect(c, id).toBeDefined();
+      expect(c.category).not.toBe('decode');
+    }
+  });
 });
+
+/**
+ * Missions whose CW is scenery, not the answer: Cold Case keys a station ID
+ * so there is a third emitter to count, and its flag is that count. Listing
+ * them here keeps the guard honest for every other CW mission — a new one
+ * that forgets to key its flag still fails loudly.
+ */
+const DECOY_CW = new Set<string>(['cold-case']);

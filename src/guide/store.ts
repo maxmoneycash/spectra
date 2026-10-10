@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { useStore, nearestTrack } from '../store/store';
 import { useCtf } from '../ctf/store';
-import { challengeById, toSceneSpec } from '../ctf/challenges';
+import { challengeById } from '../ctf/challenges';
+import { openMission } from '../ctf/open';
 import { LESSONS, lessonById, type GuideCtx } from './lessons';
 import { DEFAULT_SQUELCH_DB } from '../store/modes';
 
@@ -138,11 +139,8 @@ export const useGuide = create<GuideState>((set, get) => ({
     const lesson = lessonById(lessonId);
     const c = lesson && challengeById(lesson.challengeId);
     if (!c) return;
-    const s = useStore.getState();
-    s.loadSpec(toSceneSpec(c), { name: c.name, tag: 'tasking', from: 'ctf' });
-    s.setSquelch(c.startSquelchDb ?? DEFAULT_SQUELCH_DB);
-    useCtf.getState().setActive(c.id);
-    s.setView('ctf');
+    useStore.getState().setView('ctf');
+    void openMission(c.id);
     set({ finishedId: null });
   },
 

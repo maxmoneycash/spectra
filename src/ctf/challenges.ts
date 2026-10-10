@@ -2,7 +2,19 @@ import type { EmitterConfig } from '../sim/emitters';
 import type { SceneSpec } from '../engine/protocol';
 import { CLOSED_SQUELCH_DB } from '../store/modes';
 
-export type CtfCategory = 'recon' | 'decode' | 'identify' | 'analysis' | 'intercept';
+export type CtfCategory = 'recon' | 'decode' | 'identify' | 'analysis' | 'intercept' | 'forensics';
+
+/**
+ * A forensics mission is worked from a recording, not a live scene. The
+ * simulator renders `emitters` once at mission open — `seconds` long, in
+ * `datatype`, from `seed` — and the receiver plays the file back on a loop
+ * with no ground truth behind it.
+ */
+export interface CaptureSpec {
+  seconds: number;
+  datatype: 'cu8' | 'ci16_le' | 'cf32_le';
+  seed: number;
+}
 
 export interface Challenge {
   id: string;
@@ -28,6 +40,8 @@ export interface Challenge {
    * premise is a gate sitting above the beacon.
    */
   startSquelchDb?: number;
+  /** Present on forensics missions: the recording to render and play. */
+  capture?: CaptureSpec;
 }
 
 const MHZ = 1_000_000;
@@ -407,6 +421,76 @@ export const CHALLENGES: Challenge[] = [
     ],
     suggest: 'cw',
   },
+  // ── Forensics: worked from a recording, not a live scene ─────────────────
+  {
+    id: 'cold-case',
+    name: 'Cold Case',
+    category: 'forensics',
+    points: 200,
+    brief:
+      'A 15-second capture handed over from a rooftop scanner on UHF. The log says "a few things" were active. Count the distinct emitters. Two of them are bursty — let the loop run before you commit.',
+    answerHint: 'A number',
+    hints: [
+      'Bursty emitters are only present for part of each loop; one pass is not enough.',
+      'The Stations panel keeps a track alive for a few seconds after a burst — count what it has ever seen, not what is up right now.',
+      'There are three.',
+    ],
+    flagHash: 'f0a2c16b95add0df423907196c6ee221',
+    centerFreqHz: 462.6 * MHZ,
+    noiseSigma: 0.03,
+    emitters: [
+      { id: 'v', kind: 'nfm', freqHz: 462.675 * MHZ, powerDb: -5, speech: 'simplex-2m', seed: 601 },
+      { id: 'o', kind: 'ook', freqHz: 462.4 * MHZ, powerDb: -8, baud: 2000, seed: 602 },
+      { id: 'c', kind: 'cw', freqHz: 462.9 * MHZ, powerDb: -10, wpm: 16, text: 'VVV DE N0CALL', seed: 603 },
+    ],
+    capture: { seconds: 15, datatype: 'ci16_le', seed: 6001 },
+  },
+  {
+    id: 'the-callsign',
+    name: 'The Callsign',
+    category: 'forensics',
+    points: 250,
+    brief:
+      'A 40 m capture with two keyed beacons and a voice net. One beacon sits below the capture centre, one above. Report the callsign the lower beacon identifies with.',
+    answerHint: 'A callsign, e.g. K6ABC',
+    hints: [
+      'CW mode, narrow filter. The decoder copies in the RX strip.',
+      'Below centre means a negative VFO offset: the −40 kHz carrier.',
+      'It repeats its callsign twice, then K.',
+    ],
+    flagHash: 'b717b7d2733ff1b29ad3f0c39db10041',
+    centerFreqHz: 7.04 * MHZ,
+    noiseSigma: 0.035,
+    emitters: [
+      { id: 'b', kind: 'cw', freqHz: 7.0 * MHZ, powerDb: -5, wpm: 18, text: 'DE K6XYZ K6XYZ K', seed: 611 },
+      { id: 'v', kind: 'lsb', freqHz: 7.1 * MHZ, powerDb: -8, speech: 'hf-ssb', seed: 612 },
+      { id: 'd', kind: 'cw', freqHz: 7.34 * MHZ, powerDb: -6, wpm: 20, text: 'VVV TEST VVV', seed: 613 },
+    ],
+    suggest: 'cw',
+    capture: { seconds: 15, datatype: 'ci16_le', seed: 6002 },
+  },
+  {
+    id: 'repeater-pair',
+    name: 'Repeater Pair',
+    category: 'forensics',
+    points: 200,
+    brief:
+      'A 2 m capture around a busy repeater. The repeater\'s output is the loud, steady voice. Somewhere in the capture a user keys the input — the frequency the repeater listens on. Report the input frequency.',
+    answerHint: 'MHz to three decimals, e.g. 146.340',
+    hints: [
+      'On 2 m the standard offset is 600 kHz; most repeaters above 147 MHz use +, most below use −.',
+      'The input only keys when a user talks: wait for a weaker, intermittent voice carrier.',
+      'Output minus 600 kHz.',
+    ],
+    flagHash: '411e09a195fb756d9a2c1f8f0c17cd40',
+    centerFreqHz: 146.5 * MHZ,
+    noiseSigma: 0.03,
+    emitters: [
+      { id: 'out', kind: 'nfm', freqHz: 146.94 * MHZ, powerDb: -4, speech: 'repeater-2m', seed: 621 },
+      { id: 'in', kind: 'nfm', freqHz: 146.34 * MHZ, powerDb: -9, speech: 'simplex-2m', seed: 622 },
+    ],
+    capture: { seconds: 15, datatype: 'ci16_le', seed: 6003 },
+  },
 ];
 
 export const challengeById = (id: string) => CHALLENGES.find((c) => c.id === id);
@@ -425,4 +509,5 @@ export const CATEGORY_LABEL: Record<CtfCategory, string> = {
   identify: 'Identify',
   analysis: 'Analysis',
   intercept: 'Intercept',
+  forensics: 'Forensics',
 };

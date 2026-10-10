@@ -85,6 +85,8 @@ export type ToWorker =
   | { type: 'playOpen'; sampleRate: number; centerFreqHz: number; totalSamples: number }
   | { type: 'playChunk'; re: Float32Array; im: Float32Array }
   | { type: 'playStop' }
+  /** Render a scene to a capture (forensics missions ship no files; the sim makes one on demand). */
+  | { type: 'renderCapture'; id: string; scene: SceneSpec; seconds: number; datatype: 'cu8' | 'ci16_le' | 'cf32_le'; seed: number }
   | { type: 'voiceBank'; sets: Record<string, BankSetMsg> };
 
 // --- Worker -> Main ---
@@ -101,4 +103,6 @@ export type FromWorker =
   | { type: 'playNeed'; queuedSamples: number }
   /** Input samples consumed so far (the main thread knows the loop length). */
   | { type: 'playPos'; consumed: number }
+  | { type: 'captureProgress'; id: string; pct: number }
+  | { type: 'captureRendered'; id: string; data: ArrayBuffer; sampleRate: number; centerFreqHz: number; datatype: 'cu8' | 'ci16_le' | 'cf32_le' }
   | ({ type: 'tx' } & TxEvent);

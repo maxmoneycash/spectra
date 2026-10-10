@@ -9,6 +9,8 @@ import { MorseDecoder } from '../sim/morse';
 import { CwKeyer } from '../dsp/cwKeyer';
 import { interleave } from '../recording/sigmf';
 import { StreamResampler } from '../dsp/resample';
+import type { SceneSpec } from './protocol';
+import { encodeSamples } from '../capture/decode';
 import { setVoiceBank, onTx } from '../sim/voicebank';
 import {
   SAMPLE_RATE,
@@ -125,6 +127,41 @@ function fillFromCapture(p: CapturePlay) {
   const need = (3 * BLOCK_SIZE * p.rate) / SAMPLE_RATE;
   if (p.qIn < need) post({ type: 'playNeed', queuedSamples: p.qIn });
   if (++p.ticks % 8 === 0) post({ type: 'playPos', consumed: p.consumed });
+}
+
+/**
+ * Render a scene to a capture, a second at a time with a yield between, so
+ * progress reaches the UI and the message port stays responsive. The seed
+ * fixes the render: everyone's copy of a forensics capture is the same file.
+ */
+async function renderCapture(
+  id: string,
+  spec: SceneSpec,
+  seconds: number,
+  datatype: 'cu8' | 'ci16_le' | 'cf32_le',
+  seed: number,
+): Promise<void> {
+  const sc = new Scene({ sampleRate: SAMPLE_RATE, centerFreqHz: spec.centerFreqHz, noiseSigma: spec.noiseSigma, seed }, BLOCK_SIZE);
+  for (const cfg of spec.emitters) sc.add(cfg);
+  const total = Math.round(seconds * SAMPLE_RATE);
+  const bps = datatype === 'cf32_le' ? 8 : datatype === 'ci16_le' ? 4 : 2;
+  const out = new Uint8Array(total * bps);
+  const re = new Float32Array(BLOCK_SIZE);
+  const im = new Float32Array(BLOCK_SIZE);
+  let done = 0;
+  let lastYield = 0;
+  while (done < total) {
+    const n = Math.min(BLOCK_SIZE, total - done);
+    sc.generate(re, im, n);
+    out.set(new Uint8Array(encodeSamples(re.subarray(0, n), im.subarray(0, n), datatype)), done * bps);
+    done += n;
+    if (done - lastYield >= SAMPLE_RATE) {
+      lastYield = done;
+      post({ type: 'captureProgress', id, pct: Math.round((100 * done) / total) });
+      await new Promise<void>((r) => setTimeout(r, 0));
+    }
+  }
+  post({ type: 'captureRendered', id, data: out.buffer, sampleRate: SAMPLE_RATE, centerFreqHz: spec.centerFreqHz, datatype }, [out.buffer]);
 }
 
 function generateBlock() {
@@ -412,6 +449,9 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
       break;
     case 'playStop':
       play = null;
+      break;
+    case 'renderCapture':
+      void renderCapture(msg.id, msg.scene, msg.seconds, msg.datatype, msg.seed);
       break;
   }
 };

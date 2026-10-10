@@ -39,6 +39,7 @@ export function CaptureSheet() {
   const capture = useStore((s) => s.capture);
   const loadCapture = useStore((s) => s.loadCapture);
   const stopCapture = useStore((s) => s.stopCapture);
+  const setView = useStore((s) => s.setView);
 
   const [data, setData] = useState<File | null>(null);
   const [metaFile, setMetaFile] = useState<File | null>(null);
@@ -113,6 +114,8 @@ export function CaptureSheet() {
     setError(null);
     try {
       await loadCapture(data, { sampleRate: rate, datatype, centerFreqHz: center, description: meta?.description });
+      // A file you chose yourself belongs on the receiver; a mission's capture stays with its brief.
+      setView('console');
       setData(null);
       setMetaFile(null);
     } catch (e) {

@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react';
 import { useStore } from '../store/store';
 import { useExam } from '../exam/store';
 import { useCtf } from '../ctf/store';
-import { challengeById, toSceneSpec } from '../ctf/challenges';
+import { challengeById } from '../ctf/challenges';
+import { openMission } from '../ctf/open';
 import { scenarioById } from '../scenarios/scenarios';
 import { POOLS, type ElementId } from '../exam/types';
 import { readUrl, writeUrl } from '../lib/urlState';
@@ -24,12 +25,9 @@ export function useUrlSync(): void {
       useStore.getState().loadScenario(url.scenario);
     }
 
-    if (url.c) {
-      const c = challengeById(url.c);
-      if (c) {
-        useStore.getState().loadSpec(toSceneSpec(c), { name: c.name, tag: 'tasking', from: 'ctf' });
-        useCtf.getState().setActive(c.id);
-      }
+    if (url.c && challengeById(url.c)) {
+      // Same path as tapping the mission: live scene, or a rendered capture for forensics.
+      void openMission(url.c);
     }
 
     if (url.pool && POOLS.some((p) => p.id === url.pool)) {

@@ -167,8 +167,11 @@ interface AppState {
   captureDrop: File[] | null;
   setCaptureSheetOpen: (open: boolean) => void;
   setCaptureDrop: (files: File[] | null) => void;
-  loadCapture: (file: File, meta: CaptureMeta) => Promise<void>;
+  loadCapture: (file: Blob, meta: CaptureMeta, name?: string) => Promise<void>;
   stopCapture: () => void;
+  /** A forensics capture being rendered by the simulator, with percent done. */
+  captureRendering: { id: string; pct: number } | null;
+  setCaptureRendering: (r: { id: string; pct: number } | null) => void;
   correctlyIdentified: SignalKind[];
   idFeedback: IdFeedback | null;
   selectedId: string | null;
@@ -312,6 +315,7 @@ export const useStore = create<AppState>((set, get) => {
     capture: null,
     captureSheetOpen: false,
     captureDrop: null,
+    captureRendering: null,
     cardOpen: false,
     operator: loadOperator(),
     audioStarted: false,
@@ -540,14 +544,16 @@ export const useStore = create<AppState>((set, get) => {
     toggleReveal: () => set((s) => ({ revealTruth: !s.revealTruth })),
 
     setCaptureSheetOpen: (open) => set({ captureSheetOpen: open }),
+    setCaptureRendering: (r) => set({ captureRendering: r }),
     setCaptureDrop: (files) => set({ captureDrop: files }),
 
-    loadCapture: async (file, meta) => {
+    loadCapture: async (file, meta, name) => {
       const { totalSec } = await engine.openCapture(file, meta);
       engine.setTuning(0);
+      const label = name ?? (file instanceof File ? file.name : 'capture');
       set({
         capture: {
-          name: file.name,
+          name: label,
           sampleRate: meta.sampleRate,
           datatype: meta.datatype,
           centerFreqHz: meta.centerFreqHz,
@@ -557,12 +563,11 @@ export const useStore = create<AppState>((set, get) => {
         tuningOffsetHz: 0,
         detections: [],
         selectedId: null,
-        sceneLabel: { name: file.name, tag: 'capture', from: 'console' },
+        sceneLabel: { name: label, tag: 'capture', from: 'console' },
         sceneLoaded: true,
         revealTruth: false,
         captureSheetOpen: false,
         captureDrop: null,
-        view: 'console',
       });
       if (!get().running) await get().start();
     },

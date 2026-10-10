@@ -432,3 +432,10 @@ Still open from the "components, borders, buttons, cards, animations" ask:
   their micro-labels and status language with the coach and Tasking.
 - `LogPanel` has a private UTC formatter; adopt `src/ui/kit/time.ts`.
 - The Train list rows say "Then: …"; carry the "Cleared for" language there.
+
+## Open — capture playback, seen in Arc 2026-10-09
+
+- **cu8 floor narrows measured bandwidth → WFM reads as PSK.** A First Light render at 2.4 MSPS cu8 showed the three FM stations at ~72 kHz (live sim: ~130 kHz), classified PSK Burst at ~34%. The 8-bit quantisation floor sits where the live sim's skirts still show. Real rtl_sdr files will do the same. Options: measure bandwidth at a fixed depth below the peak (−20 dB) rather than above the floor; or let a wide continuous signal with no symbol structure fall to FM. Forensics missions render ci16 to sidestep it; user cu8 files still hit it.
+- **Stations rows overlapping** (two rows drawn on top of each other at 98.4657 / 98.1947) when the list reorders under heavy churn — layout animation glitch in the Stations panel.
+- **Marker labels crowd** at the top of the spectrum with 13 tracks on a 1.15 MHz span; placement avoids off-screen and left-of-louder cases but not density. Consider hiding labels below an SNR rank beyond N.
+- Loop-seam click **fixed**: `seamTaper` in `src/capture/stream.ts` (1 ms raised-cosine at both ends of the window), unit-tested.

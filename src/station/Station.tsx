@@ -150,7 +150,8 @@ function NextCard({
           className={PRIMARY}
           onClick={() => {
             tick();
-            if (openMission(c.id)) setView('ctf');
+            setView('ctf');
+            void openMission(c.id);
           }}
         >
           <Crosshair className="size-4" /> Open tasking
