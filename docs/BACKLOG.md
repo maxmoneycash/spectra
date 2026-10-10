@@ -1,5 +1,7 @@
 # Execution backlog
 
+> Build plan: `docs/DESIGN.md` (2026-10-09) — unified progression, Station home board, capture import + forensics, tradecraft missions, exam predictor. Items there supersede §5 below.
+
 Ordered worklist. Rationale for the ordering is in [`GROWTH.md`](./GROWTH.md).
 Each item is shippable on its own and verified in a browser before it lands.
 
