@@ -215,6 +215,18 @@ scenes use SF8–10. Negative
 controls through the real chain (`chirp-scene.test.ts`): a tone-modulated FM
 station, a same-width PSK burst and a voice band do not chirp.
 
+Two more defects surfaced building the chirp lesson (2026-10-09). At SF10 a
+64-step window holds only ~6 fly-backs and a symbol boundary occasionally
+adds an opposite-sign jump, so a 60% agreement fraction flickered off on one
+stray; agreement is now a count (enough fly-backs near the median) and a
+formed reading holds down to 0.4 consistency. And the analyzer deleted a
+track's whole ring the first frame the track was missing from the list,
+which happens every few frames when a wide bursty emitter sheds fragment
+tracks the dedup momentarily prefers; state now outlives an absence by 160
+blocks with no step computed across the gap. SF10 at 30 s: reads, 0.94.
+Walkthroughs are now nine: Read the log (Net Traffic) and Read a chirp
+(Spread Factor), both pinned through the real chain.
+
 ## Modes lesson: audio premise measured — PINNED (2026-10-09)
 
 The last lesson whose premise nothing ran through the receiver: the AM tower
