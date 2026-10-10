@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { ElementId, PoolQuestion } from './types';
 import { groupOf, poolMeta, subelementOf } from './types';
+import { event } from '../lib/analytics';
 
 const STORAGE_KEY = 'spectra.exam.v1';
 
@@ -419,6 +420,7 @@ export const useExam = create<ExamState>((set, get) => {
       });
       persist({ progress, pool: st.pool });
       saveResults(results);
+      event({ name: 'exam_finished', pool: st.pool, correct, total: meta.examQuestions, passed: correct >= meta.passing });
     },
 
     exitExam() {

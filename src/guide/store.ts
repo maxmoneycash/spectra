@@ -3,6 +3,7 @@ import { useStore, nearestTrack } from '../store/store';
 import { useCtf } from '../ctf/store';
 import { challengeById } from '../ctf/challenges';
 import { openMission } from '../ctf/open';
+import { event } from '../lib/analytics';
 import { LESSONS, lessonById, type GuideCtx } from './lessons';
 import { DEFAULT_SQUELCH_DB } from '../store/modes';
 
@@ -129,6 +130,7 @@ export const useGuide = create<GuideState>((set, get) => ({
     // First completion keeps its time; a repeat doesn't rewrite history.
     const completedAt = { ...get().completedAt, [lesson.id]: get().completedAt[lesson.id] ?? Date.now() };
     save({ completed: done, completedAt });
+    event({ name: 'lesson_done', id: lesson.id });
     set({ lessonId: null, step: 0, completed: done, completedAt, finishedId: lesson.id });
   },
 

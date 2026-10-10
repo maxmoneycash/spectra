@@ -11,6 +11,7 @@ import { SAMPLE_RATE } from '../engine/protocol';
 export { MODE_BW, BW_RANGE, DEMOD_MODES } from './modes';
 import { MODE_BW, DEFAULT_SQUELCH_DB } from './modes';
 import type { CaptureDatatype, CaptureMeta } from '../capture/decode';
+import { event } from '../lib/analytics';
 import { inPassband } from './intercept';
 
 export type PanelTab = 'signals' | 'scan' | 'log' | 'library' | 'scenario';
@@ -550,6 +551,7 @@ export const useStore = create<AppState>((set, get) => {
     loadCapture: async (file, meta, name) => {
       const { totalSec } = await engine.openCapture(file, meta);
       engine.setTuning(0);
+      event({ name: 'capture_loaded', rate: meta.sampleRate, datatype: meta.datatype, seconds: Math.round(totalSec) });
       const label = name ?? (file instanceof File ? file.name : 'capture');
       set({
         capture: {

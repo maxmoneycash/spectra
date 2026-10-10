@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { CHALLENGES, TOTAL_POINTS, challengeById } from './challenges';
+import { event } from '../lib/analytics';
 
 const STORAGE_KEY = 'spectra.ctf.v1';
 const SALT = 'spectra-ctf-v1|';
@@ -114,6 +115,7 @@ export const useCtf = create<CtfState>((set, get) => {
         Math.round(c.points * (1 - hintsUsed * HINT_COST)),
       );
       const solved = { ...st.solved, [id]: { at: Date.now(), points, hintsUsed } };
+      event({ name: 'flag', id, hints: hintsUsed });
       set({
         solved,
         checking: false,
