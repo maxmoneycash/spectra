@@ -403,3 +403,30 @@ The intercept category's enforceable skills are therefore: the filter (Split
 the Pair — a *CW* decoy inside the passband is the only interferer the keyer
 cannot ignore), the squelch (Below the Gate), frequency planning (Working the
 Input) and timing (Catch the Rotation). New ideas start from a measurement.
+
+## Open — UI aesthetics pass (2026-10-09)
+
+Shipped in `72597ff`: the coach as a ruled tasking panel (numbered directives,
+Tradecraft block, `AWAITING RX` → `CONFIRMED hh:mm:ssZ`, a last-confirmed log
+line, corner-bracket reticle shared with the waterfall's lock-on); Tasking
+rows carry status · band · mode · bounty and the sheet reads Situation /
+Deliverable / Intel; all 30 walkthrough steps rewritten in tasking voice;
+the Train header's hardcoded "Seven short walkthroughs" fixed.
+
+**Not yet seen on screen.** No verified browser was connected. First thing
+once Arc's Playwriter extension is back:
+
+- Coach: desktop bottom-left against the start overlay; phone placement over
+  the waterfall; reticle alignment on the deck knobs and the power button;
+  the log line's truncation at 360 px.
+- Tasking sheet: Intel numbering, the RX-strip cursor, row metadata wrapping
+  at 390 px.
+
+Still open from the "components, borders, buttons, cards, animations" ask:
+
+- Academy (Course / Reference / Explorer) keeps its own card and button
+  recipes; the audit's `ActionButton` / `StatGrid` extraction is undone.
+- Stations rows and the signal card predate the tasking register; align
+  their micro-labels and status language with the coach and Tasking.
+- `LogPanel` has a private UTC formatter; adopt `src/ui/kit/time.ts`.
+- The Train list rows say "Then: …"; carry the "Cleared for" language there.
