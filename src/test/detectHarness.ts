@@ -36,6 +36,8 @@ export interface DetectOpts {
    * and they stay silent, so a scene with voice stations must install one.
    */
   bank?: Record<string, BankSetMsg>;
+  /** Applied to each generated block before analysis — e.g. quantise to cu8 to mimic a capture. */
+  shape?: (re: Float32Array, im: Float32Array, n: number) => void;
 }
 
 export interface DetectResult {
@@ -97,6 +99,7 @@ export function detectScene(o: DetectOpts): DetectResult {
   let tracks: Track[] = [];
   for (let b = 0, n = Math.round((o.sec * SAMPLE_RATE) / BLOCK_SIZE); b < n; b++) {
     scene.generate(re, im, BLOCK_SIZE);
+    o.shape?.(re, im, BLOCK_SIZE);
     analyzer.compute(re, im, BLOCK_SIZE - FFT_SIZE, specDb);
     smoothSpectrum(specAvg, specDb, 0.4);
     const dets = detectEmissions(specAvg, { binHz: SAMPLE_RATE / FFT_SIZE, centerFreqHz: o.spec.centerFreqHz, thresholdDb: 13 });

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ENCODE_SCALE,
   bytesPerSample,
+  clipFraction,
   datatypeFromName,
   decodeSamples,
   encodeSamples,
@@ -19,7 +21,11 @@ function tone(n: number): { re: Float32Array; im: Float32Array } {
 }
 
 describe('sample decoders', () => {
+  // Integer formats carry ENCODE_SCALE of headroom, so a round trip comes back
+  // scaled by it; a player sees the same spectrum a quarter as loud, which the
+  // receiver's AGC absorbs. cf32 is bit-exact.
   const tol: Record<CaptureDatatype, number> = { cf32_le: 1e-7, ci16_le: 1e-4, cu8: 0.01 };
+  const gain: Record<CaptureDatatype, number> = { cf32_le: 1, ci16_le: ENCODE_SCALE, cu8: ENCODE_SCALE };
 
   for (const dt of ['cf32_le', 'ci16_le', 'cu8'] as CaptureDatatype[]) {
     it(`${dt} round-trips a tone within its precision`, () => {
@@ -29,15 +35,35 @@ describe('sample decoders', () => {
       const d = decodeSamples(buf, dt);
       expect(d.re.length).toBe(256);
       for (let i = 0; i < 256; i++) {
-        expect(Math.abs(d.re[i] - re[i])).toBeLessThan(tol[dt]);
-        expect(Math.abs(d.im[i] - im[i])).toBeLessThan(tol[dt]);
+        expect(Math.abs(d.re[i] - re[i] * gain[dt])).toBeLessThan(tol[dt]);
+        expect(Math.abs(d.im[i] - im[i] * gain[dt])).toBeLessThan(tol[dt]);
       }
     });
   }
 
+  it('does not clip a summed band that exceeds ±1 (the First Light case)', () => {
+    // Three carriers that align: peak 2.1, the real measured worst case.
+    const n = 512;
+    const re = new Float32Array(n);
+    const im = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      re[i] = 0.71 * Math.cos(i * 0.1) + 0.56 * Math.cos(i * 0.1) + 0.45 * Math.cos(i * 0.1) + 0.4 * Math.cos(i * 0.31);
+      im[i] = 0.71 * Math.sin(i * 0.1) + 0.56 * Math.sin(i * 0.1) + 0.45 * Math.sin(i * 0.1);
+    }
+    expect(Math.max(...re)).toBeGreaterThan(1.9);
+    expect(clipFraction(re, im, n, 1)).toBeGreaterThan(0.2); // unscaled, it would clip hard
+    expect(clipFraction(re, im, n)).toBe(0); // at ENCODE_SCALE nothing clips
+    for (const dt of ['cu8', 'ci16_le'] as CaptureDatatype[]) {
+      const d = decodeSamples(encodeSamples(re, im, dt), dt);
+      // Linear everywhere, including at the peak — no flat tops.
+      const k = Math.max(...re) * ENCODE_SCALE;
+      expect(Math.abs(Math.max(...d.re) - k)).toBeLessThan(tol[dt] * 2);
+    }
+  });
+
   it('decodes a chunk from an offset and clamps count to what is there', () => {
     const { re, im } = tone(64);
-    const buf = encodeSamples(re, im, 'ci16_le');
+    const buf = encodeSamples(re, im, 'ci16_le', 1); // unscaled: this test is about offsets, not headroom
     const d = decodeSamples(buf, 'ci16_le', 10 * 4, 1000);
     expect(d.re.length).toBe(54);
     expect(Math.abs(d.re[0] - re[10])).toBeLessThan(1e-4);

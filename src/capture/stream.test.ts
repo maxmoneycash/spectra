@@ -32,7 +32,8 @@ describe('CaptureStream', () => {
   const rate = 100_000;
   const n = 40_000; // 0.4 s → chunks of 16384, 16384, 7232
   const { re, im } = constant(n, 0.8);
-  const file = new File([encodeSamples(re, im, 'ci16_le')], 'loop.cs16');
+  // Unscaled on purpose: the seam/chunk assertions below read the constant back by value.
+  const file = new File([encodeSamples(re, im, 'ci16_le', 1)], 'loop.cs16');
 
   it('streams the file in chunks, loops, and tapers only the seam', async () => {
     const posted: ToWorker[] = [];

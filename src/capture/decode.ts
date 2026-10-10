@@ -75,8 +75,21 @@ export function decodeSamples(
   return { re, im };
 }
 
-/** Encode float I/Q as one of the formats (the capture renderer uses this). */
-export function encodeSamples(re: Float32Array, im: Float32Array, dt: CaptureDatatype): ArrayBuffer {
+/**
+ * Headroom the simulator's band is scaled by before integer encoding. Three
+ * strong broadcast carriers sum past ±2 (measured 2.12 peak, 35 % of samples
+ * over ±1 on First Light); without this the integer formats hard-clipped a
+ * third of every capture, which read as narrowed, noisy stations. 0.25 puts
+ * that peak at about −5 dBFS and is well clear of the cu8 floor (−48 dB).
+ */
+export const ENCODE_SCALE = 0.25;
+
+/**
+ * Encode float I/Q as one of the formats (the capture renderer uses this).
+ * Integer formats are scaled by `scale` first; cf32 is written as-is, since
+ * floats have no clip to protect against.
+ */
+export function encodeSamples(re: Float32Array, im: Float32Array, dt: CaptureDatatype, scale = ENCODE_SCALE): ArrayBuffer {
   const n = Math.min(re.length, im.length);
   if (dt === 'cf32_le') {
     const out = new Float32Array(n * 2);
@@ -88,18 +101,27 @@ export function encodeSamples(re: Float32Array, im: Float32Array, dt: CaptureDat
   }
   if (dt === 'ci16_le') {
     const out = new Int16Array(n * 2);
+    const k = 32767 * scale;
     for (let i = 0; i < n; i++) {
-      out[2 * i] = Math.max(-32768, Math.min(32767, Math.round(re[i] * 32767)));
-      out[2 * i + 1] = Math.max(-32768, Math.min(32767, Math.round(im[i] * 32767)));
+      out[2 * i] = Math.max(-32768, Math.min(32767, Math.round(re[i] * k)));
+      out[2 * i + 1] = Math.max(-32768, Math.min(32767, Math.round(im[i] * k)));
     }
     return out.buffer;
   }
   const out = new Uint8Array(n * 2);
+  const k = 127.5 * scale;
   for (let i = 0; i < n; i++) {
-    out[2 * i] = Math.max(0, Math.min(255, Math.round(re[i] * 127.5 + 127.5)));
-    out[2 * i + 1] = Math.max(0, Math.min(255, Math.round(im[i] * 127.5 + 127.5)));
+    out[2 * i] = Math.max(0, Math.min(255, Math.round(re[i] * k + 127.5)));
+    out[2 * i + 1] = Math.max(0, Math.min(255, Math.round(im[i] * k + 127.5)));
   }
   return out.buffer;
+}
+
+/** How much of a block's samples an integer encode at `scale` would clip. Diagnostics only. */
+export function clipFraction(re: Float32Array, im: Float32Array, n: number, scale = ENCODE_SCALE): number {
+  let c = 0;
+  for (let i = 0; i < n; i++) if (Math.abs(re[i]) * scale > 1 || Math.abs(im[i]) * scale > 1) c++;
+  return n ? c / n : 0;
 }
 
 export interface CaptureMeta {

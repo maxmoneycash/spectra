@@ -14,7 +14,7 @@ import { Scene } from '../src/sim/scene';
 import { SAMPLE_RATE, BLOCK_SIZE } from '../src/engine/protocol';
 import { challengeById, toSceneSpec as missionSpec } from '../src/ctf/challenges';
 import { scenarioById, toSceneSpec as scenarioSpec } from '../src/scenarios/scenarios';
-import { encodeSamples, type CaptureDatatype } from '../src/capture/decode';
+import { ENCODE_SCALE, encodeSamples, type CaptureDatatype } from '../src/capture/decode';
 
 function arg(name: string, dflt: string): string {
   const i = process.argv.indexOf(`--${name}`);
@@ -69,7 +69,7 @@ writeFileSync(
         'core:datatype': format,
         'core:sample_rate': rate,
         'core:version': '1.0.0',
-        'core:description': `SPECTRA simulator render of "${name}" — synthetic, no real traffic.`,
+        'core:description': `SPECTRA simulator render of "${name}" — synthetic, no real traffic. Integer samples are the simulator band × ${ENCODE_SCALE} (headroom; the band sums past ±1).`,
         'core:recorder': 'SPECTRA scripts/render-captures.mts',
       },
       captures: [{ 'core:sample_start': 0, 'core:frequency': spec.centerFreqHz }],
