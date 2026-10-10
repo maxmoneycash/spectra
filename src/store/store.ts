@@ -14,7 +14,7 @@ import { inPassband } from './intercept';
 
 export type PanelTab = 'signals' | 'scan' | 'log' | 'library' | 'scenario';
 
-export type AppView = 'console' | 'academy' | 'exam' | 'ctf';
+export type AppView = 'station' | 'console' | 'academy' | 'exam' | 'ctf';
 
 /** Pages of the phone receiver deck (lifted here so walkthroughs can steer it). */
 export type DeckPage = 'mode' | 'filter' | 'audio' | 'scan';
@@ -289,7 +289,7 @@ export const useStore = create<AppState>((set, get) => {
     selectedId: null,
     recording: false,
     panel: 'signals',
-    view: 'console',
+    view: 'station',
     cardOpen: false,
     operator: loadOperator(),
     audioStarted: false,

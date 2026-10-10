@@ -20,7 +20,7 @@ export function BottomNav() {
       aria-label="Sections"
       className="relative z-40 border-t border-line bg-background/92 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl supports-[backdrop-filter]:bg-background/80 lg:hidden"
     >
-      <div className="mx-auto grid max-w-lg grid-cols-4 px-2" role="tablist">
+      <div className="mx-auto grid max-w-lg grid-cols-5 px-1" role="tablist">
         {NAV.map((n) => {
           const active = view === n.id;
           const Icon = n.icon;

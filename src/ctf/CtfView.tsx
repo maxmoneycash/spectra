@@ -3,9 +3,9 @@ import { AnimatePresence, motion } from 'motion/react';
 import { ArrowRight, Check, GraduationCap, Flag, RotateCcw, Radio, Trophy, Share2, Unlock } from 'lucide-react';
 import { useCtf, score, shareText } from './store';
 import { useProgression } from '../progression/progression';
-import { CHALLENGES, CATEGORY_LABEL, challengeById, toSceneSpec, type Challenge } from './challenges';
+import { CHALLENGES, CATEGORY_LABEL, challengeById, type Challenge } from './challenges';
+import { openMission } from './open';
 import { useStore } from '../store/store';
-import { DEFAULT_SQUELCH_DB } from '../store/modes';
 import { BottomSheet } from '@/ui/BottomSheet';
 import { IconButton, GroupLabel } from '@/ui/controls';
 import { cn } from '@/lib/utils';
@@ -281,15 +281,9 @@ export function CtfView() {
   };
 
   /** Open a mission: load its RF scene into the live engine, then the sheet. */
+  /** Open a mission: load its RF scene into the live engine, then the sheet. */
   const open = (id: string) => {
-    const c = challengeById(id);
-    if (!c) return;
-    const st = useStore.getState();
-    st.loadSpec(toSceneSpec(c), { name: c.name, tag: 'tasking', from: 'ctf' });
-    // Fresh receiver per mission, at the squelch the mission is designed
-    // around: open for most, raised above the beacon for Below the Gate.
-    st.setSquelch(c.startSquelchDb ?? DEFAULT_SQUELCH_DB);
-    setActive(id);
+    openMission(id);
   };
 
   const byCategory = useMemo(() => {

@@ -22,7 +22,7 @@ export interface UrlState {
   scenario?: string;
 }
 
-const VIEWS: AppView[] = ['console', 'academy', 'exam', 'ctf'];
+const VIEWS: AppView[] = ['station', 'console', 'academy', 'exam', 'ctf'];
 /** Ids are short slugs; anything else is treated as absent. */
 const SLUG = /^[a-z0-9-]{1,40}$/i;
 

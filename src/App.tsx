@@ -3,6 +3,7 @@ import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { useStore } from './store/store';
 import { Academy } from './academy/Academy';
 import { ExamView } from './exam/ExamView';
+import { Station } from './station/Station';
 import { CtfView } from './ctf/CtfView';
 import { TopBar } from './ui/TopBar';
 import { SpectrumWaterfall } from './ui/SpectrumWaterfall';
@@ -131,6 +132,8 @@ export function App() {
                   <StatusBar />
                 </div>
               </div>
+            ) : view === 'station' ? (
+              <Station />
             ) : view === 'exam' ? (
               <ExamView />
             ) : view === 'ctf' ? (
