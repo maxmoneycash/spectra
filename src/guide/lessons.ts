@@ -22,6 +22,11 @@ export interface GuideCtx {
   identified: SignalKind[];
   /** Intercepts logged since the lesson started. */
   newIntercepts: number;
+  /**
+   * Spreading factor the signal card is reading for the selected signal (or
+   * the one the VFO sits on), once the chirp analyzer has seen its sweep.
+   */
+  chirpSf: number | null;
 }
 
 /** UI the coach can point at. Matches `data-guide` attributes in the decks. */
@@ -365,6 +370,83 @@ export const LESSONS: Lesson[] = [
         why: 'Use the clues: width, whether it is continuous or bursty, and how it sounds. A diagonal sweep is LoRa; a single thin line keyed on and off is CW.',
         panel: 'signals',
         check: (c) => c.identified.length > 0,
+      },
+    ],
+  },
+  {
+    id: 'traffic',
+    title: 'Read the log',
+    skill: 'Monitoring a frequency and reading who is talking to whom',
+    minutes: 3,
+    challengeId: 'net-traffic',
+    startMode: 'nfm',
+    scene: {
+      centerFreqHz: 146.7 * MHZ,
+      noiseSigma: 0.03,
+      emitters: [
+        { id: 'rpt', kind: 'nfm', freqHz: 146.76 * MHZ, powerDb: -6, speech: 'repeater-2m', seed: 971 },
+        { id: 'sx', kind: 'nfm', freqHz: 146.52 * MHZ, powerDb: -8, speech: 'simplex-2m', seed: 972 },
+        { id: 'd', kind: 'fsk2', freqHz: 146.95 * MHZ, powerDb: -10, seed: 973 },
+      ],
+    },
+    steps: [
+      {
+        title: 'Find the repeater',
+        body: 'Tune 146.760 MHz in NFM — a 2 m repeater output.',
+        why: 'Repeaters are where traffic concentrates: one frequency, many stations, and a courtesy tone after each one unkeys.',
+        target: 'tune',
+        check: (c) => c.mode === 'nfm' && near(c, 146.76 * MHZ, 8_000),
+      },
+      {
+        title: 'Let the log fill',
+        body: 'Stay on it. Open the Log and wait for two transmissions to land.',
+        why: 'The log keeps only what you were tuned to when it started. An intercept log is a record of where you were listening, not of everything on the air.',
+        panel: 'log',
+        check: (c) => c.newIntercepts >= 2,
+      },
+      {
+        title: 'Read who is who',
+        body: 'Read the callsigns and what each station said. One of them broke in to ask for a signal report.',
+        why: 'This is traffic analysis: who calls whom, who is in control, who has traffic to pass. Tasking asks you for exactly this.',
+        panel: 'log',
+      },
+    ],
+  },
+  {
+    id: 'chirp',
+    title: 'Read a chirp',
+    skill: "Recovering a chirp's bandwidth and spreading factor from its sweep",
+    minutes: 2,
+    challengeId: 'spread-factor',
+    startMode: 'nfm',
+    scene: {
+      centerFreqHz: 915.0 * MHZ,
+      noiseSigma: 0.028,
+      emitters: [
+        { id: 'l', kind: 'lora', freqHz: 915.4 * MHZ, powerDb: -5, sf: 10, bwHz: 125_000, seed: 981 },
+        { id: 'o', kind: 'ook', freqHz: 914.75 * MHZ, powerDb: -9, baud: 2000, seed: 982 },
+        { id: 'f', kind: 'fsk2', freqHz: 915.1 * MHZ, powerDb: -10, seed: 983 },
+      ],
+    },
+    steps: [
+      {
+        title: 'Find the ramps',
+        body: 'Tap the signal painting diagonal ramps near 915.4 MHz.',
+        why: 'Each ramp is one symbol: the carrier sweeps the whole channel, flies back, and starts again.',
+        target: 'waterfall',
+        check: (c) => c.selectedId !== null && near(c, 915.4 * MHZ, 80_000),
+      },
+      {
+        title: 'Let it read the sweep',
+        body: 'Hold there a moment. The card will read the sweep width and the spreading factor.',
+        why: 'The receiver times the sweep in short sub-frames: the fly-back plus one step is the width, and width² over the rate is 2^SF. It needs a few symbols to be sure.',
+        target: 'waterfall',
+        check: (c) => c.chirpSf !== null,
+      },
+      {
+        title: 'What the numbers mean',
+        body: 'Width is the channel. SF is how long each symbol takes to sweep it: a higher SF is slower, reaches further, and is harder to pick out of a busy band.',
+        why: 'Meshtastic LongFast runs SF11 on 250 kHz; LoRaWAN uses SF7–12 on 125 kHz channels. Recovering them off the air is what Tasking asks for.',
       },
     ],
   },

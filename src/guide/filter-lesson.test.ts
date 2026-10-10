@@ -32,6 +32,7 @@ const ctxAt = (tunedHz: number): GuideCtx => ({
   selectedId: null,
   identified: [],
   newIntercepts: 0,
+  chirpSf: null,
 });
 
 describe('filter lesson: the premise holds for a student who did as told', () => {

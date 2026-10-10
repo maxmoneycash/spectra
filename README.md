@@ -27,7 +27,7 @@ challenge, and grade an exam question, which no live receiver can do.
 
 ### Train — learn the receiver by using it
 
-- **Seven guided walkthroughs**, about 19 minutes in all: tune and listen,
+- **Nine guided walkthroughs**, about 24 minutes in all: tune and listen,
   pick the right mode, narrow the filter, open the squelch, work a repeater,
   scan the band, and identify a signal. Each runs on the live receiver. A coach
   card says what to do and why, a ring marks the control to use, and the step
@@ -69,7 +69,7 @@ challenge, and grade an exam question, which no live receiver can do.
 - Hints cost points, ranks run from Listener to Signals Officer, and the result
   card shares without spoilers.
 - Every walkthrough ends by offering the challenge that tests its skill, and
-  those seven challenges link back to their walkthrough.
+  those nine challenges link back to their walkthrough.
 
 ### Exam — license prep
 

@@ -17,6 +17,12 @@ import type { Track } from './detector';
  * 0.889 ms sub-frame, fly-backs ≈ −70 kHz, ⇒ 125 kHz, SF 8.006. Symbol
  * boundaries put a stray step in now and then (the data code jumps the
  * start frequency), which is why consistency is a fraction, not a demand.
+ *
+ * Reach, at 125 kHz: SF8 and slower. SF7 sweeps 87% of the band inside one
+ * sub-frame, so each sub-spectrum is a smear with no peak to follow — on
+ * real audio it produces no sawtooth at all (measured 2026-10-09), whatever
+ * the alias rule below can do with an ideal sequence. SF11–12 fly back only
+ * every 18–36 sub-frames and the ring sees too few wraps to be sure.
  */
 
 export interface ChirpInfo {
@@ -39,6 +45,8 @@ const RING = 64;
 const MIN_SWEEP_STEPS = 8;
 const MIN_WRAPS = 2;
 const MIN_CONSISTENCY = 0.6;
+/** Once a reading has formed it holds down to this, so the card does not flicker between packets. */
+const HOLD_CONSISTENCY = 0.4;
 /** A real sweep moves at least this many bins per sub-frame (SF12 at 125 kHz moves 3). */
 const MIN_STEP_BINS = 3;
 const MIN_CHIRP_BW_HZ = 20_000;
@@ -47,7 +55,19 @@ const LORA_BW_HZ = [7_800, 10_400, 15_600, 20_800, 31_250, 41_700, 62_500, 125_0
 interface ChirpState {
   steps: number[];
   lastPeakHz: number | null;
+  /** The current reading, if one has formed. */
+  info: ChirpInfo | null;
+  /** Blocks since the track was last on the list. */
+  unseen: number;
 }
+
+/**
+ * Blocks a track's state outlives its absence from the list (~2.3 s, the
+ * tracker's own grace). A wide bursty emitter sheds fragment tracks that the
+ * tracker's dedup keeps instead of it on some frames; dropping the ring the
+ * first frame the track was missing meant a reading could never re-form.
+ */
+const STATE_GRACE_BLOCKS = 160;
 
 function median(xs: number[]): number {
   const s = [...xs].sort((a, b) => a - b);
@@ -76,7 +96,12 @@ export function snapLoRaBw(bwHz: number): number | null {
  * station) has both signs too, but their magnitudes spread across a cosine,
  * and a drifting carrier never flies back.
  */
-export function evaluateSteps(steps: number[], subSec: number, binHz: number): ChirpInfo | null {
+export function evaluateSteps(
+  steps: number[],
+  subSec: number,
+  binHz: number,
+  minConsistency = MIN_CONSISTENCY,
+): ChirpInfo | null {
   if (steps.length < MIN_SWEEP_STEPS + MIN_WRAPS) return null;
   const pos = steps.filter((d) => d > 0);
   const neg = steps.filter((d) => d < 0).map((d) => -d);
@@ -91,9 +116,15 @@ export function evaluateSteps(steps: number[], subSec: number, binHz: number): C
     return xs.filter((d) => Math.abs(d - mid) <= tol).length / xs.length;
   };
   const consistency = tight(sweep, step);
-  if (consistency < MIN_CONSISTENCY) return null;
+  if (consistency < minConsistency) return null;
   const wrap = median(wraps);
-  if (tight(wraps, wrap) < MIN_CONSISTENCY) return null;
+  // Fly-backs are few per window at slow sweeps (SF10 at 125 kHz: ~6 of 64
+  // steps) and a symbol boundary now and then adds an opposite-sign jump, so
+  // their agreement is counted, not averaged: enough fly-backs near the
+  // median, not most of the opposite-sign steps. A 60% fraction of six
+  // samples flickered off on one stray jump (measured 2026-10-09).
+  const wrapTol = Math.max(0.2 * wrap, 1.5 * binHz);
+  if (wraps.filter((d) => Math.abs(d - wrap) <= wrapTol).length < MIN_WRAPS) return null;
   const bw = wrap + step;
   if (bw < MIN_CHIRP_BW_HZ) return null;
   const std = snapLoRaBw(bw);
@@ -139,7 +170,15 @@ export class ChirpAnalyzer {
   /** Annotate each wide track with `chirp` (or clear it) from this block's sub-frames. */
   update(re: Float32Array, im: Float32Array, len: number, tracks: Track[]): void {
     const live = new Set(tracks.map((t) => t.id));
-    for (const id of this.state.keys()) if (!live.has(id)) this.state.delete(id);
+    for (const [id, st] of this.state) {
+      if (live.has(id)) {
+        st.unseen = 0;
+        continue;
+      }
+      // Keep the ring, but never compute a step across the gap.
+      st.lastPeakHz = null;
+      if (++st.unseen > STATE_GRACE_BLOCKS) this.state.delete(id);
+    }
     const wide: Track[] = [];
     for (const t of tracks) {
       if (!t.hopping && t.bandwidthHz >= MIN_TRACK_BW_HZ) wide.push(t);
@@ -177,7 +216,12 @@ export class ChirpAnalyzer {
       }
     }
     for (const t of wide) {
-      const info = evaluateSteps(this.stateFor(t.id).steps, this.subSec, this.binHz);
+      const st = this.stateFor(t.id);
+      // Hysteresis: a reading forms at MIN_CONSISTENCY and holds until the
+      // evidence drops well below it, so the card does not flicker between
+      // packets or on a symbol boundary's stray step.
+      const info = evaluateSteps(st.steps, this.subSec, this.binHz, st.info ? HOLD_CONSISTENCY : MIN_CONSISTENCY);
+      st.info = info;
       if (info) t.chirp = info;
       else delete t.chirp;
     }
@@ -190,7 +234,7 @@ export class ChirpAnalyzer {
   private stateFor(id: string): ChirpState {
     let st = this.state.get(id);
     if (!st) {
-      st = { steps: [], lastPeakHz: null };
+      st = { steps: [], lastPeakHz: null, info: null, unseen: 0 };
       this.state.set(id, st);
     }
     return st;

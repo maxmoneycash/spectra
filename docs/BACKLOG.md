@@ -202,12 +202,16 @@ the chirp-width scene: +54 kHz steps per 0.889 ms, −70 kHz fly-backs ⇒ 125 k
 exactly, SF 8.006. LoRa is now named first on both LoRa challenges and the
 identify lesson; the signal card shows "SF8 · 125 kHz".
 
-Recorded caveats: a sweep covering more than half the band per sub-frame
-aliases into a slower one the other way (SF7 at 125 kHz steps +108 kHz but
-reads −17), so an up-chirp prior takes the alias when it yields an integer SF
-and a real down-chirp keeps its reading. SF11–12 at 125 kHz move ≤ 7 kHz per
-sub-frame and fly back only every 18–36 sub-frames; the 64-step ring sees too
-few fly-backs to be reliable there (the simulator uses SF7–9). Negative
+Recorded caveats — reach at 125 kHz is SF8 and slower. SF7 was measured on
+real audio through the chirp lesson's scene and produced no reading at all:
+it sweeps 87% of the band inside one 0.9 ms sub-frame, so each sub-spectrum
+is a smear with no peak to follow and there is no sawtooth to alias (the
+synthetic alias test in chirp.test.ts models an ideal peak sequence, which
+real SF7 never yields). The up-chirp alias rule stays for sweeps that do
+produce a peak sequence faster than half the band per sub-frame. SF11–12 at
+125 kHz move ≤ 7 kHz per sub-frame and fly back only every 18–36 sub-frames;
+the 64-step ring sees too few fly-backs to be reliable there. The simulator's
+scenes use SF8–10. Negative
 controls through the real chain (`chirp-scene.test.ts`): a tone-modulated FM
 station, a same-width PSK burst and a voice band do not chirp.
 

@@ -24,6 +24,7 @@ function entryCtx(lesson: Lesson, i: number): GuideCtx {
     selectedId: null,
     identified: [],
     newIntercepts: 0,
+    chirpSf: null,
   };
 }
 
@@ -66,6 +67,10 @@ function solutions(lesson: Lesson): (Partial<GuideCtx> | null)[] {
       return [{ scanStatus: 'scanning' }, { scanStatus: 'hold' }, { newIntercepts: 1 }];
     case 'identify':
       return [null, { selectedId: 'track-1' }, { identified: ['wfm'] }];
+    case 'traffic':
+      return [{ tunedHz: 146.76 * MHZ, mode: 'nfm' }, { newIntercepts: 2 }, null];
+    case 'chirp':
+      return [{ selectedId: 'track-1', tunedHz: 915.4 * MHZ }, { chirpSf: 10 }, null];
     default:
       return [];
   }

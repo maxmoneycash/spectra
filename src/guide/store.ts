@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { useStore } from '../store/store';
+import { useStore, nearestTrack } from '../store/store';
 import { useCtf } from '../ctf/store';
 import { challengeById, toSceneSpec } from '../ctf/challenges';
 import { LESSONS, lessonById, type GuideCtx } from './lessons';
@@ -68,6 +68,7 @@ export function guideCtx(baseIntercepts: number): GuideCtx {
     selectedId: s.selectedId,
     identified: s.correctlyIdentified,
     newIntercepts: Math.max(0, s.intercepts.length - baseIntercepts),
+    chirpSf: (s.detections.find((d) => d.id === s.selectedId) ?? nearestTrack(s.detections, s.tuningOffsetHz))?.chirp?.sf ?? null,
   };
 }
 
