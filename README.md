@@ -1,25 +1,38 @@
 # SPECTRA
 
-A browser-based **radio simulator**, **radio capture-the-flag**, and **ham radio
-exam prep**. Everything runs client-side: no SDR hardware, no backend, no
-account.
+Learn radio by tuning a working receiver in your browser. Find a signal on the
+waterfall, hear a voice, decode Morse, and solve radio challenges — no hardware,
+account, or installation.
 
-**[spectra-one.vercel.app](https://spectra-one.vercel.app)** — works on phones
-and desktops.
+**[Try SPECTRA](https://spectra-one.vercel.app)** ·
+[Play Fox trail](https://spectra-one.vercel.app/?campaign=fox-trail) ·
+[Contribute](CONTRIBUTING.md) · [MIT license](LICENSE)
 
-Because the simulator places every emitter, it knows the ground truth for the
-whole band. That is what lets it verify each walkthrough step against the
-receiver's actual state, grade a CTF flag, and score an exam — none of which a
-receiver on a live antenna can do.
+<p align="center"><img src="docs/screenshots/receiver-phone.png" alt="Live simulated FM spectrum and waterfall in SPECTRA" width="320" /></p>
 
-**Start at Station.** The **First contact** briefing introduces the practice
-band and leads into **Tune and listen**, a two-minute guided reception. After
-the lesson, it offers **First Light**, the CTF that tests the skill on a new
-band. Completing both returns the board to the next lesson. Progress uses
-the existing lesson and flag records; there is no separate campaign score.
-On phones, the coach sits above the receiver so instructions do not cover the
-waterfall. The first lesson keeps tuning visible and offers the other controls
-on demand.
+Start at **Station → First contact** for a two-minute guided reception. Then
+try **First Light** on a fresh band, or work the **Fox trail** field exercise:
+compare three fictional listening posts, copy a Morse identifier, and use your
+recorded evidence to locate the beacon. Progress is saved in your browser.
+
+<table><tr>
+<td><img src="docs/screenshots/first-contact-desktop.png" alt="First contact guided reception on desktop" width="720" /></td>
+<td><img src="docs/screenshots/first-contact-phone.png" alt="A guided lesson running in the receiver at a phone viewport" width="220" /></td>
+</tr></table>
+
+The signals are synthesized as I/Q samples and pass through a real DSP receiver
+before reaching Web Audio. Because the simulator knows where it placed every
+emitter, it can check lesson steps and grade repeatable challenges. SPECTRA
+simulates radio; it does not receive nearby devices or transmit over the air.
+
+## Fox trail
+
+A short, original campaign inspired by the discovery-and-evidence loop in
+[WatchDogsGo](https://github.com/LOCOSP/WatchDogsGo). Visit three fictional
+listening posts, tune the same CW beacon, and log measured detector output.
+The identifier must come from the live Morse decoder before the case can be
+closed. A map, persistent evidence journal, and debrief tie the exercise
+together. There is no separate XP system or claim of real-world geolocation.
 
 ## Radio simulator
 
@@ -244,7 +257,7 @@ flowchart LR
 - **The simulator is the answer key.** Detector, classifier, CTF flags, and
   walkthrough steps are all checked against ground truth the worker already
   has.
-- **235 tests**: FFT against a reference DFT, demodulator tone recovery and
+- **Correctness tests**: FFT against a reference DFT, demodulator tone recovery and
   sideband rejection, CW encode → receiver → decode round-trips for every
   beacon challenge, each lesson's step checks against the real receiver, flag
   normalization, exam scoring, and CTF solvability (every rendered flag is
@@ -252,13 +265,14 @@ flowchart LR
 
 ## Run it locally
 
-Requires Node 20 or later.
+Use Node 22 (the version used by CI).
 
 ```bash
-npm install
+npm ci
 npm run dev      # http://localhost:5173
 npm test         # DSP, decoder, lessons, flags, scoring, captures, progression
 npm run build    # typecheck, production build, prerendered signal pages
+npm run bench:sim # optional throughput measurement, separate from correctness
 ```
 
 ## Content pipelines
@@ -278,6 +292,7 @@ src/
   sim/        signal environment: emitters, voice bank, Morse, NCDXF schedule
   dsp/        FFT, filters, receiver, detector, CW keyer and decoder
   engine/     the DSP worker, the main-thread engine, and their protocol
+  campaign/   fictional fox hunt, receiver evidence, map and journal
   guide/      walkthroughs and the on-screen coach
   ctf/        Tasking challenges, flag checking, scoring, share card
   exam/       question pools, reels, practice exam, Listen mode, narration
@@ -293,6 +308,13 @@ uPlot, and Torph.
 
 The [WatchDogsGo assessment](docs/WATCHDOGS-GO.md) documents which discovery
 and expedition ideas fit the simulator, and where live field hardware belongs.
+
+## Contributing
+
+Start with [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[good first issues](https://github.com/maxmoneycash/spectra/labels/good%20first%20issue).
+Bug reports with a scenario link and reproduction steps are especially useful.
+If SPECTRA helps you learn radio, a GitHub star helps other people find it.
 
 ## Credits
 

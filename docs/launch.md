@@ -11,8 +11,8 @@ work.
 - Record the actual browser and viewport used. Desktop emulation is not a
   physical iPhone or Android test; those checks remain unverified unless a
   separate record demonstrates them.
-- The CI workflow is prepared locally. Its first hosted result remains pending
-  until it runs on GitHub. Do not describe a prepared workflow as a passing run.
+- Hosted CI passed all 346 tests, type checking, and the production build:
+  [run 38179268944](https://github.com/maxmoneycash/spectra/actions/runs/38179268944).
 
 The [contributor guide](../CONTRIBUTING.md) describes setup and verification.
 The [distribution plan](GROWTH.md) lists implemented entry links and product
