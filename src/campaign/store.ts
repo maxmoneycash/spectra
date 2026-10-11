@@ -43,10 +43,30 @@ const saved = load();
 
 export const useCampaign = create<CampaignState>((set, get) => {
   let previousMorse = '';
-  let freshMorse = '';
+  let freshStart = 0;
   function resetCopy() {
     previousMorse = useStore.getState().morseText;
-    freshMorse = '';
+    freshStart = previousMorse.length;
+  }
+  function freshCopy(text: string): string {
+    let common = 0;
+    while (common < previousMorse.length && previousMorse[common] === text[common]) common++;
+    if (common < freshStart) {
+      // The worker sends a 40-character window. At this beacon's 18 WPM, a
+      // worker block adds at most one letter, optionally after a word space.
+      // Match only that small scroll, excluding the revisable final letter;
+      // a whole repeated phrase is not evidence of a new transmission.
+      let shift = 0;
+      if (previousMorse.length === 40 && text.length === 40) {
+        for (let i = 1; i <= 2; i++) {
+          if (text.startsWith(previousMorse.slice(i, -1))) { shift = i; break; }
+        }
+      }
+      // A reset or an edit in pre-boundary text cannot prove fresh reception.
+      freshStart = shift ? Math.max(0, freshStart - shift) : text.length;
+    }
+    previousMorse = text;
+    return text.slice(freshStart);
   }
   function sceneMatches() {
     const rx = useStore.getState();
@@ -129,14 +149,9 @@ export const useCampaign = create<CampaignState>((set, get) => {
       }
     }
     if (rx.morseText !== previous.morseText && get().stage === 'identify') {
-      // The worker retains rolling text across filter/squelch changes. Only
-      // characters appended since this receiver context became valid count.
-      // A decoder reset or self-correction discards the partial fresh copy;
-      // the next clean repetition can still prove the full identifier.
-      freshMorse = rx.morseText.startsWith(previousMorse)
-        ? (freshMorse + rx.morseText.slice(previousMorse.length)).slice(-160)
-        : '';
-      previousMorse = rx.morseText;
+      // Track the fresh suffix, allowing incomplete letters to change in
+      // place (T → M → O) without recycling text from before the boundary.
+      const freshMorse = freshCopy(rx.morseText);
       set({ liveIdentifier: containsIdentifier(freshMorse) ? freshMorse : null });
     }
   });

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { TrackMsg } from '../engine/protocol';
+import { encodeMorse, MorseDecoder } from '../sim/morse';
 import { CORRECT_SITE, FOX_TRAIL, LISTENING_POSTS, campaignSceneLabel, restoreProgress, sceneForPost, type PostId } from './model';
 
 const { engine, listeners } = vi.hoisted(() => {
@@ -128,6 +129,52 @@ describe('Fox trail receiver workflow', () => {
     listeners.get('morse')!('VVV FOX 7 VVV FOX 7');
     expect(useCampaign.getState().copyIdentifier().ok).toBe(true);
     expect(useCampaign.getState().stage).toBe('locate');
+  });
+
+  it.each([false, true])('accepts real decoder character revisions with an existing rolling window: %s', async (rolling) => {
+    await survey();
+    const decoder = new MorseDecoder();
+    const receive = (message: string) => {
+      for (const segment of encodeMorse(message, 18)) {
+        decoder.push(segment.on, segment.durSec);
+        // Match worker.ts: incomplete letters are revised in place, and only
+        // the final 40 characters are sent to the receiver store.
+        listeners.get('morse')!(decoder.output.slice(-40));
+      }
+    };
+    if (rolling) {
+      receive('VVV FOX 7  '.repeat(6));
+      expect(useStore.getState().morseText).toHaveLength(40);
+      useStore.getState().setBandwidth(1000);
+      expect(useCampaign.getState().liveIdentifier).toBeNull();
+    }
+    receive('VVV ');
+    expect(useCampaign.getState().copyIdentifier().ok).toBe(false);
+    receive('FOX 7  ');
+    expect(useCampaign.getState().liveIdentifier).not.toBeNull();
+    expect(useCampaign.getState().copyIdentifier().ok).toBe(true);
+  });
+
+  it('does not mistake a repeated old window for new text when its last letter changes', async () => {
+    await survey();
+    const decoder = new MorseDecoder();
+    const receive = (segments: ReturnType<typeof encodeMorse>) => {
+      for (const segment of segments) {
+        decoder.push(segment.on, segment.durSec);
+        listeners.get('morse')!(decoder.output.slice(-40));
+      }
+    };
+    receive(encodeMorse('VVV FOX 7  '.repeat(6) + 'VVV FOX ', 18));
+    const seven = encodeMorse('7  ', 18);
+    receive(seven.slice(0, 8)); // --.. is provisionally Z, before the final dot.
+    expect(useStore.getState().morseText).toHaveLength(40);
+    expect(useStore.getState().morseText.endsWith('FOX Z')).toBe(true);
+    useStore.getState().setBandwidth(1000);
+    receive(seven.slice(8));
+    expect(useStore.getState().morseText.endsWith('FOX 7')).toBe(true);
+    expect(useCampaign.getState().copyIdentifier().ok).toBe(false);
+    receive(encodeMorse('VVV FOX 7  ', 18));
+    expect(useCampaign.getState().copyIdentifier().ok).toBe(true);
   });
 
   it.each(['paused', 'mode', 'bandwidth', 'scene'] as const)('discards a copied live identifier after %s changes', async (change) => {
