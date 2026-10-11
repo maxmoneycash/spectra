@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { LESSONS, lessonById, type GuideTarget } from './lessons';
 import { guideCtx, useGuide } from './store';
 import { challengeById } from '../ctf/challenges';
+import { StarLink } from '../ui/StarLink';
 
 /** A passing check must hold this long, so sweeping past a setting doesn't count. */
 const HOLD_MS = 450;
@@ -369,6 +370,7 @@ function Finished({ id, docked }: { id: string; docked: boolean }) {
               <span className="mono-feats font-mono text-[11px] opacity-80">+{challenge.points}</span>
             </button>
           )}
+          <StarLink />
           {upNext && (
             <button
               onClick={() => start(upNext.id)}

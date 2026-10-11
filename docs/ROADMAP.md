@@ -1,3 +1,33 @@
+# SPECTRA roadmap
+
+Updated 2026-10-11. The product is a browser radio learning environment.
+
+## Shipping in v0.1.0
+
+- First contact: guided reception followed by First Light on a fresh band.
+- Fox trail: three fictional listening posts, live receiver evidence, Morse
+  identification, a map, saved journal, and a debrief.
+- 22 radio CTF challenges, signal reference pages, and ham exam preparation.
+- A visual README, downloadable demo, contributor guide, issue templates,
+  and CI for types, correctness, and the production build.
+
+## Next useful work
+
+- Improve concrete first-session problems reported by people using the demo.
+- Fill verified keyboard/accessibility gaps and unify Academy spacing.
+- Add more campaign cases only when the first case's difficulty and controls
+  are working well for players.
+- Profile startup and DSP on representative devices before optimizing.
+
+Live hardware integration is separate future work. The simulation does not
+scan nearby devices or locate real transmitters. See the
+[WatchDogsGo assessment](WATCHDOGS-GO.md) for that product boundary.
+
+The [backlog](BACKLOG.md) keeps detailed findings; [GROWTH.md](GROWTH.md)
+describes distribution and [launch.md](launch.md) contains prepared post drafts.
+
+<details><summary>Historical July 2026 research (not active commitments)</summary>
+
 # SPECTRA — Expansion Roadmap
 
 > **Historical.** Written July 2026, before the project refocused on teaching
@@ -49,3 +79,5 @@ WebUSB RTL-SDR behind the existing sample-source seam (`engine/worker.ts` consum
 ## Research notes on the security KB
 
 `badchars/wifi-security-mcp-server` is a *knowledge base*, not live attack tooling (no monitor mode anywhere in the plan). Reusable content model: `encryption + capabilities → findings + severity + remediation`, 47 WiFi attack entries with ATT&CK IDs and mitigations — good schema for the Phase 2 security audit and future Academy security lessons.
+
+</details>

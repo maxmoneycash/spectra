@@ -75,9 +75,11 @@ there is no need to reorganize the repositories first.
    challenge-complete states were checked in Arc, including real receiver
    operation and flag submission. The phone coach sits above the receiver;
    the first lesson keeps tuning visible and expands other controls on demand.
-2. **Proposed next experiment:** one fictional mapped fox hunt, with ordered
-   objectives completed through receiver operation and a short evidence
-   debrief. This mapped campaign is proposed, not implemented by this work.
+2. **Implemented — Fox trail:** one fictional mapped fox hunt. Three listening
+   posts change the simulated beacon power. The journal requires live detector
+   observations and a freshly decoded Morse identifier before the player can
+   choose a site and read the debrief. Progress persists locally; there is no
+   hardware/GPS access and no additional XP economy.
 3. **Later, if needed:** define a versioned observation/session import with
    source, time, receiver position, signal metadata, and evidence references.
    Distinguish simulated, imported, and live evidence. Keep hardware access

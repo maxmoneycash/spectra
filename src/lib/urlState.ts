@@ -20,6 +20,8 @@ export interface UrlState {
   topic?: string;
   /** Console scenario id */
   scenario?: string;
+  /** Fictional field campaign id */
+  campaign?: string;
 }
 
 const VIEWS: AppView[] = ['station', 'console', 'academy', 'exam', 'ctf'];
@@ -43,6 +45,7 @@ export function readUrl(search = window.location.search): UrlState {
     pool: clean(params.get('pool')),
     topic: clean(params.get('topic')),
     scenario: clean(params.get('scenario')),
+    campaign: clean(params.get('campaign')),
   };
 }
 
@@ -63,6 +66,7 @@ export function writeUrl(next: UrlState): void {
   set('pool', next.pool);
   set('topic', next.topic);
   set('scenario', next.scenario);
+  set('campaign', next.campaign);
 
   const qs = params.toString();
   const url = `${window.location.pathname}${qs ? `?${qs}` : ''}`;

@@ -80,7 +80,10 @@ export function Academy() {
 
   const openInSimulator = useCallback((scenarioId: string) => {
     const s = useStore.getState();
-    if (scenarioId !== s.scenarioId) s.loadScenario(scenarioId);
+    if (s.capture) s.stopCapture();
+    // Custom lessons and campaigns retain the last sandbox scenario ID.
+    // An explicit Academy handoff must load the requested RF, even if it matches.
+    s.loadScenario(scenarioId);
     s.setView('console');
     if (!s.running) void s.start();
   }, []);

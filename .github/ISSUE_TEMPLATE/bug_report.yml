@@ -1,0 +1,42 @@
+name: Bug report
+description: Report a receiver, lesson, challenge, exam, or interface problem.
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Include what you expected and what the app did instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Include the page link and lesson/challenge name. For receiver issues, include frequency, mode, bandwidth, and squelch if known.
+      placeholder: |
+        1. Open…
+        2. Select…
+        3. Observe…
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Browser and device
+      placeholder: Safari 26 on iPhone; Chrome on Windows; etc.
+    validations:
+      required: true
+  - type: dropdown
+    id: source
+    attributes:
+      label: Signal source
+      options:
+        - Built-in simulation or lesson
+        - Built-in forensics recording
+        - Imported capture
+        - Not applicable / unsure
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Supporting details
+      description: Optional screenshot, short recording, console error, or minimal capture you can share. Avoid posting CTF answers.

@@ -1,5 +1,14 @@
 # Execution backlog
 
+## Current release — October 11, 2026
+
+First contact and the docked phone coach are shipped and browser-verified.
+This release adds Fox trail, a simulated field campaign with live receiver
+evidence, a persistent journal, and a debrief; launch media and contributor CI
+are included. See [ROADMAP.md](ROADMAP.md) for current priorities.
+The older sections below preserve the implementation/review history.
+
+
 > Build plan: `docs/DESIGN.md` (2026-10-09) — unified progression, Station home board, capture import + forensics, tradecraft missions, exam predictor. Items there supersede §5 below.
 
 Ordered worklist. Rationale for the ordering is in [`GROWTH.md`](./GROWTH.md).

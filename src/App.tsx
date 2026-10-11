@@ -4,6 +4,7 @@ import { useStore } from './store/store';
 import { Academy } from './academy/Academy';
 import { ExamView } from './exam/ExamView';
 import { Station } from './station/Station';
+import { CampaignCoach } from './campaign/Campaign';
 import { CtfView } from './ctf/CtfView';
 import { TopBar } from './ui/TopBar';
 import { SpectrumWaterfall } from './ui/SpectrumWaterfall';
@@ -110,7 +111,7 @@ export function App() {
           <main className="min-h-0 min-w-0">
             {view === 'console' ? (
               <div className="flex h-full min-h-0 flex-col">
-                {!wide && <GuideCoach docked />}
+                {!wide && <><GuideCoach docked /><CampaignCoach docked /></>}
                 <div className="grid min-h-0 min-w-0 flex-1 grid-cols-[minmax(0,1fr)_360px] max-lg:grid-cols-[minmax(0,1fr)] xl:grid-cols-[minmax(0,1fr)_380px]">
                   <CaptureDropZone className="relative min-h-0 min-w-0 overflow-hidden bg-stage">
                     <SpectrumWaterfall />
@@ -118,6 +119,7 @@ export function App() {
                     <StartOverlay />
                     <SignalCard />
                     {wide && <GuideCoach />}
+                    {wide && <CampaignCoach />}
                     <CaptureSheet />
                   </CaptureDropZone>
                   <aside

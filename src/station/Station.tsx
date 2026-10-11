@@ -14,6 +14,7 @@ import { BottomSheet } from '@/ui/BottomSheet';
 import { tick } from '@/ui/kit/haptics';
 import { cn } from '@/lib/utils';
 import { FirstContact } from './FirstContact';
+import { CampaignCard } from '../campaign/Campaign';
 
 /** `10-09 20:42Z` — the log spans days, so the date stays. */
 function stamp(at: number): string {
@@ -69,6 +70,8 @@ export function Station() {
             <NextCard next={p.next} featured={p.featured} setView={setView} />
           </section>
         )}
+
+        <CampaignCard />
 
         <section className="border-b border-line px-4 py-5 sm:px-6">
           <GroupLabel>Readiness</GroupLabel>

@@ -21,7 +21,8 @@
     "typecheck": "tsc --noEmit",
     "narrate": "node scripts/render-narration.mjs",
     "pools:gen": "node scripts/convert-pools.mjs",
-    "prerender": "vite-node scripts/prerender-signals.mts"
+    "prerender": "vite-node scripts/prerender-signals.mts",
+    "bench:sim": "vite-node scripts/sim-bench.ts"
   },
   "dependencies": {
     "@fontsource/geist": "^5.2.9",

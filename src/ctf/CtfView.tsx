@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { StarLink } from '../ui/StarLink';
 import { AnimatePresence, motion } from 'motion/react';
 import { ArrowRight, Check, GraduationCap, Flag, RotateCcw, Radio, Trophy, Share2, Unlock } from 'lucide-react';
 import { useCtf, score, shareText } from './store';
@@ -368,6 +369,7 @@ export function CtfView() {
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
+            {s.solvedCount > 0 && <StarLink />}
             <button
               onClick={() => setView('console')}
               className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-border px-3 text-[12px] text-muted-foreground transition-colors hover:text-foreground"

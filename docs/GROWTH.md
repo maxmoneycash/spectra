@@ -1,114 +1,84 @@
-# Growth — how SPECTRA finds users
+# How people find and try SPECTRA
 
-The mission is teaching people RF. Everything here follows from one fact: **the
-two barriers to learning radio are owning hardware and installing native
-software, and SPECTRA removes both.** That is the whole pitch, and it is
-legible in about four seconds on a phone.
+Updated 2026-10-11. SPECTRA is a browser radio simulator with guided lessons,
+radio CTF challenges, and ham exam practice. The useful promise is specific:
+someone can practice tuning and signal recognition without buying hardware
+or installing radio software. Every signal is simulated.
 
----
+The immediate work is a clear first session, reliable builds, and links that
+take people directly to useful tasks. This plan does not depend on paid
+advertising, accounts, a leaderboard, a backend, or recruiting volunteers.
 
-## Who this is actually for
+## Match the entry point to the task
 
-Ranked by how quickly they convert, not by market size.
+These are audience hypotheses, not measured conversion rankings.
 
-| Segment | Size / signal | What they want | Our hook |
-|---|---|---|---|
-| **Ham licence candidates** | ~30k new US licences/year; steady, recurring demand | To pass Technician | 1,431 questions, narrated, free, no signup |
-| **SDR hobbyists** | r/RTLSDR + r/amateurradio are large and highly engaged | To see signals and understand them | A live waterfall with no dongle |
-| **RF security / CTF players** | DEF CON RF Village, wireless CTFs, infosec Discords | A practice range between conferences | Ten graded RF challenges in a browser |
-| **Students & educators** | EE/physics courses, STEM clubs | A shareable, install-free lab | Deterministic scenarios everyone can open at once |
-| **The RF-curious** | Long tail from search and social | To know what a signal *is* | The signal library — see and hear each mode |
+| Audience | Task to offer | Why it fits |
+|---|---|---|
+| Radio newcomer | First contact → Tune and listen | Find a signal, hear a voice, and see what tuning changes. |
+| Ham exam learner | A question pool and a receiver lesson | Connect study terms to something observable. |
+| SDR hobbyist | A signal-reference page and receiver scene | Explore modulation and receiver behavior without setup. |
+| CTF player | First Light, then a harder challenge | Apply the receiver controls to a concrete objective. |
+| Instructor or club helper | One guided lesson | A small teaching exercise that opens from a link. |
 
-The first two are where to start. They already congregate in a handful of
-places and they evaluate tools like this in one click.
+## Entry links already available
 
----
+Deep links, the CTF share result, and static signal pages are implemented.
+They are no longer feature prerequisites for sharing the app.
 
-## Channels, ranked by fit
+| Entry | Link | Intended use |
+|---|---|---|
+| First session | [Station](https://spectra-one.vercel.app/?view=station) | New users start with the First contact briefing. |
+| Introductory challenge | [First Light](https://spectra-one.vercel.app/?c=first-light) | A short independent receiver task. |
+| A harder receiver task | [Split the Pair](https://spectra-one.vercel.app/?c=split-the-pair) | Demonstrate why filter bandwidth matters. |
+| Exam study | [Technician pool](https://spectra-one.vercel.app/?pool=technician) | Someone already studying can begin in their pool. |
+| A focused study topic | [General, G5](https://spectra-one.vercel.app/?pool=general&topic=G5) | Continue a specific learning discussion. |
+| A receiver scene | [ISM band](https://spectra-one.vercel.app/?view=console&scenario=ism-sweep) | Explore chirps and other simulated bursts. |
+| Radio reference | [LoRa](https://spectra-one.vercel.app/signals/lora/) | Read a signal description before opening the receiver. |
 
-**1. Reddit — r/amateurradio, r/RTLSDR, r/sdr.**
-The highest-fit audience on the internet, and show-and-tell posts do well there.
-Lead with the hardware-free claim and a waterfall GIF; do not lead with the exam
-trainer — that reads as an ad. Post as a builder sharing a thing, answer every
-comment, and expect the top question to be "is the DSP real?" (it is: hand-written
-FFT, FIR channelizers, Weaver SSB — say so).
+Use `c`, `scenario`, `pool`, and `topic`, as implemented in
+[`urlState.ts`](../src/lib/urlState.ts) and
+[`useUrlSync.ts`](../src/hooks/useUrlSync.ts). Static reference pages are built
+by [`prerender-signals.mts`](../scripts/prerender-signals.mts).
+Check the deployed destination before posting; a URL existing in code is not
+proof that its latest behavior has reached production.
 
-**2. Hacker News — Show HN.**
-Angle is the engineering, not the product: a full software-defined receiver and
-a multi-emitter RF simulator running in a browser tab at 1.152 MSPS. HN rewards
-"here's how it works" over "here's what it does." The DSP test suite and the
-`RESEARCH.md` gap analysis are the credibility artifacts.
+## What users can share
 
-**3. DEF CON RF Village / wireless CTF communities.**
-The CTF is purpose-built for this crowd and there is no browser-based equivalent.
-Offer it as an off-season practice range, and offer to author a village-branded
-challenge set — that converts an audience into a partnership.
+- The Operator Card renders a callsign-style record and progress image.
+- The CTF result shares a text grid, score, and rank without flag answers.
+- A specific challenge, study pool/topic, receiver scene, or signal reference
+  can be linked directly.
 
-**4. Ham YouTube.**
-A handful of channels own ham education. A working demo link is a low-ask pitch:
-the reels and the CTF both demo in under a minute on camera. This is the highest-
-leverage single channel if one of them bites.
+Describe these accurately. The CTF result is a text share, not a new image
+renderer. The app has no public leaderboard or cross-device progress account.
+Saved progress is local to the browser; it is not a verified qualification.
 
-**5. ARRL, QRZ, eHam, club newsletters.**
-Slower and more formal, but this is where licence candidates are pointed by their
-instructors. Worth a note to ARRL's education desk once the Technician reels have
-been through a few users.
+## Distribution when ready
 
-**6. Schools and clubs.**
-Free, install-free, and deterministic scenarios mean a whole classroom sees the
-identical spectrum. That is a genuinely hard thing to arrange with hardware.
+Prepare one short demonstration that starts at Station, tunes to voice, and
+shows the resulting lesson progress. A technical audience may also want the
+source and an explanation of scene → I/Q → receiver → audio.
 
----
+- **Show HN:** lead with something people can try immediately and explain the
+  implementation in the first comment. Follow the
+  [Show HN guidelines](https://news.ycombinator.com/showhn.html).
+- **Radio communities:** choose one forum or club where the topic fits; check
+  its current posting rules and disclose that you built the app. Link the
+  lesson or reference relevant to the discussion.
+- **Classes and clubs:** a lesson can stand alone as a short teaching aid.
+  Avoid promising a complete curriculum or replacing hands-on operation.
 
-## The share loops we have — and the ones we don't
+Draft posts are in [launch.md](launch.md). They have not been submitted by this
+work. Community fit and posting rules must be checked at the time of posting.
 
-**Working today**
+## Work worth doing next
 
-- **Operator Card** — a generated image of your callsign-style record. Already the
-  strongest artifact; it exists to be posted.
-- **CTF score + rank** — solving flags produces a number and a title
-  (Listener → Signals Officer). Numbers with titles get screenshotted.
-- **Exam mastery %** — per-pool progress that grows with use.
+Keep the first lesson, challenge handoff, audio recovery, and production links
+reliable. Use reproducible bug reports and existing tests to decide what to
+fix; there is no new analytics or research program in this plan.
 
-**Missing, in priority order**
-
-1. **Deep links.** The app has no URL state, so nobody can share *a specific
-   thing* — a challenge, a band, a signal. `?ctf=morse-beacon` or `?band=ism`
-   would turn every Reddit comment into a working link. This is the single
-   cheapest growth feature we could build, and it is currently zero.
-2. **A CTF share card.** The Wordle lesson is that a compact, spoiler-free
-   result graphic travels further than a link. A 10-square grid of solved flags
-   plus rank, as an image, is the natural fit.
-3. **SEO surface.** The signal library and academy are genuinely searchable
-   content — "what does LoRa look like on a waterfall" is a real query with weak
-   answers. Today it is a single-route SPA, so none of it is indexable. Static
-   routes per signal type would compound over time in a way social posts do not.
-4. **A leaderboard.** Requires a backend (Vercel KV would do). Worth it only
-   after the CTF has an audience; a leaderboard with four entries is worse than
-   none.
-
----
-
-## What I'd build next, for growth specifically
-
-In order, cheapest-to-highest-impact first:
-
-1. **URL state / deep links** — hours of work, unlocks every other channel.
-2. **CTF result card** — reuses the Operator Card renderer.
-3. **Static signal-library routes** — the compounding SEO play.
-4. **A second CTF set** — the reason for people to come back. Content is the
-   moat here: scenarios and challenges accumulate, and nobody can scrape them
-   out of a competitor.
-
----
-
-## What not to do
-
-- **Don't gate anything behind signup.** The entire advantage is that it works
-  in one click. A signup wall trades the differentiator for a metric.
-- **Don't lead with the exam trainer on hobbyist channels.** Study tools read as
-  homework; the waterfall reads as a toy you want to touch. Let the exam content
-  be the thing they find after they're already inside.
-- **Don't claim it replaces a radio.** It doesn't, and that audience will catch
-  it instantly. It's the on-ramp *before* the radio — and the hardware-ingest
-  path on the roadmap makes that a promise rather than a limitation.
+If exploration later becomes a priority, test a small simulated expedition as
+described in [WATCHDOGS-GO.md](WATCHDOGS-GO.md). Keep live collection and field
+analysis within the product boundaries documented there. More content and a
+leaderboard can wait until they solve an observed need.

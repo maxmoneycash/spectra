@@ -83,24 +83,3 @@ describe('Scene emitters', () => {
     expect(gt[1].kind).toBe('nfm');
   });
 });
-
-describe('Scene performance', () => {
-  it('generates faster than real time with a full scene', () => {
-    const scene = new Scene({ sampleRate: FS, centerFreqHz: 100_000_000, noiseSigma: 0.03 });
-    const kinds = ['wfm', 'wfm', 'nfm', 'am', 'usb', 'cw', 'fsk2', 'ook', 'lora', 'psk', 'fhss', 'radar'] as const;
-    kinds.forEach((k, i) => {
-      scene.add({ id: `e${i}`, kind: k, freqHz: 100_000_000 - 450_000 + i * 80_000, powerDb: -3 });
-    });
-    const block = 32768;
-    const blocks = Math.ceil(FS / block); // ~1 second of signal
-    const re = new Float32Array(block);
-    const im = new Float32Array(block);
-    const start = performance.now();
-    for (let b = 0; b < blocks; b++) scene.generate(re, im, block);
-    const elapsed = performance.now() - start;
-    const rtFactor = elapsed / 1000; // <1 means faster than real time
-    // eslint-disable-next-line no-console
-    console.log(`[sim] 1 s of ${FS} Hz with ${kinds.length} emitters: ${elapsed.toFixed(0)} ms (RT factor ${rtFactor.toFixed(2)}x)`);
-    expect(elapsed).toBeLessThan(3000);
-  });
-});

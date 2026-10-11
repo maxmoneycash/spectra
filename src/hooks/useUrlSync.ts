@@ -7,6 +7,8 @@ import { openMission } from '../ctf/open';
 import { scenarioById } from '../scenarios/scenarios';
 import { POOLS, type ElementId } from '../exam/types';
 import { readUrl, writeUrl } from '../lib/urlState';
+import { useCampaign } from '../campaign/store';
+import { FOX_TRAIL } from '../campaign/model';
 
 /**
  * Two-way binding between the address bar and app state: apply an incoming
@@ -21,11 +23,12 @@ export function useUrlSync(): void {
     applied.current = true;
     const url = readUrl();
 
-    if (url.scenario && scenarioById(url.scenario)) {
+    const campaign = url.campaign === FOX_TRAIL.id;
+    if (!campaign && url.scenario && scenarioById(url.scenario)) {
       useStore.getState().loadScenario(url.scenario);
     }
 
-    if (url.c && challengeById(url.c)) {
+    if (!campaign && url.c && challengeById(url.c)) {
       // Same path as tapping the mission: live scene, or a rendered capture for forensics.
       void openMission(url.c);
     }
@@ -46,7 +49,8 @@ export function useUrlSync(): void {
     // View last, so it wins over any default a loader above may have set.
     // A bare ?c= or ?pool= implies the view it belongs to — otherwise the
     // outbound writer, which only emits params for the visible view, drops it.
-    const implied = url.view ?? (url.c ? 'ctf' : url.pool ? 'exam' : undefined);
+    if (campaign) useCampaign.getState().resume();
+    const implied = campaign ? 'console' : url.view ?? (url.c ? 'ctf' : url.pool ? 'exam' : undefined);
     if (implied) useStore.getState().setView(implied);
   }, []);
 
@@ -56,6 +60,7 @@ export function useUrlSync(): void {
   const pool = useExam((s) => s.pool);
   const topic = useExam((s) => s.subFilter);
   const activeC = useCtf((s) => s.activeId);
+  const campaignActive = useCampaign((s) => s.active);
 
   useEffect(() => {
     if (!applied.current) return;
@@ -63,10 +68,11 @@ export function useUrlSync(): void {
       view,
       // Only carry the param that belongs to the view being shown, so a shared
       // link is about one thing.
-      scenario: view === 'console' ? scenarioId : undefined,
+      scenario: view === 'console' && !campaignActive ? scenarioId : undefined,
+      campaign: view === 'console' && campaignActive ? FOX_TRAIL.id : undefined,
       pool: view === 'exam' ? pool : undefined,
       topic: view === 'exam' && topic ? topic : undefined,
       c: view === 'ctf' && activeC ? activeC : undefined,
     });
-  }, [view, scenarioId, pool, topic, activeC]);
+  }, [view, scenarioId, pool, topic, activeC, campaignActive]);
 }

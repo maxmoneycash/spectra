@@ -1,0 +1,29 @@
+name: Learning or feature improvement
+description: Suggest a focused improvement to learning or operating the simulator.
+body:
+  - type: textarea
+    id: learner
+    attributes:
+      label: What is the learner trying to do?
+      description: Describe the task and where the current app gets in the way.
+    validations:
+      required: true
+  - type: textarea
+    id: change
+    attributes:
+      label: Proposed change
+      description: A small example or before/after description is enough.
+    validations:
+      required: true
+  - type: textarea
+    id: success
+    attributes:
+      label: How would we know it works?
+      description: Give an observable outcome, such as completing a lesson without needing an explanation outside the app.
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: References or related work
+      description: Optional source for a radio/content correction, related issue, or proposed example.
