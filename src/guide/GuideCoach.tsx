@@ -164,14 +164,14 @@ const panelMotion = {
  * tradecraft behind it, and a confirmation stamped off the station clock
  * when the receiver shows you did it.
  */
-export function GuideCoach() {
+export function GuideCoach({ docked = false }: { docked?: boolean }) {
   const lessonId = useGuide((s) => s.lessonId);
   const step = useGuide((s) => s.step);
   const finishedId = useGuide((s) => s.finishedId);
   const next = useGuide((s) => s.next);
   const quit = useGuide((s) => s.quit);
   const passed = useGuideRunner();
-  const [showWhy, setShowWhy] = useState(true);
+  const [showWhy, setShowWhy] = useState(false);
   const [stamp, setStamp] = useState<string | null>(null);
   const [log, setLog] = useState<{ title: string; stamp: string } | null>(null);
 
@@ -180,8 +180,9 @@ export function GuideCoach() {
   const stepKey = `${lessonId}:${step}`;
   const nn = lesson ? String(LESSONS.findIndex((l) => l.id === lesson.id) + 1).padStart(2, '0') : '';
 
-  // Re-open the tradecraft on every new step; clear the log on a new lesson.
-  useEffect(() => setShowWhy(true), [stepKey]);
+  // Phone explanations expand on demand, leaving room to operate the radio.
+  // Desktop keeps the explanation visible through the responsive styles below.
+  useEffect(() => setShowWhy(false), [stepKey]);
   useEffect(() => setLog(null), [lessonId]);
 
   // Stamp the confirmation the moment the check holds.
@@ -200,11 +201,13 @@ export function GuideCoach() {
   return (
     <>
       <AnimatePresence>{current?.target && !passed && <Reticle key={stepKey} target={current.target} />}</AnimatePresence>
-      <div className="pointer-events-none absolute inset-x-2 top-2 z-40 flex justify-center sm:inset-x-auto sm:bottom-4 sm:left-4 sm:top-auto sm:block">
+      <div className={docked
+        ? 'thin-scroll relative z-40 max-h-[36dvh] shrink-0 overflow-y-auto'
+        : 'pointer-events-none absolute bottom-4 left-4 z-40'}>
         <AnimatePresence mode="wait">
           {lesson && current && (
-            <motion.section key="coach" role="region" aria-label={`Tasking: ${lesson.title}`} {...panelMotion} className={panelClass}>
-              <header className="flex items-center gap-2 border-b border-line px-3.5 py-2">
+            <motion.section key="coach" role="region" aria-label={`Tasking: ${lesson.title}`} {...panelMotion} className={cn(panelClass, docked && 'max-w-none rounded-none border-x-0 border-t-0 shadow-none')}>
+              <header className="flex items-center gap-2 border-b border-line px-3.5 py-1 lg:py-2">
                 <span className="size-1.5 shrink-0 rounded-full bg-tuned" aria-hidden />
                 <span className="mono-feats truncate font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                   Tasking · {nn} {lesson.title}
@@ -218,7 +221,7 @@ export function GuideCoach() {
                 <button
                   onClick={quit}
                   aria-label="End tasking"
-                  className="-mr-1.5 grid size-7 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  className="-mr-1.5 grid size-11 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground lg:size-7"
                 >
                   <X className="size-3.5" />
                 </button>
@@ -239,22 +242,14 @@ export function GuideCoach() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -12 }}
                   transition={{ duration: 0.18 }}
-                  className="px-3.5 pb-3 pt-3"
+                  className="px-3.5 py-2 lg:py-3"
                 >
                   <h3 className="text-[15px] font-semibold tracking-tight text-foreground">{current.title}</h3>
                   <p className="mt-1 text-[13px] leading-relaxed text-foreground/90">{current.body}</p>
                   {current.why && (
                     <>
-                      <button
-                        onClick={() => setShowWhy((v) => !v)}
-                        aria-expanded={showWhy}
-                        className="mt-2 inline-flex min-h-8 items-center gap-1 text-muted-foreground transition-colors hover:text-foreground sm:hidden"
-                      >
-                        <ChevronRight className={cn('size-3.5 transition-transform', showWhy && 'rotate-90')} />
-                        <GroupLabel className="text-inherit">Tradecraft</GroupLabel>
-                      </button>
-                      <div className={cn('sm:mt-2.5 sm:block', showWhy ? 'block' : 'hidden')}>
-                        <GroupLabel className="hidden sm:block">Tradecraft</GroupLabel>
+                      <div className={cn('lg:mt-2.5 lg:block', showWhy ? 'block' : 'hidden')}>
+                        <GroupLabel className="hidden lg:block">Tradecraft</GroupLabel>
                         <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">{current.why}</p>
                       </div>
                     </>
@@ -262,11 +257,22 @@ export function GuideCoach() {
                 </motion.div>
               </AnimatePresence>
 
-              <footer className="flex items-center gap-2 border-t border-line px-3.5 py-2">
+              <footer className="flex items-center gap-2 border-t border-line px-3.5 lg:py-2">
+                {current.why && !passed && (
+                  <button
+                    onClick={() => setShowWhy((v) => !v)}
+                    aria-expanded={showWhy}
+                    className="inline-flex min-h-11 items-center gap-1 text-muted-foreground transition-colors hover:text-foreground lg:hidden"
+                  >
+                    <ChevronRight className={cn('size-3.5 transition-transform', showWhy && 'rotate-90')} />
+                    <GroupLabel className="text-inherit">Tradecraft</GroupLabel>
+                  </button>
+                )}
                 {current.check ? (
                   <span
                     className={cn(
                       'mono-feats inline-flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.14em]',
+                      !passed && current.why ? 'hidden lg:inline-flex' : 'min-h-11 lg:min-h-0',
                       passed ? 'text-emerald-500' : 'text-muted-foreground',
                     )}
                   >
@@ -291,7 +297,7 @@ export function GuideCoach() {
                       ok();
                       next();
                     }}
-                    className="inline-flex min-h-9 items-center gap-1.5 rounded-md bg-foreground px-3 text-[12.5px] font-medium text-background transition-opacity hover:opacity-90"
+                    className="ml-auto inline-flex min-h-11 items-center gap-1.5 rounded-md bg-foreground px-3 text-[12.5px] font-medium text-background transition-opacity hover:opacity-90 lg:ml-0 lg:min-h-9"
                   >
                     Acknowledge <ArrowRight className="size-3.5" />
                   </button>
@@ -299,7 +305,7 @@ export function GuideCoach() {
                 {current.check && !passed && (
                   <button
                     onClick={next}
-                    className="mono-feats ml-auto min-h-8 rounded-md px-2 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground"
+                    className="mono-feats ml-auto min-h-11 rounded-md px-2 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground lg:min-h-8"
                   >
                     Skip
                   </button>
@@ -307,13 +313,13 @@ export function GuideCoach() {
               </footer>
 
               {log && !passed && (
-                <p className="mono-feats truncate border-t border-dashed border-line px-3.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground/80">
+                <p className="mono-feats hidden truncate border-t border-dashed border-line px-3.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground/80 lg:block">
                   {log.stamp} · Confirmed · {log.title}
                 </p>
               )}
             </motion.section>
           )}
-          {!lesson && finishedId && <Finished key="finished" id={finishedId} />}
+          {!lesson && finishedId && <Finished key="finished" id={finishedId} docked={docked} />}
         </AnimatePresence>
       </div>
     </>
@@ -321,7 +327,7 @@ export function GuideCoach() {
 }
 
 /** End-of-lesson card: skill confirmed, and the mission that tests it. */
-function Finished({ id }: { id: string }) {
+function Finished({ id, docked }: { id: string; docked: boolean }) {
   const lesson = lessonById(id);
   const start = useGuide((s) => s.start);
   const dismiss = useGuide((s) => s.dismissFinished);
@@ -332,7 +338,7 @@ function Finished({ id }: { id: string }) {
   const upNext = LESSONS[idx + 1];
 
   return (
-    <motion.section role="status" {...panelMotion} className={panelClass}>
+    <motion.section role="status" {...panelMotion} className={cn(panelClass, docked && 'max-w-none rounded-none border-x-0 border-t-0 shadow-none')}>
       <header className="flex items-center gap-2 border-b border-line px-3.5 py-2">
         <span className="grid size-4 place-items-center rounded-full bg-emerald-500 text-background">
           <Check className="size-2.5" strokeWidth={3.5} />
@@ -343,7 +349,7 @@ function Finished({ id }: { id: string }) {
         <button
           onClick={dismiss}
           aria-label="Close"
-          className="-mr-1.5 ml-auto grid size-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          className="-mr-1.5 ml-auto grid size-11 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground lg:size-7"
         >
           <X className="size-3.5" />
         </button>

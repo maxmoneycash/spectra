@@ -13,6 +13,7 @@ import { GroupLabel, IconButton } from '@/ui/controls';
 import { BottomSheet } from '@/ui/BottomSheet';
 import { tick } from '@/ui/kit/haptics';
 import { cn } from '@/lib/utils';
+import { FirstContact } from './FirstContact';
 
 /** `10-09 20:42Z` — the log spans days, so the date stays. */
 function stamp(at: number): string {
@@ -36,6 +37,8 @@ export function Station() {
   const setCardOpen = useStore((s) => s.setCardOpen);
   const since = useStore((s) => s.operator.since);
   const [logOpen, setLogOpen] = useState(false);
+  const firstLessonDone = p.lessons.done.includes(LESSONS[0].id);
+  const firstMissionDone = p.flags.solved.includes(LESSONS[0].challengeId);
 
   const sinceLabel = new Date(since).toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
 
@@ -58,10 +61,14 @@ export function Station() {
           </div>
         </header>
 
-        <section className="border-b border-line px-4 py-5 sm:px-6">
-          <GroupLabel>Next</GroupLabel>
-          <NextCard next={p.next} featured={p.featured} setView={setView} />
-        </section>
+        {!firstLessonDone || !firstMissionDone ? (
+          <FirstContact lessonDone={firstLessonDone} missionDone={firstMissionDone} />
+        ) : (
+          <section className="border-b border-line px-4 py-5 sm:px-6">
+            <GroupLabel>Next</GroupLabel>
+            <NextCard next={p.next} featured={p.featured} setView={setView} />
+          </section>
+        )}
 
         <section className="border-b border-line px-4 py-5 sm:px-6">
           <GroupLabel>Readiness</GroupLabel>

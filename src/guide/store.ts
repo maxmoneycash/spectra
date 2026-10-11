@@ -105,6 +105,8 @@ export const useGuide = create<GuideState>((set, get) => ({
     const lesson = lessonById(id);
     if (!lesson) return;
     const s = useStore.getState();
+    // Lessons use a simulated band; leave any imported recording first.
+    if (s.capture) s.stopCapture();
     s.loadSpec(lesson.scene, { name: lesson.title, tag: 'training', from: 'academy' });
     // A clean receiver, so earlier fiddling can't skip or block a lesson.
     s.setMode(lesson.startMode ?? 'nfm');

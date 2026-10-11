@@ -50,7 +50,7 @@ const PAGES: Page[] = ['mode', 'filter', 'audio', 'scan'];
  * underneath, and the rest of the controls live on swipeable pages so the
  * waterfall keeps the screen.
  */
-export function MobileDeck() {
+export function MobileDeck({ compact = false }: { compact?: boolean }) {
   const centerFreqHz = useStore((s) => s.centerFreqHz);
   const tuningOffsetHz = useStore((s) => s.tuningOffsetHz);
   const setTuning = useStore((s) => s.setTuning);
@@ -69,6 +69,8 @@ export function MobileDeck() {
   const running = useStore((s) => s.running);
 
   const [tuneOpen, setTuneOpen] = useState(false);
+  const [showControls, setShowControls] = useState(false);
+  const controlsVisible = !compact || showControls;
   const page = useStore((s) => s.deckPage);
   const setPage = useStore((s) => s.setDeckPage);
   const [emblaRef, embla] = useEmblaCarousel({ align: 'start', containScroll: 'trimSnaps', skipSnaps: false });
@@ -102,7 +104,7 @@ export function MobileDeck() {
   const canSeek = running && detections.length > 0;
 
   return (
-    <section aria-label="Receiver controls" className="border-t border-line bg-background">
+    <section aria-label="Receiver controls" className="shrink-0 border-t border-line bg-background">
       {/* VFO: seek · frequency · seek */}
       <div className="flex items-center gap-1 px-2 pt-2">
         <SeekButton dir={-1} disabled={!canSeek} onSeek={() => tuneStep(-1)} />
@@ -142,7 +144,16 @@ export function MobileDeck() {
         onChange={setTuning}
       />
 
-      <div className="px-3 pt-1.5">
+      {compact && (
+        <button
+          onClick={() => setShowControls((v) => !v)}
+          aria-expanded={controlsVisible}
+          className="min-h-11 w-full text-xs text-muted-foreground transition-colors hover:text-foreground"
+        >
+          {controlsVisible ? 'Hide receiver controls' : 'Show receiver controls'}
+        </button>
+      )}
+      <div className={cn('px-3 pt-1.5', !controlsVisible && 'hidden')}>
         <Segmented
           size="sm"
           label="Receiver control page"
@@ -157,7 +168,7 @@ export function MobileDeck() {
         />
       </div>
 
-      <div className="overflow-hidden" ref={emblaRef}>
+      <div className={cn('overflow-hidden', !controlsVisible && 'hidden')} ref={emblaRef}>
         <div className="flex touch-pan-y">
           {/* MODE */}
           <div className="min-w-0 shrink-0 grow-0 basis-full px-3 py-2.5">

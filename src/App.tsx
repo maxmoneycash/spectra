@@ -11,6 +11,7 @@ import { StartOverlay } from './ui/StartOverlay';
 import { CaptureSheet, CaptureDropZone } from './ui/CaptureSheet';
 import { OnAirCaption } from './ui/OnAirCaption';
 import { GuideCoach } from './guide/GuideCoach';
+import { useGuide } from './guide/store';
 import { SignalCard } from './ui/SignalCard';
 import { ReceiverDeck } from './ui/deck/ReceiverDeck';
 import { MobileDeck } from './ui/deck/MobileDeck';
@@ -88,6 +89,7 @@ function KeysPop({ onClose }: { onClose: () => void }) {
 export function App() {
   const panel = useStore((s) => s.panel);
   const view = useStore((s) => s.view);
+  const firstLesson = useGuide((s) => s.lessonId === 'tune' || s.finishedId === 'tune');
   const [sheetOpen, setSheetOpen] = useState(false);
   const [keysOpen, setKeysOpen] = useState(false);
   const wide = useMediaQuery('(min-width: 1024px)');
@@ -108,13 +110,14 @@ export function App() {
           <main className="min-h-0 min-w-0">
             {view === 'console' ? (
               <div className="flex h-full min-h-0 flex-col">
+                {!wide && <GuideCoach docked />}
                 <div className="grid min-h-0 min-w-0 flex-1 grid-cols-[minmax(0,1fr)_360px] max-lg:grid-cols-[minmax(0,1fr)] xl:grid-cols-[minmax(0,1fr)_380px]">
                   <CaptureDropZone className="relative min-h-0 min-w-0 overflow-hidden bg-stage">
                     <SpectrumWaterfall />
                     <OnAirCaption />
                     <StartOverlay />
                     <SignalCard />
-                    <GuideCoach />
+                    {wide && <GuideCoach />}
                     <CaptureSheet />
                   </CaptureDropZone>
                   <aside
@@ -129,7 +132,7 @@ export function App() {
                     </div>
                   </aside>
                 </div>
-                {wide ? <ReceiverDeck /> : <MobileDeck />}
+                {wide ? <ReceiverDeck /> : <MobileDeck compact={firstLesson} />}
                 <div className="max-lg:hidden">
                   <StatusBar />
                 </div>

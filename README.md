@@ -12,6 +12,15 @@ whole band. That is what lets it verify each walkthrough step against the
 receiver's actual state, grade a CTF flag, and score an exam — none of which a
 receiver on a live antenna can do.
 
+**Start at Station.** The **First contact** briefing introduces the practice
+band and leads into **Tune and listen**, a two-minute guided reception. After
+the lesson, it offers **First Light**, the CTF that tests the skill on a new
+band. Completing both returns the board to the next lesson. Progress uses
+the existing lesson and flag records; there is no separate campaign score.
+On phones, the coach sits above the receiver so instructions do not cover the
+waterfall. The first lesson keeps tuning visible and offers the other controls
+on demand.
+
 ## Radio simulator
 
 **Signal environment.** A Web Worker synthesizes a 1.152 MS/s complex-baseband
@@ -248,7 +257,7 @@ Requires Node 20 or later.
 ```bash
 npm install
 npm run dev      # http://localhost:5173
-npm test         # 235 tests: DSP, decoder, lessons, flags, scoring
+npm test         # DSP, decoder, lessons, flags, scoring, captures, progression
 npm run build    # typecheck, production build, prerendered signal pages
 ```
 
@@ -274,11 +283,16 @@ src/
   exam/       question pools, reels, practice exam, Listen mode, narration
   academy/    course, glossary, spectrum explorer
   scenarios/  the eight bands
+  station/    home board and first-operation briefing
+  progression/ one rank, next task, and activity log across learning modes
   ui/         receiver, controls, sheets, signal card, app shell
 ```
 
 Built with React, Vite, TypeScript, Tailwind CSS v4, Radix, Motion, Vaul,
 uPlot, and Torph.
+
+The [WatchDogsGo assessment](docs/WATCHDOGS-GO.md) documents which discovery
+and expedition ideas fit the simulator, and where live field hardware belongs.
 
 ## Credits
 
